@@ -1,0 +1,93 @@
+import { yupResolver } from '@hookform/resolvers/yup';
+import { Link } from "expo-router";
+import { Controller, useForm } from 'react-hook-form';
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import * as yup from 'yup';
+
+const scheme=yup.object().shape({
+  username:yup.string().required("Username is required"),
+  password:yup.string().required("Password is required"),
+})
+export default function signin() {
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(scheme),
+  });
+
+const onsubmit=async(data)=>
+{
+console.log(data);
+}
+
+
+  return (
+    <View className="flex-1 bg-white justify-center px-8">
+      {/* Header */}
+      <View className="mb-12 items-center">
+        <Text className="text-3xl font-bold text-black mb-2">Create Account</Text>
+        <Text className="text-base text-gray-600">Join us to get started</Text>
+      </View>
+
+      {/* Form Container */}
+      <View className="space-y-4">
+
+
+        <Controller
+          name='username'
+          control={control}
+          render={({ field: { onChange, value } }) => (
+            <View className="mb-4">
+              <TextInput
+                className="h-14 w-full border-b-2 border-gray-200 px-2 text-base text-black bg-transparent focus:border-black"
+                placeholder="Username" 
+                placeholderTextColor="#9CA3AF"
+                autoCapitalize="none"
+                onChangeText={onChange}
+                value={value}
+              />
+              {errors.username && <Text className="text-red-500 text-sm mt-1">{errors.username.message}</Text>}
+            </View>
+          )}
+        />
+            
+        <Controller
+          name='password'
+          control={control}
+          render={({ field: { onChange, value } }) => (
+            <View className="mb-4">
+              <TextInput
+                className="h-14 w-full border-b-2 border-gray-200 px-2 text-base text-black bg-transparent focus:border-black"
+                placeholder="Password"
+                placeholderTextColor="#9CA3AF"
+                autoCapitalize="none"
+                onChangeText={onChange}
+                secureTextEntry
+                value={value}
+              />
+              {errors.password && <Text className="text-red-500 text-sm mt-1">{errors.password.message}</Text>}
+            </View>
+          )}
+        />
+
+        <TouchableOpacity 
+          className="bg-black h-14 rounded-full justify-center items-center mt-6 shadow-sm"
+          onPress={handleSubmit(onsubmit)}
+          
+        >
+          <Text className="text-white text-lg font-semibold">Sign In</Text>
+        </TouchableOpacity>
+
+        {/* Sign In Link */}
+        <View className="flex-row justify-center items-center mt-8">
+          <Text className="text-gray-600 text-base">Already have an account? </Text>
+          <TouchableOpacity>
+            <Link  href={"/signup"} className="text-black font-semibold text-base" >Sign up</Link>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+}
