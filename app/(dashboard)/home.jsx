@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
-import { Text, TouchableOpacity, View } from 'react-native'
+import { Link } from "expo-router";
+import { useEffect, useState } from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 const home = () => {
   const [progress, setProgress] = useState(0)
@@ -28,16 +29,16 @@ const home = () => {
 
   return (
       <View className="border-2 border-red-400 h-full bg-white">
-      <View className=" h-[8%] flex-row justify-between items-end px-4">
+      <View className=" h-[10%] flex-row justify-between items-end px-4 border-2 border-red-400">
         <Text className="text-lg font-semibold">Welcome, Sharyar</Text>
         <TouchableOpacity>
-          <View className="w-9 h-9 bg-gray-300 rounded-full flex items-center justify-center">
-            <Text className="text-sm font-bold">S</Text>
-          </View>
+          <Link href={"/signup"} className="w-9 h-9 bg-gray-300 rounded-full flex items-center justify-center">
+            <Text className="text-sm font-bold text-center">S</Text>
+          </Link>
         </TouchableOpacity>
       </View>
 
-      <View className="h-[10%] flex-row justify-around items-center px-4 ">
+      <View className="h-[12%] flex-row justify-around items-center px-4 ">
         <TouchableOpacity className="flex items-center border-2 border-black py-4 px-6 rounded-full">
           <Text className="text-base font-medium text-black">Today</Text>
         </TouchableOpacity>
@@ -52,9 +53,9 @@ const home = () => {
       </View>
 
       {/* Rectangular Card */}
-      <View className="mx-4 mt-2 p-5 bg-white  border-2 border-black rounded-lg shadow-sm">
-        <Text className="text-md">Daily Stats -{'>'}</Text>
-        <View className="flex-row justify-between items-center mt-4">
+      <View className="mx-4 mt-2 p-2 bg-white  border-2 border-black rounded-lg shadow-sm">
+        <Text className="text-[1.2rem]">Daily Stats -{'>'}</Text>
+        <View className="flex-row justify-around items-center mt-4">
           
 
           <TouchableOpacity className="items-center" onPress={() => {
@@ -101,7 +102,7 @@ const home = () => {
           </TouchableOpacity>
 
           {/* Square Card */}
-          <View className="w-28 h-28 bg-black border border-gray-300 rounded-lg flex items-center justify-center">
+          <View className="w-32 h-32 bg-black border border-gray-300 rounded-lg flex items-center justify-center">
             <View className="items-center">
               <Text className="text-[3rem] font-bold text-white">12</Text>
               <Text className="text-xl text-gray-200">Jun</Text>

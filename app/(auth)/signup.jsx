@@ -3,7 +3,6 @@ import { Link } from "expo-router";
 import { Controller, useForm } from 'react-hook-form';
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 import * as yup from 'yup';
-import "./global.css";
 
 const scheme=yup.object().shape({
   fullname:yup.string().required('Name is Required'),

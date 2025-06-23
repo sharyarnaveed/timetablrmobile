@@ -6,9 +6,13 @@ export default function _layout() {
 <Stack screenOptions={{
   headerShown:false
 }}>
-  <Stack.Screen name='home'/>
-  <Stack.Screen name='signin'/>
-  <Stack.Screen name='signup'/>
+  <Stack.Screen name='(dashboard)' screenOptions={{
+  headerShown:false
+}}/>
+ <Stack.Screen name='(auth)' screenOptions={{
+  headerShown:false
+}}/>
+
 
 </Stack>
   )
