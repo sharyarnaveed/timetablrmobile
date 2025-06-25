@@ -1,127 +1,136 @@
 import { Link } from "expo-router";
-import { useEffect, useState } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 const home = () => {
-  const [progress, setProgress] = useState(0)
-  const targetProgress = 75
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= targetProgress) {
-          clearInterval(interval)
-          return targetProgress
-        }
-        return prev + 1
-      })
-    }, 30)
-
-    return () => clearInterval(interval)
-  }, [])
-
-  const getProgressColor = (percentage) => {
-    if (percentage >= 80) return '#22c55e' // green
-    if (percentage >= 60) return '#eab308' // yellow
-    if (percentage >= 40) return '#f97316' // orange
-    return '#ef4444' // red
-  }
+  const [selectedTab, setSelectedTab] = useState('Today')
 
   return (
-      <View className="border-2 border-red-400 h-full bg-white">
-      <View className=" h-[10%] flex-row justify-between items-end px-4 border-2 border-red-400">
-        <Text className="text-lg font-semibold">Welcome, Sharyar</Text>
-        <TouchableOpacity>
-          <Link href={"/signup"} className="w-9 h-9 bg-gray-300 rounded-full flex items-center justify-center">
-            <Text className="text-sm font-bold text-center">S</Text>
-          </Link>
-        </TouchableOpacity>
-      </View>
-
-      <View className="h-[12%] flex-row justify-around items-center px-4 ">
-        <TouchableOpacity className="flex items-center border-2 border-black py-4 px-6 rounded-full">
-          <Text className="text-base font-medium text-black">Today</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity className="flex items-center  border-2 border-black py-4 px-6 rounded-full">
-          <Text className="text-base font-medium text-gray-500">See More</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity className="flex items-center  border-2 border-black py-4 px-6 rounded-full">
-          <Text className="text-base font-medium text-gray-500">Timetable</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Rectangular Card */}
-      <View className="mx-4 mt-2 p-2 bg-white  border-2 border-black rounded-lg shadow-sm">
-        <Text className="text-[1.2rem]">Daily Stats -{'>'}</Text>
-        <View className="flex-row justify-around items-center mt-4">
-          
-
-          <TouchableOpacity className="items-center" onPress={() => {
-            setProgress(0)
-            setTimeout(() => {
-              const interval = setInterval(() => {
-                setProgress(prev => {
-                  if (prev >= targetProgress) {
-                    clearInterval(interval)
-                    return targetProgress
-                  }
-                  return prev + 2
-                })
-              }, 20)
-            }, 100)
-          }}>
-            <View className="w-28 h-28 items-center justify-center relative">
-              <View className="absolute w-28 h-28 border-4 border-gray-200 rounded-full" />
-              
-              <View 
-                className="absolute w-24 h-24 border-4 rounded-full"
-                style={{
-                  borderColor: '#e5e7eb',
-                  borderTopColor: progress > 0 ? getProgressColor(progress) : '#e5e7eb',
-                  borderRightColor: progress > 25 ? getProgressColor(progress) : '#e5e7eb',
-                  borderBottomColor: progress > 50 ? getProgressColor(progress) : '#e5e7eb',
-                  borderLeftColor: progress > 75 ? getProgressColor(progress) : '#e5e7eb',
-                  transform: [{ rotate: '-90deg' }]
-                }}
-              />
-              
-              {/* Center Content */}
-              <View className="items-center justify-center">
-                <Text 
-                  className="text-xl font-bold" 
-                  style={{ color: getProgressColor(progress) }}
-                >
-                  {progress}%
-                </Text>
-                <Text className="text-xs text-gray-500">Complete</Text>
+    <ScrollView className="flex-1 bg-white">
+      <View className="flex-1">
+        {/* Header Section - Floating Card Style */}
+        <View className="px-6 pt-16 pb-8">
+          <View className="bg-black rounded-3xl p-6 shadow-lg">
+            <View className="flex-row justify-between items-center">
+              <View className="flex-1">
+                <Text className="text-lg font-light text-gray-300">Good morning</Text>
+                <Text className="text-2xl font-bold text-white mt-1">Sharyar</Text>
+                <Text className="text-sm text-gray-400 mt-2">Thursday, June 26</Text>
+              </View>
+              <View className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
+                <Link href={"/signup"}>
+                  <Text className="text-xl font-bold text-black">S</Text>
+                </Link>
               </View>
             </View>
+          </View>
+        </View>
 
-          </TouchableOpacity>
+        {/* Navigation Tabs - Pill Style */}
+        <View className="px-6 py-4">
+          <View className="flex-row justify-center space-x-2">
+            {['Today', 'Week', 'Calendar'].map((tab) => (
+              <TouchableOpacity
+                key={tab}
+                className={`px-6 py-3 rounded-full ${
+                  selectedTab === tab ? 'bg-black' : 'bg-gray-100'
+                }`}
+                onPress={() => setSelectedTab(tab)}
+              >
+                <Text className={`font-medium ${
+                  selectedTab === tab ? 'text-white' : 'text-gray-600'
+                }`}>
+                  {tab}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
 
-          {/* Square Card */}
-          <View className="w-32 h-32 bg-black border border-gray-300 rounded-lg flex items-center justify-center">
-            <View className="items-center">
-              <Text className="text-[3rem] font-bold text-white">12</Text>
-              <Text className="text-xl text-gray-200">Jun</Text>
+        {/* Stats Grid - Geometric Cards */}
+        <View className="px-6 mb-8">
+          <View className="flex-row justify-between space-x-4">
+            {/* Progress Card */}
+            <View className="flex-1 bg-gray-50 p-6 rounded-2xl items-center">
+              <View className="w-12 h-12 bg-black rounded-full items-center justify-center mb-3">
+                <Text className="text-white font-bold">75</Text>
+              </View>
+              <Text className="text-sm text-gray-600 font-medium">Progress</Text>
+            </View>
+
+            {/* Classes Card */}
+            <View className="flex-1 bg-black p-6 rounded-2xl items-center">
+              <Text className="text-3xl font-bold text-white mb-2">8</Text>
+              <Text className="text-sm text-gray-300 font-medium">Classes</Text>
+            </View>
+
+            {/* Remaining Card */}
+            <View className="flex-1 bg-gray-50 p-6 rounded-2xl items-center">
+              <Text className="text-3xl font-bold text-black mb-2">3</Text>
+              <Text className="text-sm text-gray-600 font-medium">Left</Text>
             </View>
           </View>
+        </View>
 
+        {/* Current Class Section */}
+        <View className="mx-6 mb-6">
+          <View className="flex-row items-center justify-between mb-4">
+            <Text className="text-lg font-semibold text-gray-800">Current Class</Text>
+            <TouchableOpacity>
+              <Text className="text-black font-medium">View Schedule</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View className="bg-black p-6 rounded-2xl shadow-lg border border-gray-800">
+            <View className="flex-row justify-between items-start mb-4">
+              <View className="flex-1">
+                <Text className="text-white text-xl font-bold mb-1">Mathematics</Text>
+                <Text className="text-gray-300 text-sm">Advanced Calculus</Text>
+              </View>
+              <View className="bg-white px-3 py-1 rounded-full">
+                <Text className="text-black text-xs font-medium">LIVE</Text>
+              </View>
+            </View>
+            
+            <View className="flex-row justify-between items-center">
+              <View>
+                <Text className="text-gray-300 text-sm">Room 204 • Prof. Johnson</Text>
+                <Text className="text-white font-medium">10:30 AM - 12:00 PM</Text>
+              </View>
+              <TouchableOpacity className="bg-white px-4 py-2 rounded-lg">
+                <Text className="text-black font-medium">Join</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        {/* Upcoming Classes */}
+        <View className="mx-6 mb-36">
+          <Text className="text-lg font-semibold text-gray-800 mb-4">Upcoming Classes</Text>
+          
+          <View className="space-y-3">
+            {[
+              { subject: 'Physics', time: '12:30 PM', room: 'Lab 101', type: 'Lab' },
+              { subject: 'Chemistry', time: '2:00 PM', room: 'Room 305', type: 'Lecture' },
+
+            ].map((classItem, index) => (
+              <View key={index} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex-row justify-between items-center">
+                <View className="flex-1">
+                  <Text className="font-semibold text-gray-800">{classItem.subject}</Text>
+                  <Text className="text-sm text-gray-500">{classItem.room} • {classItem.type}</Text>
+                </View>
+                <View className="items-end">
+                  <Text className="font-medium text-gray-800">{classItem.time}</Text>
+                  <View className="bg-gray-100 px-2 py-1 rounded mt-1">
+                    <Text className="text-xs text-gray-800">{classItem.type}</Text>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </View>
         </View>
       </View>
-
-<Text className="mx-5 mt-10 mb-5 text-[1.2rem] ">
-  Current Class - {'>'}
-</Text>
-   <View className="mx-4 mt-2 p-3 w-[93%] h-[20%] bg-black  border-2 border-black rounded-2xl shadow-sm">
-
-
-   </View>
-
-
-    </View>
+    </ScrollView>
   )
 }
 
