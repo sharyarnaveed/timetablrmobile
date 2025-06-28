@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import AntDesign from '@expo/vector-icons/AntDesign';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Tabs } from "expo-router";
 
@@ -80,7 +81,21 @@ size={24}
              size={24} 
              color={focused ? '#fff' : '#666'} 
            />
-         )
+         ),
+       }}
+     />
+
+
+  <Tabs.Screen 
+       name="logout" 
+       options={{
+         tabBarIcon: ({ focused, color, size }) => (
+           <MaterialCommunityIcons 
+             name={focused ? "logout" : "logout"}
+             size={24} 
+             color='#8B0000'
+           />
+         ),
        }}
      />
 

@@ -8,7 +8,7 @@ const home = () => {
   return (
     <ScrollView className="flex-1 bg-white">
       <View className="flex-1">
-        {/* Header Section - Floating Card Style */}
+
         <View className="px-6 pt-16 pb-8">
           <View className="bg-black rounded-3xl p-6 shadow-lg">
             <View className="flex-row justify-between items-center">
@@ -17,16 +17,18 @@ const home = () => {
                 <Text className="text-2xl font-bold text-white mt-1">Sharyar</Text>
                 <Text className="text-sm text-gray-400 mt-2">Thursday, June 26</Text>
               </View>
-              <View className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
-                <Link href={"/signup"}>
-                  <Text className="text-xl font-bold text-black">S</Text>
-                </Link>
-              </View>
+<View className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
+  <Link 
+    className="w-12 h-12 rounded-full flex justify-center items-center text-center" 
+    href="/settings"
+  >
+    <Text className="text-black font-semibold text-[2rem] flex justify-center items-center">S</Text>
+  </Link>
+</View>
             </View>
           </View>
         </View>
 
-        {/* Navigation Tabs - Pill Style */}
         <View className="px-6 py-4">
           <View className="flex-row justify-center space-x-2">
             {['Today', 'Week', 'Calendar'].map((tab) => (
@@ -47,7 +49,7 @@ const home = () => {
           </View>
         </View>
 
-        {/* Stats Grid - Geometric Cards */}
+
         <View className="px-6 mb-8">
           <View className="flex-row justify-between space-x-4">
             {/* Progress Card */}

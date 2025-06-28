@@ -1,7 +1,11 @@
 import { yupResolver } from '@hookform/resolvers/yup';
+// Remove the Picker import
+// import { Picker } from '@react-native-picker/picker';
+import axios from "axios";
 import { Link } from "expo-router";
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { FlatList, Modal, Text, TextInput, TouchableOpacity, View } from "react-native";
 import * as yup from 'yup';
 
 const scheme=yup.object().shape({
@@ -15,6 +19,26 @@ repassword:yup.string().required("Re-Password is required")
 
 const signup = () => {
 
+const [Programs,SetPrograms]=useState([])
+const [isPickerVisible, setIsPickerVisible] = useState(false);
+const [searchText, setSearchText] = useState('');
+
+const getprograms=async()=>
+{
+  try {
+    const responce= await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/api/user/getprogramfromdb`)
+    SetPrograms(responce.data)
+  } catch (error) {
+    console.log("error in getting programs",error);
+    
+  }
+}
+
+useEffect(()=>
+{
+  getprograms()
+},[])
+
   const {
     control,
     handleSubmit,
@@ -25,7 +49,7 @@ const signup = () => {
 
 const onsubmit=async(data)=>
 {
-console.log(data);
+
 }
 
   return (
@@ -95,19 +119,83 @@ console.log(data);
         <Controller
           name='program'
           control={control}
-          render={({ field: { onChange, value } }) => (
-            <View className="mb-4">
-              <TextInput
-                className="h-14 w-full border-b-2 border-gray-200 px-2 text-base text-black bg-transparent focus:border-black"
-                placeholder="Program" 
-                placeholderTextColor="#9CA3AF"
-                autoCapitalize="words"
-                onChangeText={onChange}
-                value={value}
-              />
-              {errors.program && <Text className="text-red-500 text-sm mt-1">{errors.program.message}</Text>}
-            </View>
-          )}
+          render={({ field: { onChange, value } }) => {
+            const filteredPrograms = Programs.filter(program => 
+              program.program_name?.toLowerCase().includes(searchText.toLowerCase())
+            );
+            
+            const selectedProgram = Programs.find(program => program.program_name === value);
+
+            return (
+              <View className="mb-4">
+                <TouchableOpacity
+                  className="h-14 w-full border-b-2 border-gray-200 bg-transparent justify-center px-2"
+                  onPress={() => setIsPickerVisible(true)}
+                >
+                  <Text 
+                    className={`text-base ${selectedProgram ? 'text-black' : 'text-gray-400'}`}
+                  >
+                    {selectedProgram ? selectedProgram.program_name : 'Select Program'}
+                  </Text>
+                </TouchableOpacity>
+
+                <Modal
+                  visible={isPickerVisible}
+                  animationType="slide"
+                  transparent={true}
+                  onRequestClose={() => setIsPickerVisible(false)}
+                >
+                  <View className="flex-1 bg-black bg-opacity-50 justify-center">
+                    <View className="bg-white mx-4 rounded-lg max-h-96">
+                      <View className="p-4 border-b border-gray-200">
+                        <View className="flex-row justify-between items-center mb-3">
+                          <Text className="text-lg font-semibold">Select Program</Text>
+                          <TouchableOpacity onPress={() => {
+                            setIsPickerVisible(false);
+                            setSearchText('');
+                          }}>
+                            <Text className="text-black text-lg font-bold">✕</Text>
+                          </TouchableOpacity>
+                        </View>
+
+                        <TextInput
+                          className="h-16 border border-gray-300 rounded-lg px-3 text-base"
+                          placeholder="Search programs..."
+                          placeholderTextColor="#9CA3AF"
+                          value={searchText}
+                          onChangeText={setSearchText}
+                          autoFocus={true}
+                        />
+                      </View>
+                      <FlatList
+                        data={filteredPrograms}
+                        keyExtractor={(item) => item.program_id.toString()}
+                        renderItem={({ item }) => (
+                          <TouchableOpacity
+                            className="p-4 border-b border-gray-100"
+                            onPress={() => {
+                              onChange(item.program_name);
+                              setIsPickerVisible(false);
+                              setSearchText('');
+                            }}
+                          >
+                            <Text className="text-base text-black">{item.program_name}</Text>
+                          </TouchableOpacity>
+                        )}
+                        ListEmptyComponent={
+                          <View className="p-4">
+                            <Text className="text-gray-500 text-center">No programs found</Text>
+                          </View>
+                        }
+                      />
+                    </View>
+                  </View>
+                </Modal>
+
+                {errors.program && <Text className="text-red-500 text-sm mt-1">{errors.program.message}</Text>}
+              </View>
+            );
+          }}
         />
 
         <Controller
@@ -152,7 +240,6 @@ console.log(data);
         <TouchableOpacity 
           className="bg-black h-14 rounded-full justify-center items-center mt-6 shadow-sm"
           onPress={handleSubmit(onsubmit)}
-          
         >
           <Text className="text-white text-lg font-semibold">Create Account</Text>
         </TouchableOpacity>

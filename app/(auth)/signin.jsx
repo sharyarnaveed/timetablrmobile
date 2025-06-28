@@ -84,7 +84,7 @@ console.log(data);
         <View className="flex-row justify-center items-center mt-8">
           <Text className="text-gray-600 text-base">Already have an account? </Text>
           <TouchableOpacity>
-            <Link  href={"/home"} className="text-black font-semibold text-base" >Sign up</Link>
+            <Link  href={"/signup"} className="text-black font-semibold text-base" >Sign up</Link>
           </TouchableOpacity>
         </View>
       </View>
