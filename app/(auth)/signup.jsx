@@ -2,16 +2,17 @@ import { yupResolver } from '@hookform/resolvers/yup';
 // Remove the Picker import
 // import { Picker } from '@react-native-picker/picker';
 import axios from "axios";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { FlatList, Modal, Text, TextInput, TouchableOpacity, View } from "react-native";
+import Toast from 'react-native-toast-message';
 import * as yup from 'yup';
 
 const scheme=yup.object().shape({
-  fullname:yup.string().required('Name is Required'),
-  username:yup.string().required("Username is required"),
-  department:yup.string().required("Department is required"),
+  fullname:yup.string().required('Name is Required').matches(/^[a-zA-Z ]+$/, 'Only letters are allowed'),
+  username:yup.string().required("Username is required").matches(/^[a-zA-Z0-9_]+$/, 'Only letters, numbers, and underscores are allowed'),
+  department:yup.string().required("Department is required").matches(/^[a-zA-Z]+$/, 'Only letters, numbers, and underscores are allowed'),
   program:yup.string().required("Program is required"),
   password:yup.string().required("Password is required"),
 repassword:yup.string().required("Re-Password is required")
@@ -49,7 +50,30 @@ useEffect(()=>
 
 const onsubmit=async(data)=>
 {
+console.log(data);
+try {
+    const responce= await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/api/user/signup`,data)
+    console.log(responce.data.accesstoken);
+    if (responce.data.success) {
+      Toast.show({
+        type:"success",
+        text1:responce.data.message
+      })
+      router.push("/signin")
+    }
+else{
+  Toast.show({
+    type:"error",
+    text1:responce.data.message
+  })
+}
 
+
+    // SetPrograms(responce.data)
+  } catch (error) {
+    console.log("error in getting programs",error);
+    
+  }
 }
 
   return (

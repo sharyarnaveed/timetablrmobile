@@ -4,6 +4,7 @@ import Toast from 'react-native-toast-message';
 import "./global.css";
 export default function _layout() {
   return (
+    <>
 <Stack screenOptions={{
   headerShown:false
 }}>
@@ -13,8 +14,10 @@ export default function _layout() {
   <Stack.Screen name='(dashboard)' screenOptions={{
   headerShown:false
 }}/>
- <Toast/>
+
 
 </Stack>
+   <Toast/>
+  </>
   )
 }
