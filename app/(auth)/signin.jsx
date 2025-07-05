@@ -1,10 +1,7 @@
 import { yupResolver } from '@hookform/resolvers/yup';
-import axios from 'axios';
-import { Link, router } from "expo-router";
-import * as SecureStore from 'expo-secure-store';
+import { Link } from "expo-router";
 import { Controller, useForm } from 'react-hook-form';
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
-import Toast from 'react-native-toast-message';
 
 import * as yup from 'yup';
 const scheme=yup.object().shape({
@@ -22,6 +19,8 @@ export default function signin() {
 
 const onsubmit=async(data)=>
 {
+console.log(data.username);
+await SecureStore.setItemAsync('username',data.username)
 
 try {
  const responce= await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/api/user/signin`,data)
