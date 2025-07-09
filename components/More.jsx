@@ -25,7 +25,6 @@ const getalltimetable=async()=>
           withCredentials: true,
         }
     )
-    console.log(responce.data);
     SetScheduledata(responce.data.timetable)
    
 
