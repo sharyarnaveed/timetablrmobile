@@ -1,19 +1,34 @@
-import { Ionicons } from '@expo/vector-icons';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import * as yup from 'yup';
+import { Ionicons } from "@expo/vector-icons";
+import { yupResolver } from "@hookform/resolvers/yup";
+import axios from "axios";
+import { router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import {
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Toast from "react-native-toast-message";
+import * as yup from "yup";
 
 // Add validation schemas
 const usernameSchema = yup.object().shape({
-  newUsername: yup.string().required('Username is required').min(3, 'Username must be at least 3 characters'),
+  newUsername: yup
+    .string()
+    .required("Username is required")
+    .min(3, "Username must be at least 3 characters"),
 });
 
 const passwordSchema = yup.object().shape({
-  currentPassword: yup.string().required('Current password is required'),
-  newPassword: yup.string().required('New password is required').min(6, 'Password must be at least 6 characters'),
+  currentPassword: yup.string().required("Current password is required"),
+  newPassword: yup
+    .string()
+    .required("New password is required")
+    .min(6, "Password must be at least 6 characters"),
 });
 
 export default function Settings() {
@@ -39,17 +54,81 @@ export default function Settings() {
   });
 
   const onUsernameSubmit = async (data) => {
-    console.log('Username update:', data);
-    // Handle username update logic here
-    setActiveForm(null);
-    resetUsername();
+    try {
+      const token = await SecureStore.getItemAsync("accessToken");
+     
+      // Handle username update logic here
+      const reponce = await axios.put(
+        `${process.env.EXPO_PUBLIC_API_URL}/api/user/changeusername`,
+        { username: data.newUsername },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+      console.log(reponce.data);
+      if (reponce.data.success) {
+        Toast.show({
+          type: "success",
+          text1: reponce.data.message,
+        });
+        setActiveForm(null);
+        resetUsername();
+      } else {
+        Toast.show({
+          type: "error",
+          text1: reponce.data.message,
+        });
+      }
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Cant Change Username",
+      });
+    }
   };
 
   const onPasswordSubmit = async (data) => {
-    console.log('Password update:', data);
+   
     // Handle password update logic here
-    setActiveForm(null);
-    resetPassword();
+    try {
+      const token = await SecureStore.getItemAsync("accessToken");
+
+      // Handle username update logic here
+      const reponce = await axios.put(
+        `${process.env.EXPO_PUBLIC_API_URL}/api/user/changepassword`,
+        { oldpassword: data.currentPassword, newpassword: data.newPassword },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+
+      if (reponce.data.success) {
+        Toast.show({
+          type: "success",
+          text1: reponce.data.message,
+        });
+        setActiveForm(null);
+        resetPassword();
+      } else {
+        Toast.show({
+          type: "error",
+          text1: reponce.data.message,
+        });
+      }
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Cant Change password",
+      });
+    }
   };
 
   const toggleForm = (formType) => {
@@ -69,14 +148,16 @@ export default function Settings() {
         <View className="mb-8">
           <View className="flex-row items-center mb-4">
             <TouchableOpacity
-              onPress={() => router.push('/(dashboard)/home')}
+              onPress={() => router.push("/(dashboard)/home")}
               className="mr-4 p-2 rounded-full bg-gray-100"
             >
               <Ionicons name="arrow-back" size={24} color="#000" />
             </TouchableOpacity>
             <Text className="text-3xl font-bold text-black">Settings</Text>
           </View>
-          <Text className="text-gray-500 mt-2">Manage your account preferences</Text>
+          <Text className="text-gray-500 mt-2">
+            Manage your account preferences
+          </Text>
         </View>
 
         {/* Settings Options */}
@@ -85,29 +166,39 @@ export default function Settings() {
           <View className="bg-gray-50 rounded-2xl p-1">
             <TouchableOpacity
               className="flex-row items-center justify-between p-5"
-              onPress={() => toggleForm('username')}
+              onPress={() => toggleForm("username")}
             >
               <View>
-                <Text className="text-lg font-semibold text-black">Update Username</Text>
-                <Text className="text-gray-500 text-sm mt-1">Change your display name</Text>
+                <Text className="text-lg font-semibold text-black">
+                  Update Username
+                </Text>
+                <Text className="text-gray-500 text-sm mt-1">
+                  Change your display name
+                </Text>
               </View>
-              <View className={`w-8 h-8 rounded-full items-center justify-center ${
-                activeForm === 'username' ? 'bg-black' : 'bg-gray-300'
-              }`}>
-                <Text className={`font-bold ${
-                  activeForm === 'username' ? 'text-white' : 'text-gray-600'
-                }`}>
-                  {activeForm === 'username' ? '−' : '+'}
+              <View
+                className={`w-8 h-8 rounded-full items-center justify-center ${
+                  activeForm === "username" ? "bg-black" : "bg-gray-300"
+                }`}
+              >
+                <Text
+                  className={`font-bold ${
+                    activeForm === "username" ? "text-white" : "text-gray-600"
+                  }`}
+                >
+                  {activeForm === "username" ? "−" : "+"}
                 </Text>
               </View>
             </TouchableOpacity>
 
             {/* Username Form */}
-            {activeForm === 'username' && (
+            {activeForm === "username" && (
               <View className="px-5 pb-5">
                 <View className="bg-white rounded-xl p-4 border border-gray-200">
-                  <Text className="text-sm font-medium text-gray-700 mb-3">Write new username</Text>
-                  
+                  <Text className="text-sm font-medium text-gray-700 mb-3">
+                    Write new username
+                  </Text>
+
                   <Controller
                     control={usernameControl}
                     name="newUsername"
@@ -122,16 +213,20 @@ export default function Settings() {
                       />
                     )}
                   />
-                  
+
                   {usernameErrors.newUsername && (
-                    <Text className="text-red-500 text-sm mb-3">{usernameErrors.newUsername.message}</Text>
+                    <Text className="text-red-500 text-sm mb-3">
+                      {usernameErrors.newUsername.message}
+                    </Text>
                   )}
 
                   <TouchableOpacity
                     className="bg-black rounded-lg py-3 items-center"
                     onPress={handleUsernameSubmit(onUsernameSubmit)}
                   >
-                    <Text className="text-white font-semibold text-base">Update Username</Text>
+                    <Text className="text-white font-semibold text-base">
+                      Update Username
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -142,29 +237,39 @@ export default function Settings() {
           <View className="bg-gray-50 rounded-2xl p-1">
             <TouchableOpacity
               className="flex-row items-center justify-between p-5"
-              onPress={() => toggleForm('password')}
+              onPress={() => toggleForm("password")}
             >
               <View>
-                <Text className="text-lg font-semibold text-black">Change Password</Text>
-                <Text className="text-gray-500 text-sm mt-1">Update your security credentials</Text>
+                <Text className="text-lg font-semibold text-black">
+                  Change Password
+                </Text>
+                <Text className="text-gray-500 text-sm mt-1">
+                  Update your security credentials
+                </Text>
               </View>
-              <View className={`w-8 h-8 rounded-full items-center justify-center ${
-                activeForm === 'password' ? 'bg-black' : 'bg-gray-300'
-              }`}>
-                <Text className={`font-bold ${
-                  activeForm === 'password' ? 'text-white' : 'text-gray-600'
-                }`}>
-                  {activeForm === 'password' ? '−' : '+'}
+              <View
+                className={`w-8 h-8 rounded-full items-center justify-center ${
+                  activeForm === "password" ? "bg-black" : "bg-gray-300"
+                }`}
+              >
+                <Text
+                  className={`font-bold ${
+                    activeForm === "password" ? "text-white" : "text-gray-600"
+                  }`}
+                >
+                  {activeForm === "password" ? "−" : "+"}
                 </Text>
               </View>
             </TouchableOpacity>
 
             {/* Password Form */}
-            {activeForm === 'password' && (
+            {activeForm === "password" && (
               <View className="px-5 pb-5">
                 <View className="bg-white rounded-xl p-4 border border-gray-200">
-                  <Text className="text-sm font-medium text-gray-700 mb-3">Change your password</Text>
-                  
+                  <Text className="text-sm font-medium text-gray-700 mb-3">
+                    Change your password
+                  </Text>
+
                   <Controller
                     control={passwordControl}
                     name="currentPassword"
@@ -179,9 +284,11 @@ export default function Settings() {
                       />
                     )}
                   />
-                  
+
                   {passwordErrors.currentPassword && (
-                    <Text className="text-red-500 text-sm mb-3">{passwordErrors.currentPassword.message}</Text>
+                    <Text className="text-red-500 text-sm mb-3">
+                      {passwordErrors.currentPassword.message}
+                    </Text>
                   )}
 
                   <Controller
@@ -198,16 +305,20 @@ export default function Settings() {
                       />
                     )}
                   />
-                  
+
                   {passwordErrors.newPassword && (
-                    <Text className="text-red-500 text-sm mb-3">{passwordErrors.newPassword.message}</Text>
+                    <Text className="text-red-500 text-sm mb-3">
+                      {passwordErrors.newPassword.message}
+                    </Text>
                   )}
 
                   <TouchableOpacity
                     className="bg-black rounded-lg py-3 items-center"
                     onPress={handlePasswordSubmit(onPasswordSubmit)}
                   >
-                    <Text className="text-white font-semibold text-base">Change Password</Text>
+                    <Text className="text-white font-semibold text-base">
+                      Change Password
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
