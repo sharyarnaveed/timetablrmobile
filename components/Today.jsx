@@ -51,7 +51,7 @@ gettimetabewhoeldata()
             {/* Beautiful Progress Bar */}
             <View className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
               <View 
-                className="bg-gradient-to-r from-black to-gray-700 h-3 rounded-full transition-all duration-500 ease-out"
+                className="bg-black h-3 rounded-full"
                 style={{ width: `${progress}%` }}
               />
             </View>
@@ -86,15 +86,11 @@ gettimetabewhoeldata()
           <Text className="text-lg font-semibold text-gray-800">
             Current Class
           </Text>
-          {thecurent && (
-            <View className="bg-green-100 px-3 py-1 rounded-full">
-              <Text className="text-green-700 text-xs font-medium">● LIVE</Text>
-            </View>
-          )}
         </View>
 
-        {thecurent ? (
-          <View className="bg-black p-6 rounded-2xl shadow-lg">
+    {
+      thecurent && (
+<View className="bg-black p-6 rounded-2xl shadow-lg">
             <View className="flex-row justify-between items-start mb-4">
               <View className="flex-1">
                 <Text className="text-white text-xl font-bold mb-2">
@@ -118,28 +114,14 @@ gettimetabewhoeldata()
               </Text>
             </View>
           </View>
-        ) : (
-          <View className="bg-gray-50 p-8 rounded-2xl border border-gray-200 items-center">
-            <View className="w-16 h-16 bg-blue-100 rounded-full items-center justify-center mb-4">
-              <Text className="text-3xl">📚</Text>
-            </View>
-            <Text className="text-xl font-semibold text-gray-800 mb-2">
-              No Class Right Now
-            </Text>
-            <Text className="text-sm text-gray-600 text-center mb-4">
-              Enjoy your free time! Your next class will appear here when it's time.
-            </Text>
-            <View className="bg-white px-4 py-2 rounded-full border border-gray-300">
-              <Text className="text-gray-600 font-medium text-sm">
-                ✨ Free Time
-              </Text>
-            </View>
-          </View>
-        )}
+      )
+    }  
+          
+      
       </View>
 
       {/* Upcoming Classes */}
-      {Notcurrentclass ? (
+      {Notcurrentclass && Notcurrentclass.length>0 ? (
         <View className="mx-6 mb-36">
           <Text className="text-lg font-semibold text-gray-800 mb-4">
             Upcoming Classes
@@ -170,22 +152,16 @@ gettimetabewhoeldata()
           </View>
         </View>
       ) : (
-        <View className="bg-gradient-to-br from-blue-50 to-indigo-100 p-8 rounded-2xl border border-blue-200 items-center">
+        <View className="mx-6 mb-36 bg-gradient-to-br from-blue-50 to-indigo-100 p-8 rounded-2xl border border-blue-200 items-center">
           <View className="w-16 h-16 bg-blue-100 rounded-full items-center justify-center mb-4">
             <Text className="text-3xl">📚</Text>
           </View>
           <Text className="text-xl font-semibold text-gray-800 mb-2">
-            No Class Right Now
+            No Next Class 
           </Text>
           <Text className="text-sm text-gray-600 text-center mb-4">
-            Enjoy your free time! Your next class will appear here when it's
-            time.
+            Enjoy your  time! 
           </Text>
-          <View className="bg-white px-4 py-2 rounded-full border border-blue-200">
-            <Text className="text-blue-600 font-medium text-sm">
-              ✨ Free Time
-            </Text>
-          </View>
         </View>
       )}
     </>

@@ -1,13 +1,17 @@
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Link } from "expo-router";
+import axios from "axios";
+import { Link, router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import { Controller, useForm } from 'react-hook-form';
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
-
+import Toast from 'react-native-toast-message';
 import * as yup from 'yup';
-const scheme=yup.object().shape({
-  username:yup.string().required("Username is required"),
-  password:yup.string().required("Password is required"),
-})
+
+const scheme = yup.object().shape({
+  username: yup.string().required("Username is required"),
+  password: yup.string().required("Password is required"),
+});
+
 export default function signin() {
   const {
     control,
@@ -17,37 +21,33 @@ export default function signin() {
     resolver: yupResolver(scheme),
   });
 
-const onsubmit=async(data)=>
-{
-console.log(data.username);
-await SecureStore.setItemAsync('username',data.username)
+  const onsubmit = async (data) => {
+    console.log(data.username);
+    await SecureStore.setItemAsync('username', data.username);
 
-try {
- const responce= await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/api/user/signin`,data)
-    if (responce.data.success) {
+    try {
+      const responce = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/api/user/signin`, data);
+      if (responce.data.success) {
+        Toast.show({
+          type: "success",
+          text1: responce.data.message
+        });
+        await SecureStore.setItemAsync('accessToken', responce.data.accesstoken);
+        router.push("/(dashboard)/home");
+      } else {
+        Toast.show({
+          type: "error",
+          text1: responce.data.message
+        });
+      }
+    } catch (error) {
+      console.log(error);
       Toast.show({
-        type:"success",
-        text1:responce.data.message
-      })
-await SecureStore.setItemAsync('accessToken', responce.data.accesstoken);
-router.push("/(dashboard)/home")
-    }else{
-      Toast.show({
-        type:"error",
-        text1:responce.data.message
-      })
+        type: "error",
+        text1: "Error in Sign In"
+      });
     }
-
-
-} catch (error) {
-  console.log(error);
-  Toast.show({
-    type:"success",
-    text2:"Error in Sign In"
-  })
-}
-}
-
+  };
 
   return (
     <View className="flex-1 bg-white justify-center px-8">

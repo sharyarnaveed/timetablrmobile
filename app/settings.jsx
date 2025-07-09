@@ -1,15 +1,42 @@
 import { Ionicons } from '@expo/vector-icons';
+import { yupResolver } from '@hookform/resolvers/yup';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Controller } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import * as yup from 'yup';
 
+// Add validation schemas
+const usernameSchema = yup.object().shape({
+  newUsername: yup.string().required('Username is required').min(3, 'Username must be at least 3 characters'),
+});
 
+const passwordSchema = yup.object().shape({
+  currentPassword: yup.string().required('Current password is required'),
+  newPassword: yup.string().required('New password is required').min(6, 'Password must be at least 6 characters'),
+});
 
 export default function Settings() {
   const [activeForm, setActiveForm] = useState(null);
 
+  // Add form controls
+  const {
+    control: usernameControl,
+    handleSubmit: handleUsernameSubmit,
+    formState: { errors: usernameErrors },
+    reset: resetUsername,
+  } = useForm({
+    resolver: yupResolver(usernameSchema),
+  });
 
+  const {
+    control: passwordControl,
+    handleSubmit: handlePasswordSubmit,
+    formState: { errors: passwordErrors },
+    reset: resetPassword,
+  } = useForm({
+    resolver: yupResolver(passwordSchema),
+  });
 
   const onUsernameSubmit = async (data) => {
     console.log('Username update:', data);

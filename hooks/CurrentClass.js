@@ -28,6 +28,6 @@ export default function useCurrentClass(timetableString) {
 
     findCurrentClass();
   }, [timetableString]);
-
+console.log("returning data")
   return currentClass;
 }

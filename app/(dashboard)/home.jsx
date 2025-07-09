@@ -144,7 +144,9 @@ const home = () => {
         </View>
         {selectedTab == "Today" && (
           <>
+ 
             <Today thecurent={currentClass} Notcurrentclass={upcomingclasses} />
+         
           </>
         )}
 
