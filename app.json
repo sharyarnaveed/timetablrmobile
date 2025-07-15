@@ -4,7 +4,6 @@
     "slug": "timetablr",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
     "scheme": "timetablr",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
@@ -14,7 +13,8 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#ffffff",
+        "useNextNotificationsApi": true
       },
       "edgeToEdgeEnabled": true
     },
@@ -23,8 +23,14 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
+    "extra": {
+      "eas": {
+        "projectId": "2a206bb1-01e6-4965-94ea-2b94d7489942"
+      }
+    },
     "plugins": [
       "expo-router",
+      "expo-notifications",
       [
         "expo-splash-screen",
         {
@@ -39,6 +45,7 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "owner": "sharyar_naveed"
   }
 }

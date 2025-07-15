@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useEffect } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { useEffect } from "react";
+import { ActivityIndicator, Text, View } from "react-native";
 
 const logout = () => {
   const router = useRouter();
@@ -9,17 +9,15 @@ const logout = () => {
   useEffect(() => {
     const performLogout = async () => {
       try {
-        // Clear all stored data
         await SecureStore.deleteItemAsync("accessToken");
         await SecureStore.deleteItemAsync("username");
         await SecureStore.deleteItemAsync("timetable");
         await SecureStore.deleteItemAsync("day");
-        
-        // Navigate to signin
+
         router.replace("/signin");
       } catch (error) {
         console.log("Error during logout:", error);
-        // Still navigate even if there's an error clearing storage
+
         router.replace("/signin");
       }
     };
