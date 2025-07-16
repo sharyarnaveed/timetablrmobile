@@ -16,12 +16,12 @@
         "backgroundColor": "#ffffff",
         "useNextNotificationsApi": true
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.sharyar_naveed.timetablr"
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "output": "static"
     },
     "extra": {
       "eas": {

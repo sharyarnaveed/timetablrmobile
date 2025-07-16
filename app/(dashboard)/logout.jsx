@@ -12,8 +12,7 @@ const logout = () => {
         await SecureStore.deleteItemAsync("accessToken");
         await SecureStore.deleteItemAsync("username");
         await SecureStore.deleteItemAsync("timetable");
-        await SecureStore.deleteItemAsync("day");
-
+        await SecureStore.deleteItemAsync("day");      
         router.replace("/signin");
       } catch (error) {
         console.log("Error during logout:", error);

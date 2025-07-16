@@ -1,41 +1,44 @@
-import axios from 'axios';
+import axios from "axios";
 import * as SecureStore from "expo-secure-store";
-import { useEffect, useState } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from "react";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 const More = () => {
-  const [selectedDay, setSelectedDay] = useState('Monday')
+  const [selectedDay, setSelectedDay] = useState("Monday");
 
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-  const fullDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const fullDays = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
 
-  const [scheduleData,SetScheduledata] = useState([])
+  const [scheduleData, SetScheduledata] = useState([]);
 
-
-const getalltimetable=async()=>
-{
-        const token = await SecureStore.getItemAsync("accessToken");
-  console.log(token)
-  try {
-    const responce=await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/api/user/alltimetable`,{
+  const getalltimetable = async () => {
+    const token = await SecureStore.getItemAsync("accessToken");
+    console.log(token);
+    try {
+      const responce = await axios.get(
+        `${process.env.EXPO_PUBLIC_API_URL}/api/user/alltimetable`,
+        {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           withCredentials: true,
         }
-    )
-    SetScheduledata(responce.data.timetable)
-   
+      );
+      SetScheduledata(responce.data.timetable);
+    } catch (error) {
+      console.log("error in getiing timetable", error);
+    }
+  };
 
-
-  } catch (error) {
-    console.log("error in getiing timetable",error);
-    
-  }
-}
-
- const covertionoftime = (time24) => {
+  const covertionoftime = (time24) => {
     const [hourStr, minute] = time24.split(":");
     let hour = parseInt(hourStr, 10);
     const ampm = hour >= 12 ? "PM" : "AM";
@@ -44,24 +47,22 @@ const getalltimetable=async()=>
     return `${hour}:${minute} ${ampm}`;
   };
 
-useEffect(()=>
-{
-  console.log("in use");
-  
-  getalltimetable()
+  useEffect(() => {
+    console.log("in use");
 
-},[])
-    const filterredschedule=scheduleData.filter(item=>item.day===selectedDay)
-
+    getalltimetable();
+  }, []);
+  const filterredschedule = scheduleData.filter(
+    (item) => item.day === selectedDay
+  );
 
   return (
     <View className="flex-1 bg-gray-50 mb-36">
       {/* Header */}
       <View className="bg-white px-6 pt-4 pb-2 shadow-sm">
-        
         {/* Day Tabs */}
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           className="mb-4"
         >
@@ -71,16 +72,18 @@ useEffect(()=>
                 key={day}
                 onPress={() => setSelectedDay(fullDays[index])}
                 className={`px-6 py-3 rounded-full ${
-                  selectedDay === fullDays[index] 
-                    ? 'bg-gray-900' 
-                    : 'bg-gray-100'
+                  selectedDay === fullDays[index]
+                    ? "bg-gray-900"
+                    : "bg-gray-100"
                 }`}
               >
-                <Text className={`font-medium ${
-                  selectedDay === fullDays[index] 
-                    ? 'text-white' 
-                    : 'text-gray-600'
-                }`}>
+                <Text
+                  className={`font-medium ${
+                    selectedDay === fullDays[index]
+                      ? "text-white"
+                      : "text-gray-600"
+                  }`}
+                >
                   {day}
                 </Text>
               </TouchableOpacity>
@@ -116,7 +119,6 @@ useEffect(()=>
                     </Text>
                   </View>
                 </View>
-
               </View>
             ))
           ) : (
@@ -132,7 +134,7 @@ useEffect(()=>
         </View>
       </ScrollView>
     </View>
-  )
-}
+  );
+};
 
-export default More
+export default More;

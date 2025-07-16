@@ -52,6 +52,10 @@ const _layout = () => {
       const tokenData = await Notifications.getExpoPushTokenAsync({
         projectId: process.env.EXPO_PROJECT_ID,
       });
+
+      const notificationsaved=await SecureStore.getItemAsync("notification")
+      if(notificationsaved!="true")
+      {
 try{
    const token = await SecureStore.getItemAsync("accessToken");
 const responce= await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/api/user/storetoken`,
@@ -63,13 +67,16 @@ const responce= await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/api/user/st
           },
           withCredentials: true,
         })
+        await SecureStore.setItemAsync("notification", "true")
         console.log(responce.data);
-        
 }
 catch(error){
 console.log(error)
 }
+      }
+
       console.log('✅ Expo Push Token:', tokenData.data);
+
     } catch (err) {
       console.error('❌ Error getting push token:', err);
       if (Platform.OS === 'android' || Platform.OS === 'ios') {
