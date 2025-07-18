@@ -7,12 +7,13 @@
     "scheme": "timetablr",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
+    "icon":"./assets/images/icon.png",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/foreground.png",
         "backgroundColor": "#ffffff",
         "useNextNotificationsApi": true
       },
@@ -34,7 +35,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/splash.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
