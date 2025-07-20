@@ -18,7 +18,7 @@ Notifications.setNotificationHandler({
   }),
 });
 
- const token = await SecureStore.getItemAsync("accessToken");
+
 const _layout = () => {
   useEffect(() => {
     const checkTokenAndRegister = async () => {
