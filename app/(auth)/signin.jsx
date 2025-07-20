@@ -33,7 +33,7 @@ export default function signin() {
           text1: responce.data.message
         });
         await SecureStore.setItemAsync('accessToken', responce.data.accesstoken);
-        router.push("/(dashboard)/index");
+        router.push("/(dashboard)/");
       } else {
         Toast.show({
           type: "error",
@@ -53,7 +53,7 @@ export default function signin() {
     <View className="flex-1 bg-white justify-center px-8">
       {/* Header */}
       <View className="mb-12 items-center">
-        <Text className="text-3xl font-bold text-black mb-2">Create Account</Text>
+        <Text className="text-3xl font-bold text-black mb-2">Sign in</Text>
         <Text className="text-base text-gray-600">Join us to get started</Text>
       </View>
 

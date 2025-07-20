@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "129066488796",
+    "project_id": "time-d3399",
+    "storage_bucket": "time-d3399.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:129066488796:android:3e94e6b3e10dd497e2b519",
+        "android_client_info": {
+          "package_name": "com.sharyar_naveed.timetablr"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDaFqNfeyVDLk1PfW87IR3xobQuzoSGRL0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
