@@ -17,15 +17,20 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
+
+ const token = await SecureStore.getItemAsync("accessToken");
 const _layout = () => {
    useEffect(() => {
-    registerForPushNotificationsAsync();
+if(token)
+{
+  registerForPushNotificationsAsync();
+  const subscription = Notifications.addNotificationReceivedListener(notification => {
+    console.log('Notification received in foreground:', notification);
+  });
+  
+  return () => subscription.remove();
+}
     
-    const subscription = Notifications.addNotificationReceivedListener(notification => {
-      console.log('Notification received in foreground:', notification);
-    });
-
-    return () => subscription.remove();
   }, []);
 
   // Request permissions and register for push token
@@ -127,7 +132,7 @@ console.log(error)
       }}
     >
       <Tabs.Screen
-        name="home"
+        name="index"
         options={{
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons
