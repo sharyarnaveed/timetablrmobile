@@ -33,7 +33,7 @@ export default function signin() {
           text1: responce.data.message
         });
         await SecureStore.setItemAsync('accessToken', responce.data.accesstoken);
-        router.push("/(dashboard)/home");
+        router.push("/(dashboard)/index");
       } else {
         Toast.show({
           type: "error",

@@ -148,7 +148,7 @@ export default function Settings() {
         <View className="mb-8">
           <View className="flex-row items-center mb-4">
             <TouchableOpacity
-              onPress={() => router.push("/(dashboard)/home")}
+              onPress={() => router.push("/(dashboard)/index")}
               className="mr-4 p-2 rounded-full bg-gray-100"
             >
               <Ionicons name="arrow-back" size={24} color="#000" />

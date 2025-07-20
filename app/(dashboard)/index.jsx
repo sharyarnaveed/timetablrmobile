@@ -8,7 +8,7 @@ import Today from "../../components/Today";
 import useCurrentClass from "../../hooks/CurrentClass";
 import useupcomingClasses from "../../hooks/NotCurrentClass";
 
-const home = () => {
+const index = () => {
   const [selectedTab, setSelectedTab] = useState("Today");
   const [TheUsername, SetTehusername] = useState("");
   const [theday, setday] = useState("");
@@ -156,4 +156,4 @@ const home = () => {
   );
 };
 
-export default home;
+export default index;
