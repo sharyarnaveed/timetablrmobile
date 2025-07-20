@@ -20,17 +20,18 @@ Notifications.setNotificationHandler({
 
  const token = await SecureStore.getItemAsync("accessToken");
 const _layout = () => {
-   useEffect(() => {
-if(token)
-{
-  registerForPushNotificationsAsync();
-  const subscription = Notifications.addNotificationReceivedListener(notification => {
-    console.log('Notification received in foreground:', notification);
-  });
-  
-  return () => subscription.remove();
-}
-    
+  useEffect(() => {
+    const checkTokenAndRegister = async () => {
+      const token = await SecureStore.getItemAsync("accessToken");
+      if (token) {
+        registerForPushNotificationsAsync();
+        const subscription = Notifications.addNotificationReceivedListener(notification => {
+          console.log('Notification received in foreground:', notification);
+        });
+        return () => subscription.remove();
+      }
+    };
+    checkTokenAndRegister();
   }, []);
 
   // Request permissions and register for push token
