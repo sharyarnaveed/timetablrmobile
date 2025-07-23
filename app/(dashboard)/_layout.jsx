@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import axios from "axios";
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
@@ -64,7 +64,6 @@ const _layout = () => {
       {
 try{
    const token = await SecureStore.getItemAsync("accessToken");
-   console.log(token)
 const responce= await axios.post(`https://timetablr.burjalsama.site/api/user/storetoken`,
         { token:tokenData.data },
         {
@@ -160,11 +159,11 @@ console.log(error)
       />
 
       <Tabs.Screen
-        name="makeupclass"
+        name="settings"
         options={{
           tabBarIcon: ({ focused, color, size }) => (
-            <MaterialIcons
-              name={focused ? "class" : "class"}
+            <Feather
+              name={focused ? "settings" : "settings"}
               size={24}
               color={focused ? "#fff" : "#666"}
             />

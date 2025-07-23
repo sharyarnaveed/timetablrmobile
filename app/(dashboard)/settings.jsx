@@ -69,7 +69,6 @@ export default function Settings() {
           withCredentials: true,
         }
       );
-      console.log(reponce.data);
       if (reponce.data.success) {
         Toast.show({
           type: "success",

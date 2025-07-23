@@ -22,7 +22,6 @@ export default function signin() {
   });
 
   const onsubmit = async (data) => {
-    console.log(data.username);
     await SecureStore.setItemAsync('username', data.username);
 
     try {

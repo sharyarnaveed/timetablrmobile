@@ -24,7 +24,6 @@ export default function useCurrentClass(timetableString) {
 
     findCurrentClasses();
   }, [timetableString]);
-console.log(currentClasses);
 
   return currentClasses;
 }

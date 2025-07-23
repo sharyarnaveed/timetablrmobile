@@ -26,6 +26,15 @@ const Today = ({ thecurent, Notcurrentclass }) => {
     }
   };
 
+const covertionoftime = (time24) => {
+    const [hourStr, minute] = time24.split(":");
+    let hour = parseInt(hourStr, 10);
+    const ampm = hour >= 12 ? "PM" : "AM";
+
+    hour = hour % 12 || 12;
+    return `${hour}:${minute} ${ampm}`;
+  };
+
   useEffect(() => {
     gettimetabewhoeldata();
   }, [thecurent, Notcurrentclass]);
@@ -99,6 +108,9 @@ const Today = ({ thecurent, Notcurrentclass }) => {
                     <Text className="text-gray-300 text-sm mb-1">
                       📍 {cls.venue}
                     </Text>
+                     <Text className="text-gray-300 text-sm">
+                     {covertionoftime(cls.start_time)} - {covertionoftime(cls.end_time)}
+                    </Text>
                     <Text className="text-gray-300 text-sm">
                       👨‍🏫 {cls.teacher_name}
                     </Text>
@@ -132,6 +144,9 @@ const Today = ({ thecurent, Notcurrentclass }) => {
                   </Text>
                   <Text className="text-sm text-gray-500">
                     {classItem.venue} • {classItem.teacher_name}
+                  </Text>
+                   <Text className="text-sm text-gray-500">
+                    {classItem.start_time} • {classItem.end_time}
                   </Text>
                 </View>
               </View>

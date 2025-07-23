@@ -2,11 +2,34 @@ import axios from "axios";
 import { Link, router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Week from "../../components/More";
 import Today from "../../components/Today";
 import useCurrentClass from "../../hooks/CurrentClass";
 import useupcomingClasses from "../../hooks/NotCurrentClass";
+
+const { width, height } = Dimensions.get("window");
+
+const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: "#fff" },
+  scrollView: { flex: 1 },
+  container: { flex: 1 },
+  headerWrapper: { paddingHorizontal: width * 0.04, paddingTop: height * 0.04, paddingBottom: height * 0.02 },
+  headerCard: { backgroundColor: "#000", borderRadius: width * 0.06, padding: width * 0.04, shadowColor: "#000", shadowOpacity: 0.1, shadowRadius: width * 0.02 },
+  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  welcomeText: { fontSize: width * 0.045, fontWeight: "300", color: "#d1d5db" },
+  usernameText: { fontSize: width * 0.06, fontWeight: "bold", color: "#fff", marginTop: 4 },
+  dayText: { fontSize: width * 0.035, color: "#9ca3af", marginTop: 8 },
+  avatarWrapper: { width: width * 0.16, height: width * 0.16, backgroundColor: "#fff", borderRadius: width * 0.08, alignItems: "center", justifyContent: "center" },
+  avatarLink: { width: width * 0.12, height: width * 0.12, borderRadius: width * 0.06, alignItems: "center", justifyContent: "center" },
+  avatarText: { color: "#000", fontWeight: "bold", fontSize: width * 0.08, textAlign: "center" },
+  tabWrapper: { paddingHorizontal: width * 0.04, paddingVertical: height * 0.02 },
+  tabRow: { flexDirection: "row", justifyContent: "center" },
+  tabButton: { paddingHorizontal: width * 0.06, paddingVertical: height * 0.015, borderRadius: 999, backgroundColor: "#f3f4f6", marginHorizontal: 4 },
+  tabButtonActive: { backgroundColor: "#000" },
+  tabText: { fontWeight: "500", color: "#4b5563", fontSize: width * 0.04 },
+  tabTextActive: { color: "#fff" },
+});
 
 const index = () => {
   const [selectedTab, setSelectedTab] = useState("Today");
@@ -81,7 +104,6 @@ const index = () => {
         !LocalTimetable ||
         LocalTimetable.length === 0
       ) {
-        console.log("Fetching fresh timetable...");
         await SecureStore.setItemAsync("day", dayName);
         await getdata(dayName, Makeday);
       } else {
@@ -95,24 +117,24 @@ const index = () => {
   return (
     <ScrollView className="flex-1 bg-white">
       <View className="flex-1">
-        <View className="px-6 pt-16 pb-8">
-          <View className="bg-black rounded-3xl p-6 shadow-lg">
+        <View className="px-4 pt-12 pb-6 sm:px-8 sm:pt-16 sm:pb-8">
+          <View className="bg-black rounded-3xl p-4 shadow-lg sm:p-6">
             <View className="flex-row justify-between items-center">
               <View className="flex-1">
-                <Text className="text-lg font-light text-gray-300">
+                <Text className="text-base font-light text-gray-300 sm:text-lg">
                   Welcome
                 </Text>
-                <Text className="text-2xl font-bold text-white mt-1">
+                <Text className="text-xl font-bold text-white mt-1 sm:text-2xl">
                   {TheUsername}
                 </Text>
-                <Text className="text-sm text-gray-400 mt-2">{theday}</Text>
+                <Text className="text-xs text-gray-400 mt-2 sm:text-sm">{theday}</Text>
               </View>
-              <View className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
+              <View className="w-14 h-14 bg-white rounded-full flex items-center justify-center sm:w-16 sm:h-16">
                 <Link
-                  className="w-12 h-12 rounded-full flex justify-center items-center text-center"
+                  className="w-10 h-10 rounded-full flex justify-center items-center text-center sm:w-12 sm:h-12"
                   href="/settings"
                 >
-                  <Text className="text-black font-semibold text-[2rem] flex justify-center items-center">
+                  <Text className="text-black font-semibold text-3xl flex justify-center items-center sm:text-[2rem]">
                     {firstchar.toUpperCase()}
                   </Text>
                 </Link>
@@ -121,14 +143,14 @@ const index = () => {
           </View>
         </View>
 
-        <View className="px-6 py-4">
+        <View className="px-4 py-3 sm:px-6 sm:py-4">
           <View className="flex-row justify-center space-x-2">
             {["Today", "Week"].map((tab) => (
               <TouchableOpacity
                 key={tab}
-                className={`px-6 py-3 rounded-full ${
+                className={`px-4 py-2 rounded-full ${
                   selectedTab === tab ? "bg-black" : "bg-gray-100"
-                }`}
+                } sm:px-6 sm:py-3`}
                 onPress={() => setSelectedTab(tab)}
               >
                 <Text
