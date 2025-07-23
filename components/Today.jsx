@@ -2,7 +2,7 @@ import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 
-const Today = ({ thecurent = [], Notcurrentclass = [] }) => {
+const Today = ({ thecurent, Notcurrentclass }) => {
   const [totalength, setlength] = useState(0);
   const [leftlength, setLeftLength] = useState(0);
   const [progress, SetProgress] = useState(0);
@@ -114,7 +114,7 @@ const Today = ({ thecurent = [], Notcurrentclass = [] }) => {
       )}
 
       {/* Upcoming Classes */}
-      {singleCurrent && Notcurrentclass.length > 0 ? (
+      { Notcurrentclass.length > 0 ? (
         <View className="mx-6 mb-36">
           <Text className="text-lg font-semibold text-gray-800 mb-4">
             Upcoming Classes

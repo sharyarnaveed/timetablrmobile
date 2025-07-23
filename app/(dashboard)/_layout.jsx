@@ -64,7 +64,8 @@ const _layout = () => {
       {
 try{
    const token = await SecureStore.getItemAsync("accessToken");
-const responce= await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/api/user/storetoken`,
+   console.log(token)
+const responce= await axios.post(`https://timetablr.burjalsama.site/api/user/storetoken`,
         { token:tokenData.data },
         {
           headers: {

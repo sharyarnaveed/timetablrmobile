@@ -23,6 +23,6 @@ export default function useupcomingClasses(timetableString) {
 
     filterUpcomingClasses();
   }, [timetableString]);
-  console.log("returbning not current");
+  // console.log("returbning not current",upcoming);
   return upcoming;
 }
