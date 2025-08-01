@@ -74,7 +74,7 @@ const responce= await axios.post(`https://timetablr.burjalsama.site/api/user/sto
           withCredentials: true,
         })
         await SecureStore.setItemAsync("notification", "true")
-        console.log(responce.data);
+        
 }
 catch(error){
 console.log(error)

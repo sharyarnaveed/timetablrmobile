@@ -14,10 +14,15 @@ export default function useupcomingClasses(timetableString) {
       const minutes = now.getMinutes().toString().padStart(2, "0");
       const currentTime = `${hours}:${minutes}`;
 
-      const upcoming = timetableArray
-        .filter((cls) => cls.start_time > currentTime)
-        .sort((a, b) => a.start_time.localeCompare(b.start_time));
+      const padTime = (timeStr) => {
+        // Handles "9:00" -> "09:00"
+        const [h, m] = timeStr.split(":");
+        return `${h.padStart(2, "0")}:${m.padStart(2, "0")}`;
+      };
 
+      const upcoming = timetableArray
+        .filter((cls) => padTime(cls.start_time) > currentTime)
+        .sort((a, b) => padTime(a.start_time).localeCompare(padTime(b.start_time)));
       setUpcoming(upcoming);
     };
 

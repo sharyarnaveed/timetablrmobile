@@ -57,7 +57,7 @@ const addcourse = () => {
         }
       );
 
-      console.log(responce.data);
+      
       if (responce.data.success) {
         Toast.show({
           type: "success",
