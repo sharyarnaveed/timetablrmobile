@@ -3,7 +3,8 @@ import axios from "axios";
 import { Link, router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { Controller, useForm } from 'react-hook-form';
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+  
+import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Toast from 'react-native-toast-message';
 import * as yup from 'yup';
 
@@ -49,6 +50,21 @@ export default function signin() {
   };
 
   return (
+    <KeyboardAvoidingView
+          className="flex-1 bg-white"
+          behavior={Platform.OS === "android" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "android" ? 0 : 20}
+        >
+          <ScrollView
+            className="flex-1"
+            contentContainerStyle={{
+              flexGrow: 1,
+              justifyContent: "center",
+              paddingHorizontal: 32,
+            }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
     <View className="flex-1 bg-white justify-center px-8">
       {/* Header */}
       <View className="mb-12 items-center">
@@ -114,5 +130,7 @@ export default function signin() {
         </View>
       </View>
     </View>
+    </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

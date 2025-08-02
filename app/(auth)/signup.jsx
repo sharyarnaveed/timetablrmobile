@@ -7,7 +7,10 @@ import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   FlatList,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
+  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
@@ -94,259 +97,274 @@ const signup = () => {
   };
 
   return (
-    <View className="flex-1 bg-white justify-center px-8">
-      {/* Header */}
-      <View className="mb-12 items-center">
-        <Text className="text-3xl font-bold text-black mb-2">
-          Create Account
-        </Text>
-        <Text className="text-base text-gray-600">Join us to get started</Text>
-      </View>
+    <KeyboardAvoidingView
+      className=" bg-white"
+      behavior={Platform.OS === "android" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "android" ? 0 : 20}
+    >
+      <ScrollView
+        
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: "center",
+          paddingHorizontal: 0,
+        }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Header */}
+        <View className="mb-12 items-center">
+          <Text className="text-3xl font-bold text-black mb-2">
+            Create Account
+          </Text>
+          <Text className="text-base text-gray-600">Join us to get started</Text>
+        </View>
 
-      {/* Form Container */}
-      <View className="space-y-4">
-        <Controller
-          name="fullname"
-          control={control}
-          render={({ field: { onChange, value } }) => (
-            <View className="mb-4">
-              <TextInput
-                className="h-14 w-full border-b-2 border-gray-200 px-2 text-base text-black bg-transparent focus:border-black"
-                placeholder="Full Name"
-                placeholderTextColor="#9CA3AF"
-                autoCapitalize="words"
-                onChangeText={onChange}
-                value={value}
-              />
-              {errors.fullname && (
-                <Text className="text-red-500 text-sm mt-1">
-                  {errors.fullname.message}
-                </Text>
-              )}
-            </View>
-          )}
-        />
-
-        <Controller
-          name="username"
-          control={control}
-          render={({ field: { onChange, value } }) => (
-            <View className="mb-4">
-              <TextInput
-                className="h-14 w-full border-b-2 border-gray-200 px-2 text-base text-black bg-transparent focus:border-black"
-                placeholder="Username"
-                placeholderTextColor="#9CA3AF"
-                autoCapitalize="none"
-                onChangeText={onChange}
-                value={value}
-              />
-              {errors.username && (
-                <Text className="text-red-500 text-sm mt-1">
-                  {errors.username.message}
-                </Text>
-              )}
-            </View>
-          )}
-        />
-
-        <Controller
-          name="department"
-          control={control}
-          render={({ field: { onChange, value } }) => (
-            <View className="mb-4">
-              <TextInput
-                className="h-14 w-full border-b-2 border-gray-200 px-2 text-base text-black bg-transparent focus:border-black"
-                placeholder="Department"
-                placeholderTextColor="#9CA3AF"
-                autoCapitalize="words"
-                onChangeText={onChange}
-                value={value}
-              />
-              {errors.department && (
-                <Text className="text-red-500 text-sm mt-1">
-                  {errors.department.message}
-                </Text>
-              )}
-            </View>
-          )}
-        />
-
-        <Controller
-          name="program"
-          control={control}
-          render={({ field: { onChange, value } }) => {
-            const filteredPrograms = Programs.filter((program) =>
-              program.program_name
-                ?.toLowerCase()
-                .includes(searchText.toLowerCase())
-            );
-
-            const selectedProgram = Programs.find(
-              (program) => program.program_name === value
-            );
-
-            return (
+        {/* Form Container */}
+        <View className="space-y-4">
+          <Controller
+            name="fullname"
+            control={control}
+            render={({ field: { onChange, value } }) => (
               <View className="mb-4">
-                <TouchableOpacity
-                  className="h-14 w-full border-b-2 border-gray-200 bg-transparent justify-center px-2"
-                  onPress={() => setIsPickerVisible(true)}
-                >
-                  <Text
-                    className={`text-base ${
-                      selectedProgram ? "text-black" : "text-gray-400"
-                    }`}
-                  >
-                    {selectedProgram
-                      ? selectedProgram.program_name
-                      : "Select Program"}
-                  </Text>
-                </TouchableOpacity>
-
-                <Modal
-                  visible={isPickerVisible}
-                  animationType="slide"
-                  transparent={true}
-                  onRequestClose={() => setIsPickerVisible(false)}
-                >
-                  <View className="flex-1 bg-black bg-opacity-50 justify-center">
-                    <View className="bg-white mx-4 rounded-lg max-h-96">
-                      <View className="p-4 border-b border-gray-200">
-                        <View className="flex-row justify-between items-center mb-3">
-                          <Text className="text-lg font-semibold">
-                            Select Program
-                          </Text>
-                          <TouchableOpacity
-                            onPress={() => {
-                              setIsPickerVisible(false);
-                              setSearchText("");
-                            }}
-                          >
-                            <Text className="text-black text-lg font-bold">
-                              ✕
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
-
-                        <TextInput
-                          className="h-16 border border-gray-300 rounded-lg px-3 text-base"
-                          placeholder="Search programs..."
-                          placeholderTextColor="#9CA3AF"
-                          value={searchText}
-                          onChangeText={setSearchText}
-                          autoFocus={true}
-                        />
-                      </View>
-                      <FlatList
-                        data={filteredPrograms}
-                        keyExtractor={(item) => item.program_id.toString()}
-                        renderItem={({ item }) => (
-                          <TouchableOpacity
-                            className="p-4 border-b border-gray-100"
-                            onPress={() => {
-                              onChange(item.program_name);
-                              setIsPickerVisible(false);
-                              setSearchText("");
-                            }}
-                          >
-                            <Text className="text-base text-black">
-                              {item.program_name}
-                            </Text>
-                          </TouchableOpacity>
-                        )}
-                        ListEmptyComponent={
-                          <View className="p-4">
-                            <Text className="text-gray-500 text-center">
-                              No programs found
-                            </Text>
-                          </View>
-                        }
-                      />
-                    </View>
-                  </View>
-                </Modal>
-
-                {errors.program && (
+                <TextInput
+                  className="h-14 w-full border-b-2 border-gray-200 px-2 text-base text-black bg-transparent focus:border-black"
+                  placeholder="Full Name"
+                  placeholderTextColor="#9CA3AF"
+                  autoCapitalize="words"
+                  onChangeText={onChange}
+                  value={value}
+                />
+                {errors.fullname && (
                   <Text className="text-red-500 text-sm mt-1">
-                    {errors.program.message}
+                    {errors.fullname.message}
                   </Text>
                 )}
               </View>
-            );
-          }}
-        />
+            )}
+          />
 
-        <Controller
-          name="password"
-          control={control}
-          render={({ field: { onChange, value } }) => (
-            <View className="mb-4">
-              <TextInput
-                className="h-14 w-full border-b-2 border-gray-200 px-2 text-base text-black bg-transparent focus:border-black"
-                placeholder="Password"
-                placeholderTextColor="#9CA3AF"
-                autoCapitalize="none"
-                onChangeText={onChange}
-                secureTextEntry
-                value={value}
-              />
-              {errors.password && (
-                <Text className="text-red-500 text-sm mt-1">
-                  {errors.password.message}
-                </Text>
-              )}
-            </View>
-          )}
-        />
+          <Controller
+            name="username"
+            control={control}
+            render={({ field: { onChange, value } }) => (
+              <View className="mb-4">
+                <TextInput
+                  className="h-14 w-full border-b-2 border-gray-200 px-2 text-base text-black bg-transparent focus:border-black"
+                  placeholder="Username"
+                  placeholderTextColor="#9CA3AF"
+                  autoCapitalize="none"
+                  onChangeText={onChange}
+                  value={value}
+                />
+                {errors.username && (
+                  <Text className="text-red-500 text-sm mt-1">
+                    {errors.username.message}
+                  </Text>
+                )}
+              </View>
+            )}
+          />
 
-        <Controller
-          name="repassword"
-          control={control}
-          render={({ field: { onChange, value } }) => (
-            <View className="mb-6">
-              <TextInput
-                className="h-14 w-full border-b-2 border-gray-200 px-2 text-base text-black bg-transparent focus:border-black"
-                placeholder="Confirm Password"
-                placeholderTextColor="#9CA3AF"
-                autoCapitalize="none"
-                onChangeText={onChange}
-                secureTextEntry
-                value={value}
-              />
-              {errors.repassword && (
-                <Text className="text-red-500 text-sm mt-1">
-                  {errors.repassword.message}
-                </Text>
-              )}
-            </View>
-          )}
-        />
+          <Controller
+            name="department"
+            control={control}
+            render={({ field: { onChange, value } }) => (
+              <View className="mb-4">
+                <TextInput
+                  className="h-14 w-full border-b-2 border-gray-200 px-2 text-base text-black bg-transparent focus:border-black"
+                  placeholder="Department"
+                  placeholderTextColor="#9CA3AF"
+                  autoCapitalize="words"
+                  onChangeText={onChange}
+                  value={value}
+                />
+                {errors.department && (
+                  <Text className="text-red-500 text-sm mt-1">
+                    {errors.department.message}
+                  </Text>
+                )}
+              </View>
+            )}
+          />
 
-        {/* Sign Up Button */}
-        <TouchableOpacity
-          className="bg-black h-14 rounded-full justify-center items-center mt-6 shadow-sm"
-          onPress={handleSubmit(onsubmit)}
-        >
-          <Text className="text-white text-lg font-semibold">
-            Create Account
-          </Text>
-        </TouchableOpacity>
+          <Controller
+            name="program"
+            control={control}
+            render={({ field: { onChange, value } }) => {
+              const filteredPrograms = Programs.filter((program) =>
+                program.program_name
+                  ?.toLowerCase()
+                  .includes(searchText.toLowerCase())
+              );
 
-        {/* Sign In Link */}
-        <View className="flex-row justify-center items-center mt-8">
-          <Text className="text-gray-600 text-base">
-            Already have an account?{" "}
-          </Text>
-          <TouchableOpacity>
-            <Link
-              href={"/signin"}
-              className="text-black font-semibold text-base"
-            >
-              Sign In
-            </Link>
+              const selectedProgram = Programs.find(
+                (program) => program.program_name === value
+              );
+
+              return (
+                <View className="mb-4">
+                  <TouchableOpacity
+                    className="h-14 w-full border-b-2 border-gray-200 bg-transparent justify-center px-2"
+                    onPress={() => setIsPickerVisible(true)}
+                  >
+                    <Text
+                      className={`text-base ${
+                        selectedProgram ? "text-black" : "text-gray-400"
+                      }`}
+                    >
+                      {selectedProgram
+                        ? selectedProgram.program_name
+                        : "Select Program"}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <Modal
+                    visible={isPickerVisible}
+                    animationType="slide"
+                    transparent={true}
+                    onRequestClose={() => setIsPickerVisible(false)}
+                  >
+                    <View className="flex-1 bg-black bg-opacity-50 justify-center">
+                      <View className="bg-white mx-4 rounded-lg max-h-96">
+                        <View className="p-4 border-b border-gray-200">
+                          <View className="flex-row justify-between items-center mb-3">
+                            <Text className="text-lg font-semibold">
+                              Select Program
+                            </Text>
+                            <TouchableOpacity
+                              onPress={() => {
+                                setIsPickerVisible(false);
+                                setSearchText("");
+                              }}
+                            >
+                              <Text className="text-black text-lg font-bold">
+                                ✕
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+
+                          <TextInput
+                            className="h-16 border border-gray-300 rounded-lg px-3 text-base"
+                            placeholder="Search programs..."
+                            placeholderTextColor="#9CA3AF"
+                            value={searchText}
+                            onChangeText={setSearchText}
+                            autoFocus={true}
+                          />
+                        </View>
+                        <FlatList
+                          data={filteredPrograms}
+                          keyExtractor={(item) => item.program_id.toString()}
+                          renderItem={({ item }) => (
+                            <TouchableOpacity
+                              className="p-4 border-b border-gray-100"
+                              onPress={() => {
+                                onChange(item.program_name);
+                                setIsPickerVisible(false);
+                                setSearchText("");
+                              }}
+                            >
+                              <Text className="text-base text-black">
+                                {item.program_name}
+                              </Text>
+                            </TouchableOpacity>
+                          )}
+                          ListEmptyComponent={
+                            <View className="p-4">
+                              <Text className="text-gray-500 text-center">
+                                No programs found
+                              </Text>
+                            </View>
+                          }
+                        />
+                      </View>
+                    </View>
+                  </Modal>
+
+                  {errors.program && (
+                    <Text className="text-red-500 text-sm mt-1">
+                      {errors.program.message}
+                    </Text>
+                  )}
+                </View>
+              );
+            }}
+          />
+
+          <Controller
+            name="password"
+            control={control}
+            render={({ field: { onChange, value } }) => (
+              <View className="mb-4">
+                <TextInput
+                  className="h-14 w-full border-b-2 border-gray-200 px-2 text-base text-black bg-transparent focus:border-black"
+                  placeholder="Password"
+                  placeholderTextColor="#9CA3AF"
+                  autoCapitalize="none"
+                  onChangeText={onChange}
+                  secureTextEntry
+                  value={value}
+                />
+                {errors.password && (
+                  <Text className="text-red-500 text-sm mt-1">
+                    {errors.password.message}
+                  </Text>
+                )}
+              </View>
+            )}
+          />
+
+          <Controller
+            name="repassword"
+            control={control}
+            render={({ field: { onChange, value } }) => (
+              <View className="mb-6">
+                <TextInput
+                  className="h-14 w-full border-b-2 border-gray-200 px-2 text-base text-black bg-transparent focus:border-black"
+                  placeholder="Confirm Password"
+                  placeholderTextColor="#9CA3AF"
+                  autoCapitalize="none"
+                  onChangeText={onChange}
+                  secureTextEntry
+                  value={value}
+                />
+                {errors.repassword && (
+                  <Text className="text-red-500 text-sm mt-1">
+                    {errors.repassword.message}
+                  </Text>
+                )}
+              </View>
+            )}
+          />
+
+          {/* Sign Up Button */}
+          <TouchableOpacity
+            className="bg-black h-14 rounded-full justify-center items-center mt-6 shadow-sm"
+            onPress={handleSubmit(onsubmit)}
+          >
+            <Text className="text-white text-lg font-semibold">
+              Create Account
+            </Text>
           </TouchableOpacity>
+
+          {/* Sign In Link */}
+          <View className="flex-row justify-center items-center mt-8">
+            <Text className="text-gray-600 text-base">
+              Already have an account?{" "}
+            </Text>
+            <TouchableOpacity>
+              <Link
+                href={"/signin"}
+                className="text-black font-semibold text-base"
+              >
+                Sign In
+              </Link>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
