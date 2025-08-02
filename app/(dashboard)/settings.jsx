@@ -3,10 +3,12 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import axios from "axios";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
+  Alert,
   ScrollView,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -14,6 +16,7 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 import * as yup from "yup";
+import { useTheme } from "../../context/ThemeContext";
 
 // Add validation schemas
 const usernameSchema = yup.object().shape({
@@ -32,7 +35,11 @@ const passwordSchema = yup.object().shape({
 });
 
 export default function Settings() {
+  const { isDark, toggleTheme } = useTheme();
   const [activeForm, setActiveForm] = useState(null);
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // Add form controls
   const {
@@ -53,12 +60,29 @@ export default function Settings() {
     resolver: yupResolver(passwordSchema),
   });
 
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      const storedUsername = await SecureStore.getItemAsync("username");
+      const storedEmail = await SecureStore.getItemAsync("email");
+      const notificationStatus = await SecureStore.getItemAsync("notification");
+      
+      if (storedUsername) setUsername(storedUsername);
+      if (storedEmail) setEmail(storedEmail);
+      setNotificationsEnabled(notificationStatus === "true");
+    } catch (error) {
+      console.error("Error loading user data:", error);
+    }
+  };
+
   const onUsernameSubmit = async (data) => {
     try {
       const token = await SecureStore.getItemAsync("accessToken");
      
-      // Handle username update logic here
-      const reponce = await axios.put(
+      const response = await axios.put(
         `${process.env.EXPO_PUBLIC_API_URL}/api/user/changeusername`,
         { username: data.newUsername },
         {
@@ -69,35 +93,35 @@ export default function Settings() {
           withCredentials: true,
         }
       );
-      if (reponce.data.success) {
+      
+      if (response.data.success) {
+        await SecureStore.setItemAsync("username", data.newUsername);
+        setUsername(data.newUsername);
         Toast.show({
           type: "success",
-          text1: reponce.data.message,
+          text1: response.data.message,
         });
         setActiveForm(null);
         resetUsername();
       } else {
         Toast.show({
           type: "error",
-          text1: reponce.data.message,
+          text1: response.data.message,
         });
       }
     } catch (error) {
       Toast.show({
         type: "error",
-        text1: "Cant Change Username",
+        text1: "Can't Change Username",
       });
     }
   };
 
   const onPasswordSubmit = async (data) => {
-   
-    // Handle password update logic here
     try {
       const token = await SecureStore.getItemAsync("accessToken");
 
-      // Handle username update logic here
-      const reponce = await axios.put(
+      const response = await axios.put(
         `${process.env.EXPO_PUBLIC_API_URL}/api/user/changepassword`,
         { oldpassword: data.currentPassword, newpassword: data.newPassword },
         {
@@ -109,23 +133,23 @@ export default function Settings() {
         }
       );
 
-      if (reponce.data.success) {
+      if (response.data.success) {
         Toast.show({
           type: "success",
-          text1: reponce.data.message,
+          text1: response.data.message,
         });
         setActiveForm(null);
         resetPassword();
       } else {
         Toast.show({
           type: "error",
-          text1: reponce.data.message,
+          text1: response.data.message,
         });
       }
     } catch (error) {
       Toast.show({
         type: "error",
-        text1: "Cant Change password",
+        text1: "Can't Change Password",
       });
     }
   };
@@ -140,50 +164,274 @@ export default function Settings() {
     }
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await SecureStore.deleteItemAsync("accessToken");
+              await SecureStore.deleteItemAsync("username");
+              await SecureStore.deleteItemAsync("email");
+              await SecureStore.deleteItemAsync("timetable");
+              await SecureStore.deleteItemAsync("day");
+              router.replace("/signin");
+            } catch (error) {
+              console.error("Error during logout:", error);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const clearCache = async () => {
+    Alert.alert(
+      "Clear Cache",
+      "This will clear all cached data. Your courses will be refreshed.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Clear",
+          onPress: async () => {
+            try {
+              await SecureStore.deleteItemAsync("timetable");
+              await SecureStore.deleteItemAsync("day");
+              Toast.show({
+                type: "success",
+                text1: "Cache cleared successfully!",
+              });
+            } catch (error) {
+              console.error("Error clearing cache:", error);
+              Toast.show({
+                type: "error",
+                text1: "Failed to clear cache",
+              });
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const toggleNotifications = async (value) => {
+    setNotificationsEnabled(value);
+    await SecureStore.setItemAsync("notification", value ? "true" : "false");
+  };
+
   return (
-    <ScrollView className="flex-1 bg-white">
-      <View className="flex-1 px-6 pt-16">
-        {/* Header with Back Button */}
-        <View className="mb-8">
-          <View className="flex-row items-center mb-4">
-            <TouchableOpacity
-              onPress={() => router.push("/(dashboard)/")}
-              className="mr-4 p-2 rounded-full bg-gray-100"
-            >
-              <Ionicons name="arrow-back" size={24} color="#000" />
-            </TouchableOpacity>
-            <Text className="text-3xl font-bold text-black">Settings</Text>
-          </View>
-          <Text className="text-gray-500 mt-2">
-            Manage your account preferences
+    <ScrollView 
+      style={{ 
+        flex: 1, 
+        backgroundColor: isDark ? '#000' : '#fff' 
+      }}
+      contentContainerStyle={{ paddingBottom: 120 }}
+    >
+      <View style={{ flex: 1, padding: 16, paddingTop: 60 }}>
+        {/* Header */}
+        <View style={{ marginBottom: 32 }}>
+          <Text 
+            style={{
+              fontSize: 28,
+              fontWeight: "bold",
+              color: isDark ? "#fff" : "#000",
+              textAlign: "center"
+            }}
+          >
+            Settings
           </Text>
         </View>
 
+        {/* Profile Section */}
+        <View 
+          style={{
+            backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
+            padding: 24,
+            borderRadius: 16,
+            marginBottom: 24,
+            shadowColor: "#000",
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 4,
+            alignItems: "center"
+          }}
+        >
+          <View 
+            style={{
+              width: 80,
+              height: 80,
+              backgroundColor: isDark ? "#374151" : "#e5e7eb",
+              borderRadius: 40,
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 16
+            }}
+          >
+            <Text 
+              style={{
+                fontSize: 32,
+                fontWeight: "bold",
+                color: isDark ? "#fff" : "#374151"
+              }}
+            >
+              {username.charAt(0).toUpperCase()}
+            </Text>
+          </View>
+          <Text 
+            style={{
+              fontSize: 20,
+              fontWeight: "600",
+              color: isDark ? "#fff" : "#374151",
+              marginBottom: 4
+            }}
+          >
+            {username}
+          </Text>
+          {email && (
+            <Text 
+              style={{
+                fontSize: 14,
+                color: isDark ? "#9ca3af" : "#6b7280"
+              }}
+            >
+              {email}
+            </Text>
+          )}
+        </View>
+
         {/* Settings Options */}
-        <View className="space-y-4">
-          {/* Update Username Section */}
-          <View className="bg-gray-50 rounded-2xl p-1">
+        <View style={{ marginBottom: 24 }}>
+          {/* Theme Setting */}
+          <View 
+            style={{
+              backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
+              borderRadius: 16,
+              marginBottom: 16,
+              overflow: "hidden"
+            }}
+          >
             <TouchableOpacity
-              className="flex-row items-center justify-between p-5"
+              style={{
+                padding: 16,
+                flexDirection: "row",
+                alignItems: "center"
+              }}
+              onPress={toggleTheme}
+            >
+              <View 
+                style={{
+                  width: 40,
+                  height: 40,
+                  backgroundColor: isDark ? "#374151" : "#e5e7eb",
+                  borderRadius: 20,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginRight: 16
+                }}
+              >
+                <Ionicons 
+                  name={isDark ? "moon" : "sunny"} 
+                  size={20} 
+                  color={isDark ? "#fff" : "#374151"} 
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text 
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "500",
+                    color: isDark ? "#fff" : "#374151",
+                    marginBottom: 2
+                  }}
+                >
+                  Theme
+                </Text>
+                <Text 
+                  style={{
+                    fontSize: 14,
+                    color: isDark ? "#9ca3af" : "#6b7280"
+                  }}
+                >
+                  {isDark ? "Dark mode enabled" : "Light mode enabled"}
+                </Text>
+              </View>
+              <Switch
+                value={isDark}
+                onValueChange={toggleTheme}
+                trackColor={{ 
+                  false: isDark ? "#374151" : "#d1d5db", 
+                  true: isDark ? "#fff" : "#000" 
+                }}
+                thumbColor={isDark ? (isDark ? "#000" : "#fff") : "#f4f3f4"}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Account Management */}
+        <View style={{ marginBottom: 24 }}>
+          {/* Update Username Section */}
+          <View 
+            style={{
+              backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
+              borderRadius: 16,
+              marginBottom: 16,
+              overflow: "hidden"
+            }}
+          >
+            <TouchableOpacity
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: 20
+              }}
               onPress={() => toggleForm("username")}
             >
               <View>
-                <Text className="text-lg font-semibold text-black">
+                <Text 
+                  style={{
+                    fontSize: 18,
+                    fontWeight: "600",
+                    color: isDark ? "#fff" : "#000"
+                  }}
+                >
                   Update Username
                 </Text>
-                <Text className="text-gray-500 text-sm mt-1">
+                <Text 
+                  style={{
+                    color: isDark ? "#9ca3af" : "#6b7280",
+                    fontSize: 14,
+                    marginTop: 4
+                  }}
+                >
                   Change your display name
                 </Text>
               </View>
               <View
-                className={`w-8 h-8 rounded-full items-center justify-center ${
-                  activeForm === "username" ? "bg-black" : "bg-gray-300"
-                }`}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 16,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: activeForm === "username" 
+                    ? (isDark ? "#fff" : "#000")
+                    : (isDark ? "#374151" : "#d1d5db")
+                }}
               >
                 <Text
-                  className={`font-bold ${
-                    activeForm === "username" ? "text-white" : "text-gray-600"
-                  }`}
+                  style={{
+                    fontWeight: "bold",
+                    color: activeForm === "username" 
+                      ? (isDark ? "#000" : "#fff")
+                      : (isDark ? "#9ca3af" : "#6b7280")
+                  }}
                 >
                   {activeForm === "username" ? "−" : "+"}
                 </Text>
@@ -192,10 +440,25 @@ export default function Settings() {
 
             {/* Username Form */}
             {activeForm === "username" && (
-              <View className="px-5 pb-5">
-                <View className="bg-white rounded-xl p-4 border border-gray-200">
-                  <Text className="text-sm font-medium text-gray-700 mb-3">
-                    Write new username
+              <View style={{ paddingHorizontal: 20, paddingBottom: 20 }}>
+                <View 
+                  style={{
+                    backgroundColor: isDark ? "#374151" : "#fff",
+                    borderRadius: 12,
+                    padding: 16,
+                    borderWidth: 1,
+                    borderColor: isDark ? "#4b5563" : "#e5e7eb"
+                  }}
+                >
+                  <Text 
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "500",
+                      color: isDark ? "#d1d5db" : "#374151",
+                      marginBottom: 12
+                    }}
+                  >
+                    Enter new username
                   </Text>
 
                   <Controller
@@ -203,9 +466,17 @@ export default function Settings() {
                     name="newUsername"
                     render={({ field: { onChange, value } }) => (
                       <TextInput
-                        className="bg-gray-50 rounded-lg px-4 py-3 text-base text-black mb-3"
+                        style={{
+                          backgroundColor: isDark ? "#4b5563" : "#f9fafb",
+                          borderRadius: 8,
+                          paddingHorizontal: 16,
+                          paddingVertical: 12,
+                          fontSize: 16,
+                          color: isDark ? "#fff" : "#000",
+                          marginBottom: 12
+                        }}
                         placeholder="Enter new username"
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={isDark ? "#9ca3af" : "#6b7280"}
                         value={value}
                         onChangeText={onChange}
                         autoCapitalize="none"
@@ -214,16 +485,33 @@ export default function Settings() {
                   />
 
                   {usernameErrors.newUsername && (
-                    <Text className="text-red-500 text-sm mb-3">
+                    <Text 
+                      style={{
+                        color: "#ef4444",
+                        fontSize: 14,
+                        marginBottom: 12
+                      }}
+                    >
                       {usernameErrors.newUsername.message}
                     </Text>
                   )}
 
                   <TouchableOpacity
-                    className="bg-black rounded-lg py-3 items-center"
+                    style={{
+                      backgroundColor: isDark ? "#fff" : "#000",
+                      borderRadius: 8,
+                      paddingVertical: 12,
+                      alignItems: "center"
+                    }}
                     onPress={handleUsernameSubmit(onUsernameSubmit)}
                   >
-                    <Text className="text-white font-semibold text-base">
+                    <Text 
+                      style={{
+                        color: isDark ? "#000" : "#fff",
+                        fontWeight: "600",
+                        fontSize: 16
+                      }}
+                    >
                       Update Username
                     </Text>
                   </TouchableOpacity>
@@ -233,28 +521,62 @@ export default function Settings() {
           </View>
 
           {/* Change Password Section */}
-          <View className="bg-gray-50 rounded-2xl p-1">
+          <View 
+            style={{
+              backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
+              borderRadius: 16,
+              marginBottom: 16,
+              overflow: "hidden"
+            }}
+          >
             <TouchableOpacity
-              className="flex-row items-center justify-between p-5"
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: 20
+              }}
               onPress={() => toggleForm("password")}
             >
               <View>
-                <Text className="text-lg font-semibold text-black">
+                <Text 
+                  style={{
+                    fontSize: 18,
+                    fontWeight: "600",
+                    color: isDark ? "#fff" : "#000"
+                  }}
+                >
                   Change Password
                 </Text>
-                <Text className="text-gray-500 text-sm mt-1">
+                <Text 
+                  style={{
+                    color: isDark ? "#9ca3af" : "#6b7280",
+                    fontSize: 14,
+                    marginTop: 4
+                  }}
+                >
                   Update your security credentials
                 </Text>
               </View>
               <View
-                className={`w-8 h-8 rounded-full items-center justify-center ${
-                  activeForm === "password" ? "bg-black" : "bg-gray-300"
-                }`}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 16,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: activeForm === "password" 
+                    ? (isDark ? "#fff" : "#000")
+                    : (isDark ? "#374151" : "#d1d5db")
+                }}
               >
                 <Text
-                  className={`font-bold ${
-                    activeForm === "password" ? "text-white" : "text-gray-600"
-                  }`}
+                  style={{
+                    fontWeight: "bold",
+                    color: activeForm === "password" 
+                      ? (isDark ? "#000" : "#fff")
+                      : (isDark ? "#9ca3af" : "#6b7280")
+                  }}
                 >
                   {activeForm === "password" ? "−" : "+"}
                 </Text>
@@ -263,9 +585,24 @@ export default function Settings() {
 
             {/* Password Form */}
             {activeForm === "password" && (
-              <View className="px-5 pb-5">
-                <View className="bg-white rounded-xl p-4 border border-gray-200">
-                  <Text className="text-sm font-medium text-gray-700 mb-3">
+              <View style={{ paddingHorizontal: 20, paddingBottom: 20 }}>
+                <View 
+                  style={{
+                    backgroundColor: isDark ? "#374151" : "#fff",
+                    borderRadius: 12,
+                    padding: 16,
+                    borderWidth: 1,
+                    borderColor: isDark ? "#4b5563" : "#e5e7eb"
+                  }}
+                >
+                  <Text 
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "500",
+                      color: isDark ? "#d1d5db" : "#374151",
+                      marginBottom: 12
+                    }}
+                  >
                     Change your password
                   </Text>
 
@@ -274,9 +611,17 @@ export default function Settings() {
                     name="currentPassword"
                     render={({ field: { onChange, value } }) => (
                       <TextInput
-                        className="bg-gray-50 rounded-lg px-4 py-3 text-base text-black mb-3"
+                        style={{
+                          backgroundColor: isDark ? "#4b5563" : "#f9fafb",
+                          borderRadius: 8,
+                          paddingHorizontal: 16,
+                          paddingVertical: 12,
+                          fontSize: 16,
+                          color: isDark ? "#fff" : "#000",
+                          marginBottom: 12
+                        }}
                         placeholder="Current password"
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={isDark ? "#9ca3af" : "#6b7280"}
                         value={value}
                         onChangeText={onChange}
                         secureTextEntry
@@ -285,7 +630,13 @@ export default function Settings() {
                   />
 
                   {passwordErrors.currentPassword && (
-                    <Text className="text-red-500 text-sm mb-3">
+                    <Text 
+                      style={{
+                        color: "#ef4444",
+                        fontSize: 14,
+                        marginBottom: 12
+                      }}
+                    >
                       {passwordErrors.currentPassword.message}
                     </Text>
                   )}
@@ -295,9 +646,17 @@ export default function Settings() {
                     name="newPassword"
                     render={({ field: { onChange, value } }) => (
                       <TextInput
-                        className="bg-gray-50 rounded-lg px-4 py-3 text-base text-black mb-3"
+                        style={{
+                          backgroundColor: isDark ? "#4b5563" : "#f9fafb",
+                          borderRadius: 8,
+                          paddingHorizontal: 16,
+                          paddingVertical: 12,
+                          fontSize: 16,
+                          color: isDark ? "#fff" : "#000",
+                          marginBottom: 12
+                        }}
                         placeholder="New password"
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={isDark ? "#9ca3af" : "#6b7280"}
                         value={value}
                         onChangeText={onChange}
                         secureTextEntry
@@ -306,16 +665,33 @@ export default function Settings() {
                   />
 
                   {passwordErrors.newPassword && (
-                    <Text className="text-red-500 text-sm mb-3">
+                    <Text 
+                      style={{
+                        color: "#ef4444",
+                        fontSize: 14,
+                        marginBottom: 12
+                      }}
+                    >
                       {passwordErrors.newPassword.message}
                     </Text>
                   )}
 
                   <TouchableOpacity
-                    className="bg-black rounded-lg py-3 items-center"
+                    style={{
+                      backgroundColor: isDark ? "#fff" : "#000",
+                      borderRadius: 8,
+                      paddingVertical: 12,
+                      alignItems: "center"
+                    }}
                     onPress={handlePasswordSubmit(onPasswordSubmit)}
                   >
-                    <Text className="text-white font-semibold text-base">
+                    <Text 
+                      style={{
+                        color: isDark ? "#000" : "#fff",
+                        fontWeight: "600",
+                        fontSize: 16
+                      }}
+                    >
                       Change Password
                     </Text>
                   </TouchableOpacity>
@@ -324,6 +700,38 @@ export default function Settings() {
             )}
           </View>
         </View>
+
+        {/* Logout Button */}
+        <TouchableOpacity
+          style={{
+            backgroundColor: isDark ? "#7f1d1d" : "#fee2e2",
+            padding: 16,
+            borderRadius: 12,
+            alignItems: "center",
+            flexDirection: "row",
+            justifyContent: "center",
+            borderWidth: 1,
+            borderColor: isDark ? "#991b1b" : "#fecaca"
+          }}
+          onPress={handleLogout}
+        >
+          <Ionicons 
+            name="log-out-outline" 
+            size={20} 
+            color={isDark ? "#f87171" : "#dc2626"} 
+            style={{ marginRight: 8 }}
+          />
+          <Text 
+            style={{
+              color: isDark ? "#f87171" : "#dc2626",
+              fontSize: 16,
+              fontWeight: "600"
+            }}
+          >
+            Logout
+          </Text>
+        </TouchableOpacity>
+
       </View>
     </ScrollView>
   );

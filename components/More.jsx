@@ -2,8 +2,10 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useTheme } from "../context/ThemeContext";
 
 const More = () => {
+  const { isDark } = useTheme();
   const [selectedDay, setSelectedDay] = useState("Monday");
 
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -57,32 +59,63 @@ const More = () => {
   );
 
   return (
-    <View className="flex-1 bg-gray-50 mb-36">
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: isDark ? "#000" : "#f9fafb",
+        marginBottom: 144,
+      }}
+    >
       {/* Header */}
-      <View className="bg-white px-6 pt-4 pb-2 shadow-sm">
+      <View
+        style={{
+          backgroundColor: isDark ? "#1a1a1a" : "#fff",
+          paddingHorizontal: 24,
+          paddingTop: 16,
+          paddingBottom: 8,
+          shadowColor: "#000",
+          shadowOpacity: isDark ? 0.3 : 0.1,
+          shadowRadius: 4,
+          elevation: 4,
+        }}
+      >
         {/* Day Tabs */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          className="mb-4"
+          style={{ marginBottom: 16 }}
         >
-          <View className="flex-row space-x-2">
+          <View style={{ flexDirection: "row", gap: 8 }}>
             {days.map((day, index) => (
               <TouchableOpacity
                 key={day}
                 onPress={() => setSelectedDay(fullDays[index])}
-                className={`px-6 py-3 rounded-full ${
-                  selectedDay === fullDays[index]
-                    ? "bg-gray-900"
-                    : "bg-gray-100"
-                }`}
+                style={{
+                  paddingHorizontal: 24,
+                  paddingVertical: 12,
+                  borderRadius: 25,
+                  backgroundColor:
+                    selectedDay === fullDays[index]
+                      ? isDark
+                        ? "#fff"
+                        : "#000"
+                      : isDark
+                      ? "#374151"
+                      : "#f3f4f6",
+                }}
               >
                 <Text
-                  className={`font-medium ${
-                    selectedDay === fullDays[index]
-                      ? "text-white"
-                      : "text-gray-600"
-                  }`}
+                  style={{
+                    fontWeight: "500",
+                    color:
+                      selectedDay === fullDays[index]
+                        ? isDark
+                          ? "#000"
+                          : "#fff"
+                        : isDark
+                        ? "#d1d5db"
+                        : "#6b7280",
+                  }}
                 >
                   {day}
                 </Text>
@@ -93,40 +126,116 @@ const More = () => {
       </View>
 
       {/* Schedule Cards */}
-      <ScrollView className="flex-1 px-6 pt-6">
-        <View className="space-y-4">
+      <ScrollView
+        style={{ flex: 1, paddingHorizontal: 24, paddingTop: 24 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={{ gap: 16, paddingBottom: 24 }}>
           {filterredschedule.length > 0 ? (
             filterredschedule.map((classItem, index) => (
               <View
                 key={index}
-                className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100"
+                style={{
+                  backgroundColor: isDark ? "#1a1a1a" : "#fff",
+                  borderRadius: 16,
+                  padding: 20,
+                  shadowColor: "#000",
+                  shadowOpacity: isDark ? 0.3 : 0.05,
+                  shadowRadius: 4,
+                  elevation: 2,
+                  borderWidth: 1,
+                  borderColor: isDark ? "#374151" : "#f3f4f6",
+                }}
               >
-                <View className="flex-row justify-between items-start mb-3">
-                  <View className="flex-1">
-                    <Text className="text-md font-semibold text-gray-900 mb-1">
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                    marginBottom: 12,
+                  }}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: "600",
+                        color: isDark ? "#fff" : "#111827",
+                        marginBottom: 4,
+                      }}
+                    >
                       {classItem.course_name}
                     </Text>
-                    <Text className="text-sm text-gray-500">
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        color: isDark ? "#9ca3af" : "#6b7280",
+                      }}
+                    >
                       {classItem.venue}
                     </Text>
                   </View>
-                  <View className="items-end">
-                    <Text className="text-lg font-bold text-gray-900">
+                  <View style={{ alignItems: "flex-end" }}>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: "bold",
+                        color: isDark ? "#fff" : "#111827",
+                      }}
+                    >
                       {covertionoftime(classItem.start_time)}
-                    </Text>
-                    <Text className="text-sm text-gray-500">
-                      {classItem.duration}
                     </Text>
                   </View>
                 </View>
+
+                {/* Optional: Add a subtle indicator bar */}
+                <View
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 4,
+                    backgroundColor: isDark ? "#fff" : "#000",
+                    borderTopLeftRadius: 16,
+                    borderBottomLeftRadius: 16,
+                  }}
+                />
               </View>
             ))
           ) : (
-            <View className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 items-center">
-              <Text className="text-gray-500 text-center">
+            <View
+              style={{
+                backgroundColor: isDark ? "#1a1a1a" : "#fff",
+                borderRadius: 16,
+                padding: 32,
+                shadowColor: "#000",
+                shadowOpacity: isDark ? 0.3 : 0.05,
+                shadowRadius: 4,
+                elevation: 2,
+                borderWidth: 1,
+                borderColor: isDark ? "#374151" : "#f3f4f6",
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{
+                  color: isDark ? "#9ca3af" : "#6b7280",
+                  textAlign: "center",
+                  fontSize: 16,
+                  fontWeight: "500",
+                }}
+              >
                 No classes scheduled for {selectedDay}
               </Text>
-              <Text className="text-sm text-gray-400 mt-2">
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: isDark ? "#6b7280" : "#9ca3af",
+                  marginTop: 8,
+                  textAlign: "center",
+                }}
+              >
                 Enjoy your free day! 🎉
               </Text>
             </View>

@@ -7,8 +7,11 @@ import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { Tabs } from "expo-router";
 import * as SecureStore from "expo-secure-store";
+import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import { Alert, Platform } from "react-native";
+import { Alert, Platform, TouchableOpacity, View } from "react-native";
+import { useTheme } from "../../context/ThemeContext";
+
 // Handle notifications when received
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -19,6 +22,8 @@ Notifications.setNotificationHandler({
 });
 
 const _layout = () => {
+  const { isDark, toggleTheme } = useTheme();
+  
   useEffect(() => {
     const checkTokenAndRegister = async () => {
       const token = await SecureStore.getItemAsync("accessToken");
@@ -95,12 +100,14 @@ const _layout = () => {
   }
 
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: isDark ? '#000' : '#fff' }}>
+      <StatusBar style={isDark ? "light" : "dark"} />
+      
       <Tabs
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: "#1b1b1d",
+            backgroundColor: isDark ? "#1a1a1a" : "#ffffff",
             borderTopWidth: 0,
             elevation: 8,
             shadowOpacity: 0.15,
@@ -117,10 +124,11 @@ const _layout = () => {
             left: 0,
             right: 0,
             bottom: 30,
+            borderWidth: isDark ? 1 : 0,
+            borderColor: isDark ? "#333" : "transparent",
           },
-          tabBarActiveTintColor: "#fff",
-          tabBarInactiveTintColor: "#000",
-          tabBarInactiveBackgroundColor: "transparent",
+          tabBarActiveTintColor: isDark ? "#fff" : "#000",
+          tabBarInactiveTintColor: isDark ? "#888" : "#666",
           tabBarShowLabel: false,
           tabBarIconStyle: {
             marginBottom: 0,
@@ -138,11 +146,11 @@ const _layout = () => {
         <Tabs.Screen
           name="index"
           options={{
-            tabBarIcon: ({ focused, color, size }) => (
+            tabBarIcon: ({ focused }) => (
               <Ionicons
                 name={focused ? "home" : "home-outline"}
                 size={24}
-                color={focused ? "#fff" : "#666"}
+                color={focused ? (isDark ? "#fff" : "#000") : (isDark ? "#888" : "#666")}
               />
             ),
           }}
@@ -151,11 +159,11 @@ const _layout = () => {
         <Tabs.Screen
           name="addcourse"
           options={{
-            tabBarIcon: ({ focused, color, size }) => (
+            tabBarIcon: ({ focused }) => (
               <AntDesign
-                name={focused ? "pluscircle" : "pluscircle"}
+                name="pluscircle"
                 size={24}
-                color={focused ? "#fff" : "#666"}
+                color={focused ? (isDark ? "#fff" : "#000") : (isDark ? "#888" : "#666")}
               />
             ),
           }}
@@ -164,12 +172,35 @@ const _layout = () => {
         <Tabs.Screen
           name="settings"
           options={{
-            tabBarIcon: ({ focused, color, size }) => (
-              <Feather
-                name={focused ? "settings" : "settings"}
-                size={24}
-                color={focused ? "#fff" : "#666"}
-              />
+            tabBarIcon: ({ focused }) => (
+              <View style={{ alignItems: 'center' }}>
+                <Feather
+                  name="settings"
+                  size={24}
+                  color={focused ? (isDark ? "#fff" : "#000") : (isDark ? "#888" : "#666")}
+                />
+                {/* Theme Toggle Indicator */}
+                <TouchableOpacity
+                  onPress={toggleTheme}
+                  style={{
+                    position: 'absolute',
+                    top: -8,
+                    right: -8,
+                    width: 16,
+                    height: 16,
+                    borderRadius: 8,
+                    backgroundColor: isDark ? "#FFA500" : "#4B5563",
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Ionicons
+                    name={isDark ? "sunny" : "moon"}
+                    size={10}
+                    color="#fff"
+                  />
+                </TouchableOpacity>
+              </View>
             ),
           }}
         />
@@ -177,17 +208,17 @@ const _layout = () => {
         <Tabs.Screen
           name="logout"
           options={{
-            tabBarIcon: ({ focused, color, size }) => (
+            tabBarIcon: () => (
               <MaterialCommunityIcons
-                name={focused ? "logout" : "logout"}
+                name="logout"
                 size={24}
-                color="#8B0000"
+                color={isDark ? "#ff6b6b" : "#dc2626"}
               />
             ),
           }}
         />
       </Tabs>
-    </>
+    </View>
   );
 };
 

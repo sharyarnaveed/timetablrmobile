@@ -60,7 +60,7 @@ export default function signin() {
             contentContainerStyle={{
               flexGrow: 1,
               justifyContent: "center",
-              paddingHorizontal: 32,
+              paddingHorizontal: 10,
             }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"

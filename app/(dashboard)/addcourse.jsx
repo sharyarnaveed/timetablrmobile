@@ -8,6 +8,7 @@ import {
   FlatList,
   Modal,
   SafeAreaView,
+  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
@@ -15,12 +16,15 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 import * as yup from "yup";
+import { useTheme } from "../../context/ThemeContext";
+
 const schema = yup.object().shape({
   program: yup.string().required("Program is required"),
   course: yup.string().required("Course Name is required"),
 });
 
 const addcourse = () => {
+  const { isDark } = useTheme();
   const [activeTab, setActiveTab] = useState("addCourse");
   const [Programs, SetPrograms] = useState([]);
   const [isProgramPickerVisible, setIsProgramPickerVisible] = useState(false);
@@ -57,7 +61,6 @@ const addcourse = () => {
         }
       );
 
-      
       if (responce.data.success) {
         Toast.show({
           type: "success",
@@ -94,7 +97,6 @@ const addcourse = () => {
   const getcourse = async (id) => {
     console.log("the id is", id);
     const token = await SecureStore.getItemAsync("accessToken");
-
 
     try {
       const responce = await axios.get(
@@ -165,51 +167,127 @@ const addcourse = () => {
   }, []);
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-1">
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: isDark ? "#000" : "#fff",
+      }}
+    >
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 150 }}
+        showsVerticalScrollIndicator={false}
+      >
         <View className="px-6 pt-16 pb-8 sm:px-12 sm:pt-24 sm:pb-12 md:px-24 md:pt-32 md:pb-16">
-          <View className="bg-black rounded-3xl p-6 shadow-lg sm:p-10 md:p-14 max-w-2xl mx-auto">
-            <View className="items-center">
-              <Text className="text-lg font-light text-gray-300 sm:text-xl md:text-2xl">
-                Repeat Course Management
-              </Text>
-              <Text className="text-2xl font-bold text-white mt-1 sm:text-3xl md:text-4xl">
-                Add & View Repeat Courses
-              </Text>
-              <Text className="text-sm text-gray-400 mt-2 sm:text-base">
-                Manage your academic schedule
-              </Text>
-            </View>
+          <View
+            style={{
+              backgroundColor: isDark ? "#1a1a1a" : "#000",
+              borderRadius: 24,
+              padding: 24,
+              shadowColor: "#000",
+              shadowOpacity: 0.1,
+              shadowRadius: 8,
+              elevation: 8,
+              alignItems: "center",
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "300",
+                color: "#d1d5db",
+                textAlign: "center",
+              }}
+            >
+              Repeat Course Management
+            </Text>
+            <Text
+              style={{
+                fontSize: 24,
+                fontWeight: "bold",
+                color: "#fff",
+                marginTop: 4,
+                textAlign: "center",
+              }}
+            >
+              Add & View Repeat Courses
+            </Text>
+            <Text
+              style={{
+                fontSize: 14,
+                color: "#9ca3af",
+                marginTop: 8,
+                textAlign: "center",
+              }}
+            >
+              Manage your academic schedule
+            </Text>
           </View>
         </View>
 
         <View className="px-6 py-4 sm:px-12 sm:py-6 md:px-24 md:py-8">
           <View className="flex-row justify-center space-x-2">
             <TouchableOpacity
-              className={`px-6 py-3 rounded-full ${
-                activeTab === "addCourse" ? "bg-black" : "bg-gray-100"
-              } sm:px-8 sm:py-4`}
+              style={{
+                paddingHorizontal: 24,
+                paddingVertical: 12,
+                borderRadius: 20,
+                backgroundColor:
+                  activeTab === "addCourse"
+                    ? isDark
+                      ? "#fff"
+                      : "#000"
+                    : isDark
+                    ? "#333"
+                    : "#f3f4f6",
+              }}
               onPress={() => setActiveTab("addCourse")}
             >
               <Text
-                className={`font-medium ${
-                  activeTab === "addCourse" ? "text-white" : "text-gray-600"
-                } sm:text-base`}
+                style={{
+                  fontWeight: "500",
+                  color:
+                    activeTab === "addCourse"
+                      ? isDark
+                        ? "#000"
+                        : "#fff"
+                      : isDark
+                      ? "#fff"
+                      : "#4b5563",
+                }}
               >
                 Add Repeat Course
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              className={`px-6 py-3 rounded-full ${
-                activeTab === "viewCourse" ? "bg-black" : "bg-gray-100"
-              } sm:px-8 sm:py-4`}
+              style={{
+                paddingHorizontal: 24,
+                paddingVertical: 12,
+                borderRadius: 20,
+                backgroundColor:
+                  activeTab === "viewCourse"
+                    ? isDark
+                      ? "#fff"
+                      : "#000"
+                    : isDark
+                    ? "#333"
+                    : "#f3f4f6",
+              }}
               onPress={() => setActiveTab("viewCourse")}
             >
               <Text
-                className={`font-medium ${
-                  activeTab === "viewCourse" ? "text-white" : "text-gray-600"
-                } sm:text-base`}
+                style={{
+                  fontWeight: "500",
+                  color:
+                    activeTab === "viewCourse"
+                      ? isDark
+                        ? "#000"
+                        : "#fff"
+                      : isDark
+                      ? "#fff"
+                      : "#4b5563",
+                }}
               >
                 View Repeat Courses
               </Text>
@@ -218,20 +296,45 @@ const addcourse = () => {
         </View>
 
         {/* Tab Content */}
-        <View className="px-6 mb-8 sm:px-12 md:px-24">
+        <View className="px-6 sm:px-12 md:px-24">
           {activeTab === "addCourse" ? (
-            <View className="pt-8 sm:pt-12 mb-32">
+            <View className="pt-8 sm:pt-12">
               <View className="items-center mb-16">
-                <Text className="text-4xl font-thin text-black mb-4 tracking-wider sm:text-5xl">
+                <Text
+                  style={{
+                    fontSize: 40,
+                    fontWeight: "100",
+                    color: isDark ? "#fff" : "#000",
+                    marginBottom: 16,
+                    letterSpacing: 2,
+                    textAlign: "center",
+                  }}
+                >
                   Add Course
                 </Text>
-                <View className="w-8 h-px bg-black opacity-40" />
+                <View
+                  style={{
+                    width: 32,
+                    height: 1,
+                    backgroundColor: isDark ? "#fff" : "#000",
+                    opacity: 0.4,
+                  }}
+                />
               </View>
 
               {/* Ultra Clean Form */}
               <View className="space-y-12">
                 <View>
-                  <Text className="text-xs uppercase tracking-widest text-gray-400 mb-6 font-medium">
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      textTransform: "uppercase",
+                      letterSpacing: 2,
+                      color: isDark ? "#9ca3af" : "#6b7280",
+                      marginBottom: 24,
+                      fontWeight: "500",
+                    }}
+                  >
                     01 — Program
                   </Text>
                   <View className="relative">
@@ -252,15 +355,28 @@ const addcourse = () => {
                         return (
                           <View className="mb-4">
                             <TouchableOpacity
-                              className="h-14 w-full border-b-2 border-gray-200 bg-transparent justify-center px-2"
+                              style={{
+                                height: 56,
+                                width: "100%",
+                                borderBottomWidth: 2,
+                                borderBottomColor: isDark ? "#374151" : "#d1d5db",
+                                backgroundColor: "transparent",
+                                justifyContent: "center",
+                                paddingHorizontal: 8,
+                              }}
                               onPress={() => setIsProgramPickerVisible(true)}
                             >
                               <Text
-                                className={`text-base ${
-                                  selectedProgram
-                                    ? "text-black"
-                                    : "text-gray-400"
-                                }`}
+                                style={{
+                                  fontSize: 16,
+                                  color: selectedProgram
+                                    ? isDark
+                                      ? "#fff"
+                                      : "#000"
+                                    : isDark
+                                    ? "#9ca3af"
+                                    : "#6b7280",
+                                }}
                               >
                                 {selectedProgram
                                   ? selectedProgram.program_name
@@ -277,10 +393,29 @@ const addcourse = () => {
                               }
                             >
                               <View className="flex-1 bg-black bg-opacity-50 justify-center">
-                                <View className="bg-white mx-4 rounded-lg max-h-96">
-                                  <View className="p-4 border-b border-gray-200">
+                                <View
+                                  style={{
+                                    backgroundColor: isDark ? "#1a1a1a" : "#fff",
+                                    marginHorizontal: 16,
+                                    borderRadius: 12,
+                                    maxHeight: 384,
+                                  }}
+                                >
+                                  <View
+                                    style={{
+                                      padding: 16,
+                                      borderBottomWidth: 1,
+                                      borderBottomColor: isDark ? "#374151" : "#e5e7eb",
+                                    }}
+                                  >
                                     <View className="flex-row justify-between items-center mb-3">
-                                      <Text className="text-lg font-semibold">
+                                      <Text
+                                        style={{
+                                          fontSize: 18,
+                                          fontWeight: "600",
+                                          color: isDark ? "#fff" : "#000",
+                                        }}
+                                      >
                                         Select Program
                                       </Text>
                                       <TouchableOpacity
@@ -289,16 +424,33 @@ const addcourse = () => {
                                           setProgramSearchText("");
                                         }}
                                       >
-                                        <Text className="text-black text-lg font-bold">
+                                        <Text
+                                          style={{
+                                            color: isDark ? "#fff" : "#000",
+                                            fontSize: 18,
+                                            fontWeight: "bold",
+                                          }}
+                                        >
                                           ✕
                                         </Text>
                                       </TouchableOpacity>
                                     </View>
 
                                     <TextInput
-                                      className="h-16 border border-gray-300 rounded-lg px-3 text-base"
+                                      style={{
+                                        height: 64,
+                                        borderWidth: 1,
+                                        borderColor: isDark ? "#4b5563" : "#d1d5db",
+                                        borderRadius: 8,
+                                        paddingHorizontal: 12,
+                                        fontSize: 16,
+                                        backgroundColor: isDark ? "#374151" : "#fff",
+                                        color: isDark ? "#fff" : "#000",
+                                      }}
                                       placeholder="Search programs..."
-                                      placeholderTextColor="#9CA3AF"
+                                      placeholderTextColor={
+                                        isDark ? "#9ca3af" : "#6b7280"
+                                      }
                                       value={programSearchText}
                                       onChangeText={setProgramSearchText}
                                       autoFocus={true}
@@ -311,7 +463,11 @@ const addcourse = () => {
                                     }
                                     renderItem={({ item }) => (
                                       <TouchableOpacity
-                                        className="p-4 border-b border-gray-100"
+                                        style={{
+                                          padding: 16,
+                                          borderBottomWidth: 1,
+                                          borderBottomColor: isDark ? "#374151" : "#f3f4f6",
+                                        }}
                                         onPress={() => {
                                           onChange(item.program_name);
                                           setSelectedProgramId(item.program_id);
@@ -320,14 +476,24 @@ const addcourse = () => {
                                           getcourse(item.program_id);
                                         }}
                                       >
-                                        <Text className="text-base text-black">
+                                        <Text
+                                          style={{
+                                            fontSize: 16,
+                                            color: isDark ? "#fff" : "#000",
+                                          }}
+                                        >
                                           {item.program_name}
                                         </Text>
                                       </TouchableOpacity>
                                     )}
                                     ListEmptyComponent={
                                       <View className="p-4">
-                                        <Text className="text-gray-500 text-center">
+                                        <Text
+                                          style={{
+                                            color: isDark ? "#9ca3af" : "#6b7280",
+                                            textAlign: "center",
+                                          }}
+                                        >
                                           No programs found
                                         </Text>
                                       </View>
@@ -347,13 +513,28 @@ const addcourse = () => {
                       }}
                     />
                     <View className="absolute right-0 top-0">
-                      <View className="w-1 h-6 bg-black" />
+                      <View
+                        style={{
+                          width: 4,
+                          height: 24,
+                          backgroundColor: isDark ? "#fff" : "#000",
+                        }}
+                      />
                     </View>
                   </View>
                 </View>
 
                 <View>
-                  <Text className="text-xs uppercase tracking-widest text-gray-400 mb-6 font-medium">
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      textTransform: "uppercase",
+                      letterSpacing: 2,
+                      color: isDark ? "#9ca3af" : "#6b7280",
+                      marginBottom: 24,
+                      fontWeight: "500",
+                    }}
+                  >
                     02 — Course
                   </Text>
                   <View className="relative">
@@ -374,15 +555,28 @@ const addcourse = () => {
                         return (
                           <View className="mb-4">
                             <TouchableOpacity
-                              className="h-14 w-full border-b-2 border-gray-200 bg-transparent justify-center px-2"
+                              style={{
+                                height: 56,
+                                width: "100%",
+                                borderBottomWidth: 2,
+                                borderBottomColor: isDark ? "#374151" : "#d1d5db",
+                                backgroundColor: "transparent",
+                                justifyContent: "center",
+                                paddingHorizontal: 8,
+                              }}
                               onPress={() => setIsCoursePickerVisible(true)}
                             >
                               <Text
-                                className={`text-base ${
-                                  selectedCourse
-                                    ? "text-black"
-                                    : "text-gray-400"
-                                }`}
+                                style={{
+                                  fontSize: 16,
+                                  color: selectedCourse
+                                    ? isDark
+                                      ? "#fff"
+                                      : "#000"
+                                    : isDark
+                                    ? "#9ca3af"
+                                    : "#6b7280",
+                                }}
                               >
                                 {selectedCourse
                                   ? selectedCourse.course_name
@@ -399,10 +593,29 @@ const addcourse = () => {
                               }
                             >
                               <View className="flex-1 bg-black bg-opacity-50 justify-center">
-                                <View className="bg-white mx-4 rounded-lg max-h-96">
-                                  <View className="p-4 border-b border-gray-200">
+                                <View
+                                  style={{
+                                    backgroundColor: isDark ? "#1a1a1a" : "#fff",
+                                    marginHorizontal: 16,
+                                    borderRadius: 12,
+                                    maxHeight: 384,
+                                  }}
+                                >
+                                  <View
+                                    style={{
+                                      padding: 16,
+                                      borderBottomWidth: 1,
+                                      borderBottomColor: isDark ? "#374151" : "#e5e7eb",
+                                    }}
+                                  >
                                     <View className="flex-row justify-between items-center mb-3">
-                                      <Text className="text-lg font-semibold">
+                                      <Text
+                                        style={{
+                                          fontSize: 18,
+                                          fontWeight: "600",
+                                          color: isDark ? "#fff" : "#000",
+                                        }}
+                                      >
                                         Select Course
                                       </Text>
                                       <TouchableOpacity
@@ -411,16 +624,33 @@ const addcourse = () => {
                                           setCourseSearchText("");
                                         }}
                                       >
-                                        <Text className="text-black text-lg font-bold">
+                                        <Text
+                                          style={{
+                                            color: isDark ? "#fff" : "#000",
+                                            fontSize: 18,
+                                            fontWeight: "bold",
+                                          }}
+                                        >
                                           ✕
                                         </Text>
                                       </TouchableOpacity>
                                     </View>
 
                                     <TextInput
-                                      className="h-16 border border-gray-300 rounded-lg px-3 text-base"
+                                      style={{
+                                        height: 64,
+                                        borderWidth: 1,
+                                        borderColor: isDark ? "#4b5563" : "#d1d5db",
+                                        borderRadius: 8,
+                                        paddingHorizontal: 12,
+                                        fontSize: 16,
+                                        backgroundColor: isDark ? "#374151" : "#fff",
+                                        color: isDark ? "#fff" : "#000",
+                                      }}
                                       placeholder="Search courses..."
-                                      placeholderTextColor="#9CA3AF"
+                                      placeholderTextColor={
+                                        isDark ? "#9ca3af" : "#6b7280"
+                                      }
                                       value={courseSearchText}
                                       onChangeText={setCourseSearchText}
                                       autoFocus={true}
@@ -431,21 +661,35 @@ const addcourse = () => {
                                     keyExtractor={(item, index) => index}
                                     renderItem={({ item }) => (
                                       <TouchableOpacity
-                                        className="p-4 border-b border-gray-100"
+                                        style={{
+                                          padding: 16,
+                                          borderBottomWidth: 1,
+                                          borderBottomColor: isDark ? "#374151" : "#f3f4f6",
+                                        }}
                                         onPress={() => {
                                           onChange(item.course_name);
                                           setIsCoursePickerVisible(false);
                                           setCourseSearchText("");
                                         }}
                                       >
-                                        <Text className="text-base text-black">
+                                        <Text
+                                          style={{
+                                            fontSize: 16,
+                                            color: isDark ? "#fff" : "#000",
+                                          }}
+                                        >
                                           {item.course_name}
                                         </Text>
                                       </TouchableOpacity>
                                     )}
                                     ListEmptyComponent={
                                       <View className="p-4">
-                                        <Text className="text-gray-500 text-center">
+                                        <Text
+                                          style={{
+                                            color: isDark ? "#9ca3af" : "#6b7280",
+                                            textAlign: "center",
+                                          }}
+                                        >
                                           No courses found
                                         </Text>
                                       </View>
@@ -465,18 +709,38 @@ const addcourse = () => {
                       }}
                     />
                     <View className="absolute right-0 top-0">
-                      <View className="w-1 h-6 bg-black" />
+                      <View
+                        style={{
+                          width: 4,
+                          height: 24,
+                          backgroundColor: isDark ? "#fff" : "#000",
+                        }}
+                      />
                     </View>
                   </View>
                 </View>
               </View>
 
-              <View className="mt-20">
+              {/* Add Course Button with proper spacing */}
+              <View style={{ marginTop: 40, marginBottom: 20 }}>
                 <TouchableOpacity
-                  className="bg-black py-6 items-center rounded-lg sm:py-8"
+                  style={{
+                    backgroundColor: isDark ? "#fff" : "#000",
+                    paddingVertical: 24,
+                    alignItems: "center",
+                    borderRadius: 12,
+                  }}
                   onPress={handleSubmit(onSubmit)}
                 >
-                  <Text className="text-white text-sm uppercase tracking-widest font-medium sm:text-base">
+                  <Text
+                    style={{
+                      color: isDark ? "#000" : "#fff",
+                      fontSize: 14,
+                      textTransform: "uppercase",
+                      letterSpacing: 2,
+                      fontWeight: "500",
+                    }}
+                  >
                     Add Course
                   </Text>
                 </TouchableOpacity>
@@ -485,27 +749,76 @@ const addcourse = () => {
           ) : (
             <View>
               <View className="flex-row justify-between space-x-4 mb-6">
-                <View className="flex-1 bg-gray-50 p-6 rounded-2xl items-center sm:p-8">
-                  <Text className="text-3xl font-bold text-black mb-2 sm:text-4xl">
+                <View
+                  style={{
+                    flex: 1,
+                    backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
+                    padding: 24,
+                    borderRadius: 16,
+                    alignItems: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 32,
+                      fontWeight: "bold",
+                      color: isDark ? "#fff" : "#000",
+                      marginBottom: 8,
+                    }}
+                  >
                     {RePeatCourse.length}
                   </Text>
-                  <Text className="text-sm text-gray-600 font-medium sm:text-base">
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      color: isDark ? "#9ca3af" : "#6b7280",
+                      fontWeight: "500",
+                    }}
+                  >
                     Total Repeat Courses
                   </Text>
                 </View>
 
-                <View className="flex-1 bg-black p-6 rounded-2xl items-center sm:p-8">
-                  <Text className="text-3xl font-bold text-white mb-2 sm:text-4xl">
+                <View
+                  style={{
+                    flex: 1,
+                    backgroundColor: isDark ? "#fff" : "#000",
+                    padding: 24,
+                    borderRadius: 16,
+                    alignItems: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 32,
+                      fontWeight: "bold",
+                      color: isDark ? "#000" : "#fff",
+                      marginBottom: 8,
+                    }}
+                  >
                     {RePeatCourse.length}
                   </Text>
-                  <Text className="text-sm text-gray-300 font-medium sm:text-base">
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      color: isDark ? "#6b7280" : "#d1d5db",
+                      fontWeight: "500",
+                    }}
+                  >
                     Active
                   </Text>
                 </View>
               </View>
 
               <View>
-                <Text className="text-lg font-semibold text-gray-800 mb-4 sm:text-xl">
+                <Text
+                  style={{
+                    fontSize: 18,
+                    fontWeight: "600",
+                    color: isDark ? "#fff" : "#374151",
+                    marginBottom: 16,
+                  }}
+                >
                   Your Courses
                 </Text>
 
@@ -513,19 +826,44 @@ const addcourse = () => {
                   {RePeatCourse.map((repeat, index) => (
                     <View
                       key={repeat.repeat_id}
-                      className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 sm:p-6"
+                      style={{
+                        backgroundColor: isDark ? "#1a1a1a" : "#fff",
+                        padding: 16,
+                        borderRadius: 12,
+                        shadowColor: "#000",
+                        shadowOpacity: 0.05,
+                        shadowRadius: 4,
+                        elevation: 2,
+                        borderWidth: 1,
+                        borderColor: isDark ? "#374151" : "#e5e7eb",
+                      }}
                     >
                       <View className="flex-row justify-between items-start mb-2">
                         <View className="flex-1">
-                          <Text className="font-semibold text-gray-800 sm:text-lg">
+                          <Text
+                            style={{
+                              fontWeight: "600",
+                              color: isDark ? "#fff" : "#374151",
+                              fontSize: 16,
+                            }}
+                          >
                             {repeat.course_name}
                           </Text>
                         </View>
                         <TouchableOpacity
                           onPress={() => deletecourse(repeat.repeat_id)}
-                          className="bg-gray-100 px-2 py-1 rounded sm:px-3 sm:py-2"
+                          style={{
+                            backgroundColor: isDark ? "#7f1d1d" : "#fee2e2",
+                            paddingHorizontal: 8,
+                            paddingVertical: 4,
+                            borderRadius: 8,
+                          }}
                         >
-                          <AntDesign name="delete" size={24} color="black" />
+                          <AntDesign
+                            name="delete"
+                            size={20}
+                            color={isDark ? "#f87171" : "#dc2626"}
+                          />
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -535,7 +873,7 @@ const addcourse = () => {
             </View>
           )}
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };

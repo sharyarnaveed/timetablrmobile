@@ -98,16 +98,16 @@ const signup = () => {
 
   return (
     <KeyboardAvoidingView
-      className=" bg-white"
+      className="flex-1 bg-white"
       behavior={Platform.OS === "android" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "android" ? 0 : 20}
     >
       <ScrollView
-        
+        className="flex-1"
         contentContainerStyle={{
           flexGrow: 1,
           justifyContent: "center",
-          paddingHorizontal: 0,
+          paddingHorizontal: 32,
         }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"

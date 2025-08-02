@@ -1,46 +1,45 @@
+import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
 import { Link, router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
-import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Dimensions,
+  Linking,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View
+} from "react-native";
 import Week from "../../components/More";
 import Today from "../../components/Today";
+import { useTheme } from "../../context/ThemeContext";
 import useCurrentClass from "../../hooks/CurrentClass";
 import useupcomingClasses from "../../hooks/NotCurrentClass";
 
 const { width, height } = Dimensions.get("window");
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#fff" },
-  scrollView: { flex: 1 },
-  container: { flex: 1 },
-  headerWrapper: { paddingHorizontal: width * 0.04, paddingTop: height * 0.04, paddingBottom: height * 0.02 },
-  headerCard: { backgroundColor: "#000", borderRadius: width * 0.06, padding: width * 0.04, shadowColor: "#000", shadowOpacity: 0.1, shadowRadius: width * 0.02 },
-  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  welcomeText: { fontSize: width * 0.045, fontWeight: "300", color: "#d1d5db" },
-  usernameText: { fontSize: width * 0.06, fontWeight: "bold", color: "#fff", marginTop: 4 },
-  dayText: { fontSize: width * 0.035, color: "#9ca3af", marginTop: 8 },
-  avatarWrapper: { width: width * 0.16, height: width * 0.16, backgroundColor: "#fff", borderRadius: width * 0.08, alignItems: "center", justifyContent: "center" },
-  avatarLink: { width: width * 0.12, height: width * 0.12, borderRadius: width * 0.06, alignItems: "center", justifyContent: "center" },
-  avatarText: { color: "#000", fontWeight: "bold", fontSize: width * 0.08, textAlign: "center" },
-  tabWrapper: { paddingHorizontal: width * 0.04, paddingVertical: height * 0.02 },
-  tabRow: { flexDirection: "row", justifyContent: "center" },
-  tabButton: { paddingHorizontal: width * 0.06, paddingVertical: height * 0.015, borderRadius: 999, backgroundColor: "#f3f4f6", marginHorizontal: 4 },
-  tabButtonActive: { backgroundColor: "#000" },
-  tabText: { fontWeight: "500", color: "#4b5563", fontSize: width * 0.04 },
-  tabTextActive: { color: "#fff" },
-});
-
 const index = () => {
+  const { isDark } = useTheme();
   const [selectedTab, setSelectedTab] = useState("Today");
   const [TheUsername, SetTehusername] = useState("");
   const [theday, setday] = useState("");
   const [firstchar, Setchar] = useState("");
   const [timetableData, setTimetableData] = useState(null);
-  
-  // Call the hook at the top level
+
+  const GOOGLE_FORM_URL = "https://forms.gle/6nN8mEKFfn4d8p8v5";
+
   const currentClass = useCurrentClass(timetableData);
   const upcomingclasses = useupcomingClasses(timetableData);
+
+  const handleMessagePress = async () => {
+    try {
+      await Linking.openURL(GOOGLE_FORM_URL);
+    } catch (error) {
+      console.error("Error opening Google Form:", error);
+    }
+  };
+
   const getdata = async (day, MakeupDate) => {
     try {
       const token = await SecureStore.getItemAsync("accessToken");
@@ -61,7 +60,7 @@ const index = () => {
         "timetable",
         JSON.stringify(response.data.timetable)
       );
-      // Set the timetable data to trigger the hook
+
       setTimetableData(JSON.stringify(response.data.timetable));
     } catch (error) {
       console.log("API Error:", error.response?.data || error.message);
@@ -115,29 +114,107 @@ const index = () => {
   }, []);
 
   return (
-    <ScrollView className="flex-1 bg-white">
+    <ScrollView
+      style={{
+        flex: 1,
+        backgroundColor: isDark ? "#000" : "#fff",
+      }}
+    >
       <View className="flex-1">
         <View className="px-4 pt-12 pb-6 sm:px-8 sm:pt-16 sm:pb-8">
-          <View className="bg-black rounded-3xl p-4 shadow-lg sm:p-6">
+          <View
+            style={{
+              backgroundColor: isDark ? "#1a1a1a" : "#000",
+              borderRadius: 24,
+              padding: 16,
+              shadowColor: "#000",
+              shadowOpacity: 0.1,
+              shadowRadius: 8,
+              elevation: 8,
+            }}
+          >
             <View className="flex-row justify-between items-center">
               <View className="flex-1">
-                <Text className="text-base font-light text-gray-300 sm:text-lg">
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "300",
+                    color: isDark ? "#d1d5db" : "#d1d5db",
+                  }}
+                >
                   Welcome
                 </Text>
-                <Text className="text-xl font-bold text-white mt-1 sm:text-2xl">
+                <Text
+                  style={{
+                    fontSize: 24,
+                    fontWeight: "bold",
+                    color: "#fff",
+                    marginTop: 4,
+                  }}
+                >
                   {TheUsername}
                 </Text>
-                <Text className="text-xs text-gray-400 mt-2 sm:text-sm">{theday}</Text>
-              </View>
-              <View className="w-14 h-14 bg-white rounded-full flex items-center justify-center sm:w-16 sm:h-16">
-                <Link
-                  className="w-10 h-10 rounded-full flex justify-center items-center text-center sm:w-12 sm:h-12"
-                  href="/settings"
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: isDark ? "#9ca3af" : "#9ca3af",
+                    marginTop: 8,
+                  }}
                 >
-                  <Text className="text-black font-semibold text-3xl flex justify-center items-center sm:text-[2rem]">
-                    {firstchar.toUpperCase()}
-                  </Text>
-                </Link>
+                  {theday}
+                </Text>
+              </View>
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
+              >
+                {/* Message Icon */}
+                <TouchableOpacity
+                  style={{
+                    width: 48,
+                    height: 48,
+                    backgroundColor: "rgba(255, 255, 255, 0.2)",
+                    borderRadius: 24,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  onPress={handleMessagePress}
+                >
+                  <Ionicons name="chatbubble-outline" size={24} color="#fff" />
+                </TouchableOpacity>
+
+                {/* Avatar */}
+                <View
+                  style={{
+                    width: 56,
+                    height: 56,
+                    backgroundColor: "#fff",
+                    borderRadius: 28,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Link
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 24,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                    href="/settings"
+                  >
+                    <Text
+                      style={{
+                        color: "#000",
+                        fontWeight: "bold",
+                        fontSize: 30,
+                        textAlign: "center",
+                      }}
+                    >
+                      {firstchar.toUpperCase()}
+                    </Text>
+                  </Link>
+                </View>
               </View>
             </View>
           </View>
@@ -148,15 +225,33 @@ const index = () => {
             {["Today", "Week"].map((tab) => (
               <TouchableOpacity
                 key={tab}
-                className={`px-4 py-2 rounded-full ${
-                  selectedTab === tab ? "bg-black" : "bg-gray-100"
-                } sm:px-6 sm:py-3`}
+                style={{
+                  paddingHorizontal: 24,
+                  paddingVertical: 12,
+                  borderRadius: 20,
+                  backgroundColor:
+                    selectedTab === tab
+                      ? isDark
+                        ? "#fff"
+                        : "#000"
+                      : isDark
+                      ? "#333"
+                      : "#f3f4f6",
+                }}
                 onPress={() => setSelectedTab(tab)}
               >
                 <Text
-                  className={`font-medium ${
-                    selectedTab === tab ? "text-white" : "text-gray-600"
-                  }`}
+                  style={{
+                    fontWeight: "500",
+                    color:
+                      selectedTab === tab
+                        ? isDark
+                          ? "#000"
+                          : "#fff"
+                        : isDark
+                        ? "#fff"
+                        : "#4b5563",
+                  }}
                 >
                   {tab}
                 </Text>
@@ -165,11 +260,7 @@ const index = () => {
           </View>
         </View>
         {selectedTab == "Today" && (
-          <>
- 
-            <Today thecurent={currentClass} Notcurrentclass={upcomingclasses} />
-         
-          </>
+          <Today thecurent={currentClass} Notcurrentclass={upcomingclasses} />
         )}
 
         {selectedTab == "Week" && <Week />}
