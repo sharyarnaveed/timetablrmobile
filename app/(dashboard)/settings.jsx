@@ -190,40 +190,6 @@ export default function Settings() {
     );
   };
 
-  const clearCache = async () => {
-    Alert.alert(
-      "Clear Cache",
-      "This will clear all cached data. Your courses will be refreshed.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Clear",
-          onPress: async () => {
-            try {
-              await SecureStore.deleteItemAsync("timetable");
-              await SecureStore.deleteItemAsync("day");
-              Toast.show({
-                type: "success",
-                text1: "Cache cleared successfully!",
-              });
-            } catch (error) {
-              console.error("Error clearing cache:", error);
-              Toast.show({
-                type: "error",
-                text1: "Failed to clear cache",
-              });
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const toggleNotifications = async (value) => {
-    setNotificationsEnabled(value);
-    await SecureStore.setItemAsync("notification", value ? "true" : "false");
-  };
-
   return (
     <ScrollView 
       style={{ 

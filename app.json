@@ -17,8 +17,7 @@
       "permissions": ["NOTIFICATIONS"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/foreground.png",
-        "backgroundColor": "#ffffff",
-        "useNextNotificationsApi": true
+        "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true
     },

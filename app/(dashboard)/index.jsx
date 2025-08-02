@@ -4,7 +4,6 @@ import { Link, router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import {
-  Dimensions,
   Linking,
   ScrollView,
   Text,
@@ -17,7 +16,6 @@ import { useTheme } from "../../context/ThemeContext";
 import useCurrentClass from "../../hooks/CurrentClass";
 import useupcomingClasses from "../../hooks/NotCurrentClass";
 
-const { width, height } = Dimensions.get("window");
 
 const index = () => {
   const { isDark } = useTheme();
