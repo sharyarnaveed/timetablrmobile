@@ -144,7 +144,7 @@ const index = () => {
                 </Text>
                 <Text
                   style={{
-                    fontSize: 24,
+                    fontSize: 20,
                     fontWeight: "bold",
                     color: "#fff",
                     marginTop: 4,

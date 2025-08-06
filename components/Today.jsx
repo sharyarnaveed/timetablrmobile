@@ -45,47 +45,47 @@ const Today = ({ thecurent, Notcurrentclass }) => {
   const singleCurrent = thecurent.length === 1;
 
   return (
-    <View style={{ backgroundColor: isDark ? '#000' : '#fff' }}>
+    <View style={{ backgroundColor: isDark ? "#000" : "#fff" }}>
       {/* Progress and Stats */}
       <View className="px-6 mb-8">
-        <View className="flex-row justify-between space-x-4">
-          <View 
+        <View className="flex-row justify-between space-x-2">
+          <View
             style={{
               flex: 1,
               backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
-              padding: 24,
+              padding: 12,
               borderRadius: 16,
-              alignItems: "center"
+              alignItems: "center",
             }}
           >
             <View className="items-center mb-4">
-              <Text 
+              <Text
                 style={{
-                  fontSize: 32,
+                  fontSize: 24,
                   fontWeight: "bold",
                   color: isDark ? "#fff" : "#000",
-                  marginBottom: 8
+                  marginBottom: 8,
                 }}
               >
                 {Math.round(progress)}%
               </Text>
-              <Text 
+              <Text
                 style={{
                   fontSize: 14,
                   color: isDark ? "#9ca3af" : "#6b7280",
-                  fontWeight: "500"
+                  fontWeight: "500",
                 }}
               >
                 Complete
               </Text>
             </View>
-            <View 
+            <View
               style={{
                 width: "100%",
                 backgroundColor: isDark ? "#374151" : "#e5e7eb",
                 borderRadius: 6,
                 height: 12,
-                overflow: "hidden"
+                overflow: "hidden",
               }}
             >
               <View
@@ -93,7 +93,7 @@ const Today = ({ thecurent, Notcurrentclass }) => {
                   backgroundColor: isDark ? "#fff" : "#000",
                   height: 12,
                   borderRadius: 6,
-                  width: `${progress}%`
+                  width: `${progress}%`,
                 }}
               />
             </View>
@@ -105,69 +105,74 @@ const Today = ({ thecurent, Notcurrentclass }) => {
                     width: 8,
                     height: 8,
                     borderRadius: 4,
-                    backgroundColor: progress >= threshold 
-                      ? (isDark ? "#fff" : "#000")
-                      : (isDark ? "#374151" : "#d1d5db")
+                    backgroundColor:
+                      progress >= threshold
+                        ? isDark
+                          ? "#fff"
+                          : "#000"
+                        : isDark
+                        ? "#374151"
+                        : "#d1d5db",
                   }}
                 />
               ))}
             </View>
           </View>
 
-          <View 
+          <View
             style={{
               flex: 1,
               backgroundColor: isDark ? "#fff" : "#000",
               padding: 24,
               borderRadius: 16,
-              alignItems: "center"
+              alignItems: "center",
             }}
           >
-            <Text 
+            <Text
               style={{
-                fontSize: 32,
+                fontSize: 24,
                 fontWeight: "bold",
                 color: isDark ? "#000" : "#fff",
-                marginBottom: 8
+                marginBottom: 8,
               }}
             >
               {totalength}
             </Text>
-            <Text 
+            <Text
               style={{
                 fontSize: 14,
                 color: isDark ? "#6b7280" : "#d1d5db",
-                fontWeight: "500"
+                fontWeight: "500",
               }}
             >
               Classes
             </Text>
           </View>
 
-          <View 
+          <View
             style={{
               flex: 1,
               backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
               padding: 24,
               borderRadius: 16,
-              alignItems: "center"
+              alignItems: "center",
             }}
           >
-            <Text 
+            <Text
               style={{
-                fontSize: 32,
+                fontSize: 24,
                 fontWeight: "bold",
                 color: isDark ? "#fff" : "#000",
-                marginBottom: 8
+                marginBottom: 8,
               }}
             >
               {leftlength}
             </Text>
-            <Text 
+            <Text
               style={{
                 fontSize: 14,
                 color: isDark ? "#9ca3af" : "#6b7280",
-                fontWeight: "500"
+                fontWeight: "500",
               }}
             >
               Left
@@ -176,16 +181,17 @@ const Today = ({ thecurent, Notcurrentclass }) => {
         </View>
       </View>
 
-      {(thecurent && thecurent.length > 0) || (Notcurrentclass && Notcurrentclass.length > 0) ? (
+      {(thecurent && thecurent.length > 0) ||
+      (Notcurrentclass && Notcurrentclass.length > 0) ? (
         <>
           {thecurent.length > 0 && (
             <View className="mx-6 mb-6">
-              <Text 
+              <Text
                 style={{
                   fontSize: 18,
                   fontWeight: "600",
                   color: isDark ? "#fff" : "#374151",
-                  marginBottom: 16
+                  marginBottom: 16,
                 }}
               >
                 {multipleCurrent ? "Current Classes" : "Current Class"}
@@ -193,8 +199,8 @@ const Today = ({ thecurent, Notcurrentclass }) => {
 
               <View className="space-y-4">
                 {thecurent.map((cls, index) => (
-                  <View 
-                    key={index} 
+                  <View
+                    key={index}
                     style={{
                       backgroundColor: isDark ? "#1a1a1a" : "#000",
                       padding: 24,
@@ -202,60 +208,61 @@ const Today = ({ thecurent, Notcurrentclass }) => {
                       shadowColor: "#000",
                       shadowOpacity: 0.1,
                       shadowRadius: 8,
-                      elevation: 4
+                      elevation: 4,
                     }}
                   >
                     <View className="flex-row justify-between items-start mb-4">
                       <View className="flex-1">
-                        <Text 
+                        <Text
                           style={{
                             color: "#fff",
                             fontSize: 20,
                             fontWeight: "bold",
-                            marginBottom: 8
+                            marginBottom: 8,
                           }}
                         >
                           {cls.course_name}
                         </Text>
-                        <Text 
+                        <Text
                           style={{
                             color: "#d1d5db",
                             fontSize: 14,
-                            marginBottom: 4
+                            marginBottom: 4,
                           }}
                         >
                           📍 {cls.venue}
                         </Text>
-                        <Text 
+                        <Text
                           style={{
                             color: "#d1d5db",
-                            fontSize: 14
+                            fontSize: 14,
                           }}
                         >
-                          {covertionoftime(cls.start_time)} - {covertionoftime(cls.end_time)}
+                          {covertionoftime(cls.start_time)} -{" "}
+                          {covertionoftime(cls.end_time)}
                         </Text>
-                        <Text 
+                        <Text
                           style={{
                             color: "#d1d5db",
-                            fontSize: 14
+                            fontSize: 14,
                           }}
                         >
                           👨‍🏫 {cls.teacher_name}
                         </Text>
                       </View>
-                      <View 
+                      <View
                         style={{
                           backgroundColor: "#fff",
                           paddingHorizontal: 16,
                           paddingVertical: 8,
-                          borderRadius: 20
+                          borderRadius: 20,
                         }}
                       >
-                        <Text 
+                        <Text
                           style={{
                             color: "#000",
                             fontSize: 12,
-                            fontWeight: "bold"
+                            fontWeight: "bold",
                           }}
                         >
                           LIVE
@@ -270,12 +277,12 @@ const Today = ({ thecurent, Notcurrentclass }) => {
 
           {Notcurrentclass.length > 0 ? (
             <View className="mx-6 mb-36">
-              <Text 
+              <Text
                 style={{
                   fontSize: 18,
                   fontWeight: "600",
                   color: isDark ? "#fff" : "#374151",
-                  marginBottom: 16
+                  marginBottom: 16,
                 }}
               >
                 Upcoming Classes
@@ -297,33 +304,34 @@ const Today = ({ thecurent, Notcurrentclass }) => {
                       borderColor: isDark ? "#374151" : "#e5e7eb",
                       flexDirection: "row",
                       justifyContent: "space-between",
-                      alignItems: "center"
+                      alignItems: "center",
                     }}
                   >
                     <View className="flex-1">
-                      <Text 
+                      <Text
                         style={{
                           fontWeight: "600",
-                          color: isDark ? "#fff" : "#374151"
+                          color: isDark ? "#fff" : "#374151",
                         }}
                       >
                         {classItem.course_name}
                       </Text>
-                      <Text 
+                      <Text
                         style={{
                           fontSize: 14,
-                          color: isDark ? "#9ca3af" : "#6b7280"
+                          color: isDark ? "#9ca3af" : "#6b7280",
                         }}
                       >
                         {classItem.venue} • {classItem.teacher_name}
                       </Text>
-                      <Text 
+                      <Text
                         style={{
                           fontSize: 14,
-                          color: isDark ? "#9ca3af" : "#6b7280"
+                          color: isDark ? "#9ca3af" : "#6b7280",
                         }}
                       >
-                        {covertionoftime(classItem.start_time)} - {covertionoftime(classItem.end_time)}
+                        {covertionoftime(classItem.start_time)} -{" "}
+                        {covertionoftime(classItem.end_time)}
                       </Text>
                     </View>
                   </View>
@@ -331,7 +339,7 @@ const Today = ({ thecurent, Notcurrentclass }) => {
               </View>
             </View>
           ) : thecurent.length > 0 ? (
-            <View 
+            <View
               style={{
                 marginHorizontal: 24,
                 marginBottom: 144,
@@ -348,7 +356,7 @@ const Today = ({ thecurent, Notcurrentclass }) => {
                 elevation: 4,
               }}
             >
-              <View 
+              <View
                 style={{
                   width: 64,
                   height: 64,
@@ -356,27 +364,27 @@ const Today = ({ thecurent, Notcurrentclass }) => {
                   borderRadius: 32,
                   alignItems: "center",
                   justifyContent: "center",
-                  marginBottom: 16
+                  marginBottom: 16,
                 }}
               >
                 <Text style={{ fontSize: 32 }}>📚</Text>
               </View>
-              <Text 
+              <Text
                 style={{
                   fontSize: 20,
                   fontWeight: "600",
                   color: isDark ? "#fff" : "#374151",
-                  marginBottom: 8
+                  marginBottom: 8,
                 }}
               >
                 No More Classes Today
               </Text>
-              <Text 
+              <Text
                 style={{
                   fontSize: 14,
                   color: isDark ? "#9ca3af" : "#6b7280",
                   textAlign: "center",
-                  marginBottom: 16
+                  marginBottom: 16,
                 }}
               >
                 Enjoy your time!
@@ -385,7 +393,7 @@ const Today = ({ thecurent, Notcurrentclass }) => {
           ) : null}
         </>
       ) : (
-        <View 
+        <View
           style={{
             marginHorizontal: 24,
             marginBottom: 144,
@@ -402,7 +410,7 @@ const Today = ({ thecurent, Notcurrentclass }) => {
             elevation: 4,
           }}
         >
-          <View 
+          <View
             style={{
               width: 64,
               height: 64,
@@ -410,27 +418,27 @@ const Today = ({ thecurent, Notcurrentclass }) => {
               borderRadius: 32,
               alignItems: "center",
               justifyContent: "center",
-              marginBottom: 16
+              marginBottom: 16,
             }}
           >
             <Text style={{ fontSize: 32 }}>📚</Text>
           </View>
-          <Text 
+          <Text
             style={{
               fontSize: 20,
               fontWeight: "600",
               color: isDark ? "#fff" : "#374151",
-              marginBottom: 8
+              marginBottom: 8,
             }}
           >
             No Classes Today
           </Text>
-          <Text 
+          <Text
             style={{
               fontSize: 14,
               color: isDark ? "#9ca3af" : "#6b7280",
               textAlign: "center",
-              marginBottom: 16
+              marginBottom: 16,
             }}
           >
             Enjoy your free day!

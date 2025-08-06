@@ -18,7 +18,6 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 import * as yup from "yup";
-
 const scheme = yup.object().shape({
   fullname: yup
     .string()
@@ -66,10 +65,16 @@ const signup = () => {
   const {
     control,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm({
     resolver: yupResolver(scheme),
+    defaultValues: {
+      agree: false,
+    },
   });
+
+  const isAgreed = watch("agree");
 
   const onsubmit = async (data) => {
     try {
@@ -77,6 +82,7 @@ const signup = () => {
         `${process.env.EXPO_PUBLIC_API_URL}/api/user/signup`,
         data
       );
+
       if (responce.data.success) {
         Toast.show({
           type: "success",
@@ -117,7 +123,9 @@ const signup = () => {
           <Text className="text-3xl font-bold text-black mb-2">
             Create Account
           </Text>
-          <Text className="text-base text-gray-600">Join us to get started</Text>
+          <Text className="text-base text-gray-600">
+            Join us to get started
+          </Text>
         </View>
 
         {/* Form Container */}
@@ -338,12 +346,42 @@ const signup = () => {
             )}
           />
 
+          {/* Custom Checkbox Component */}
+          <Controller
+            name="agree"
+            control={control}
+            render={({ field: { onChange, value } }) => (
+              <View className="flex-row items-center mb-4">
+                <CustomCheckbox
+                  checked={value}
+                  onPress={() => onChange(!value)}
+                />
+                <Text className="text-base text-gray-700">
+                  I agree to the{" "}
+                  <Link
+                    href={"https://timetablrtermspolicy.vercel.app"}
+                    className="text-black font-semibold"
+                  >
+                    Terms and Conditions
+                  </Link>
+                </Text>
+              </View>
+            )}
+          />
+
           {/* Sign Up Button */}
           <TouchableOpacity
-            className="bg-black h-14 rounded-full justify-center items-center mt-6 shadow-sm"
+            className={`h-14 rounded-full justify-center items-center mt-6 shadow-sm ${
+              isAgreed ? "bg-black" : "bg-gray-300 opacity-50"
+            }`}
             onPress={handleSubmit(onsubmit)}
+            disabled={!isAgreed}
           >
-            <Text className="text-white text-lg font-semibold">
+            <Text
+              className={`text-lg font-semibold ${
+                isAgreed ? "text-white" : "text-gray-500"
+              }`}
+            >
               Create Account
             </Text>
           </TouchableOpacity>
@@ -369,3 +407,18 @@ const signup = () => {
 };
 
 export default signup;
+
+// Remove this import if react-native-paper is causing issues
+// import { Checkbox } from 'react-native-paper';
+
+// Add this custom checkbox component
+const CustomCheckbox = ({ checked, onPress }) => (
+  <TouchableOpacity
+    onPress={onPress}
+    className={`w-6 h-6 border-2 rounded mr-3 items-center justify-center ${
+      checked ? "bg-black border-black" : "border-gray-400"
+    }`}
+  >
+    {checked && <Text className="text-white text-sm">✓</Text>}
+  </TouchableOpacity>
+);
