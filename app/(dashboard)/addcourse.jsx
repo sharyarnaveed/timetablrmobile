@@ -95,7 +95,6 @@ const addcourse = () => {
   };
 
   const getcourse = async (id) => {
-    console.log("the id is", id);
     const token = await SecureStore.getItemAsync("accessToken");
 
     try {

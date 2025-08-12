@@ -21,7 +21,6 @@ const Today = ({ thecurent, Notcurrentclass }) => {
         const progressPercentage =
           parsing.length > 0 ? (completedClasses / parsing.length) * 100 : 0;
         SetProgress(progressPercentage);
-        console.log(`Progress: ${progressPercentage.toFixed(2)}%`);
       }
     } catch (error) {
       console.error("Error getting timetable data:", error);
@@ -172,7 +171,7 @@ const Today = ({ thecurent, Notcurrentclass }) => {
               style={{
                 fontSize: 14,
                 color: isDark ? "#9ca3af" : "#6b7280",
-                fontWeight: "500",
+                fontWeight: "300",
               }}
             >
               Left
@@ -216,8 +215,8 @@ const Today = ({ thecurent, Notcurrentclass }) => {
                         <Text
                           style={{
                             color: "#fff",
-                            fontSize: 20,
-                            fontWeight: "bold",
+                            fontSize: 18,
+                            fontWeight: "semibold",
                             marginBottom: 8,
                           }}
                         >

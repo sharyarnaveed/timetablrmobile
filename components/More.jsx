@@ -22,7 +22,6 @@ const More = () => {
 
   const getalltimetable = async () => {
     const token = await SecureStore.getItemAsync("accessToken");
-    console.log(token);
     try {
       const responce = await axios.get(
         `${process.env.EXPO_PUBLIC_API_URL}/api/user/alltimetable`,

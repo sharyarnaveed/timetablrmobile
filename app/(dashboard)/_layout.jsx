@@ -5,7 +5,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import axios from "axios";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
-import { Tabs } from "expo-router";
+import { router, Tabs } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
@@ -23,7 +23,7 @@ Notifications.setNotificationHandler({
 
 const _layout = () => {
   const { isDark, toggleTheme } = useTheme();
-  
+
   useEffect(() => {
     const checkTokenAndRegister = async () => {
       const token = await SecureStore.getItemAsync("accessToken");
@@ -37,7 +37,31 @@ const _layout = () => {
         return () => subscription.remove();
       }
     };
-    checkTokenAndRegister();
+
+    const checktoken = async () => {
+    const token =  SecureStore.getItem("accessToken");
+
+     const responce = await axios.get(
+        `${process.env.EXPO_PUBLIC_API_URL}/api/user/checkauth`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+if(responce.data.valid==false)
+{
+  router.push("/logout")
+}
+     
+    };
+
+    
+    checktoken();
+
+
+      checkTokenAndRegister();
   }, []);
 
   // Request permissions and register for push token
@@ -100,9 +124,9 @@ const _layout = () => {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: isDark ? '#000' : '#fff' }}>
+    <View style={{ flex: 1, backgroundColor: isDark ? "#000" : "#fff" }}>
       <StatusBar style={isDark ? "light" : "dark"} />
-      
+
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -150,7 +174,15 @@ const _layout = () => {
               <Ionicons
                 name={focused ? "home" : "home-outline"}
                 size={24}
-                color={focused ? (isDark ? "#fff" : "#000") : (isDark ? "#888" : "#666")}
+                color={
+                  focused
+                    ? isDark
+                      ? "#fff"
+                      : "#000"
+                    : isDark
+                    ? "#888"
+                    : "#666"
+                }
               />
             ),
           }}
@@ -163,7 +195,15 @@ const _layout = () => {
               <AntDesign
                 name="pluscircle"
                 size={24}
-                color={focused ? (isDark ? "#fff" : "#000") : (isDark ? "#888" : "#666")}
+                color={
+                  focused
+                    ? isDark
+                      ? "#fff"
+                      : "#000"
+                    : isDark
+                    ? "#888"
+                    : "#666"
+                }
               />
             ),
           }}
@@ -173,25 +213,33 @@ const _layout = () => {
           name="settings"
           options={{
             tabBarIcon: ({ focused }) => (
-              <View style={{ alignItems: 'center' }}>
+              <View style={{ alignItems: "center" }}>
                 <Feather
                   name="settings"
                   size={24}
-                  color={focused ? (isDark ? "#fff" : "#000") : (isDark ? "#888" : "#666")}
+                  color={
+                    focused
+                      ? isDark
+                        ? "#fff"
+                        : "#000"
+                      : isDark
+                      ? "#888"
+                      : "#666"
+                  }
                 />
                 {/* Theme Toggle Indicator */}
                 <TouchableOpacity
                   onPress={toggleTheme}
                   style={{
-                    position: 'absolute',
+                    position: "absolute",
                     top: -8,
                     right: -8,
                     width: 16,
                     height: 16,
                     borderRadius: 8,
                     backgroundColor: isDark ? "#FFA500" : "#4B5563",
-                    justifyContent: 'center',
-                    alignItems: 'center',
+                    justifyContent: "center",
+                    alignItems: "center",
                   }}
                 >
                   <Ionicons
