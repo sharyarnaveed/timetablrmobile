@@ -215,7 +215,7 @@ const Today = ({ thecurent, Notcurrentclass }) => {
                         <Text
                           style={{
                             color: "#fff",
-                            fontSize: 18,
+                            fontSize: 14,
                             fontWeight: "semibold",
                             marginBottom: 8,
                           }}
@@ -225,7 +225,7 @@ const Today = ({ thecurent, Notcurrentclass }) => {
                         <Text
                           style={{
                             color: "#d1d5db",
-                            fontSize: 14,
+                            fontSize: 13,
                             marginBottom: 4,
                           }}
                         >

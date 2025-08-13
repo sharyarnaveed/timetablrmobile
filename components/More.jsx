@@ -49,7 +49,6 @@ const More = () => {
   };
 
   useEffect(() => {
-    console.log("in use");
 
     getalltimetable();
   }, []);
