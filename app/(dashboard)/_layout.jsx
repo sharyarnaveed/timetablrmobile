@@ -40,7 +40,11 @@ const _layout = () => {
 
     const checktoken = async () => {
     const token =  SecureStore.getItem("accessToken");
+if(!token)
+{
+  router.push("/signin")
 
+}
      const responce = await axios.get(
         `${process.env.EXPO_PUBLIC_API_URL}/api/user/checkauth`,
         {

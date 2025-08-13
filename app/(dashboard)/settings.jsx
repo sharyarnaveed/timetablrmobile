@@ -190,6 +190,59 @@ export default function Settings() {
     );
   };
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete Account",
+      "Are you sure you want to permanently delete your account? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const token = await SecureStore.getItemAsync("accessToken");
+              const response = await axios.delete(
+                `${process.env.EXPO_PUBLIC_API_URL}/api/user/deleteaccount`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                  },
+                  withCredentials: true,
+                }
+              );
+              console.log(response.data);
+              
+              if (response.data.success) {
+                await SecureStore.deleteItemAsync("accessToken");
+                await SecureStore.deleteItemAsync("username");
+                await SecureStore.deleteItemAsync("email");
+                await SecureStore.deleteItemAsync("timetable");
+                await SecureStore.deleteItemAsync("day");
+                Toast.show({
+                  type: "success",
+                  text1: "Account deleted successfully.",
+                });
+                router.replace("/signin");
+              } else {
+                Toast.show({
+                  type: "error",
+                  text1: response.data.message || "Failed to delete account.",
+                });
+              }
+            } catch (error) {
+              Toast.show({
+                type: "error",
+                text1: "Error deleting account.",
+              });
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <ScrollView 
       style={{ 
@@ -667,36 +720,72 @@ export default function Settings() {
           </View>
         </View>
 
-        {/* Logout Button */}
-        <TouchableOpacity
-          style={{
-            backgroundColor: isDark ? "#7f1d1d" : "#fee2e2",
-            padding: 16,
-            borderRadius: 12,
-            alignItems: "center",
-            flexDirection: "row",
-            justifyContent: "center",
-            borderWidth: 1,
-            borderColor: isDark ? "#991b1b" : "#fecaca"
-          }}
-          onPress={handleLogout}
-        >
-          <Ionicons 
-            name="log-out-outline" 
-            size={20} 
-            color={isDark ? "#f87171" : "#dc2626"} 
-            style={{ marginRight: 8 }}
-          />
-          <Text 
+        {/* Logout and Delete Account Buttons */}
+        <View>
+          {/* Logout Button */}
+          <TouchableOpacity
             style={{
-              color: isDark ? "#f87171" : "#dc2626",
-              fontSize: 16,
-              fontWeight: "600"
+              backgroundColor: isDark ? "#7f1d1d" : "#fee2e2",
+              padding: 16,
+              borderRadius: 12,
+              alignItems: "center",
+              flexDirection: "row",
+              justifyContent: "center",
+              borderWidth: 1,
+              borderColor: isDark ? "#991b1b" : "#fecaca",
+              marginBottom: 16, // Add some space before logout
             }}
+            onPress={handleLogout}
           >
-            Logout
-          </Text>
-        </TouchableOpacity>
+            <Ionicons 
+              name="log-out-outline" 
+              size={20} 
+              color={isDark ? "#f87171" : "#dc2626"} 
+              style={{ marginRight: 8 }}
+            />
+            <Text 
+              style={{
+                color: isDark ? "#f87171" : "#dc2626",
+                fontSize: 16,
+                fontWeight: "600"
+              }}
+            >
+              Logout
+            </Text>
+          </TouchableOpacity>
+
+          {/* Delete Account Button */}
+          <TouchableOpacity
+            style={{
+              backgroundColor: isDark ? "#991b1b" : "#fee2e2",
+              padding: 16,
+              borderRadius: 12,
+              alignItems: "center",
+              flexDirection: "row",
+              justifyContent: "center",
+              borderWidth: 1,
+              borderColor: isDark ? "#991b1b" : "#fecaca",
+              marginBottom: 16, // Add some space before logout
+            }}
+            onPress={handleDeleteAccount}
+          >
+            <Ionicons
+              name="trash-outline"
+              size={20}
+              color={isDark ? "#f87171" : "#dc2626"}
+              style={{ marginRight: 8 }}
+            />
+            <Text
+              style={{
+                color: isDark ? "#f87171" : "#dc2626",
+                fontSize: 16,
+                fontWeight: "600",
+              }}
+            >
+              Delete Account
+            </Text>
+          </TouchableOpacity>
+        </View>
 
       </View>
     </ScrollView>
