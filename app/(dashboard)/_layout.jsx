@@ -39,13 +39,11 @@ const _layout = () => {
     };
 
     const checktoken = async () => {
-    const token =  SecureStore.getItem("accessToken");
-if(!token)
-{
-  router.push("/signin")
-
-}
-     const responce = await axios.get(
+      const token = SecureStore.getItem("accessToken");
+      if (!token) {
+        router.push("/signin");
+      }
+      const responce = await axios.get(
         `${process.env.EXPO_PUBLIC_API_URL}/api/user/checkauth`,
         {
           headers: {
@@ -54,18 +52,14 @@ if(!token)
           },
         }
       );
-if(responce.data.valid==false)
-{
-  router.push("/logout")
-}
-     
+      if (responce.data.valid == false) {
+        router.push("/logout");
+      }
     };
 
-    
     checktoken();
 
-
-      checkTokenAndRegister();
+    checkTokenAndRegister();
   }, []);
 
   // Request permissions and register for push token
