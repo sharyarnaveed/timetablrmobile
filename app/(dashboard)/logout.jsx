@@ -7,21 +7,33 @@ const logout = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const performLogout = async () => {
-      try {
-        await SecureStore.deleteItemAsync("accessToken");
-        await SecureStore.deleteItemAsync("username");
-        await SecureStore.deleteItemAsync("timetable");
-        await SecureStore.deleteItemAsync("day");      
-        router.replace("/signin");
-      } catch (error) {
-        console.log("Error during logout:", error);
+   const handleLogout = () => {
+     Alert.alert(
+       "Logout",
+       "Are you sure you want to logout?",
+       [
+         { text: "Cancel", style: "cancel" },
+         {
+           text: "Logout",
+           style: "destructive",
+           onPress: async () => {
+             try {
+               await SecureStore.deleteItemAsync("accessToken");
+               await SecureStore.deleteItemAsync("username");
+               await SecureStore.deleteItemAsync("email");
+               await SecureStore.deleteItemAsync("timetable");
+               await SecureStore.deleteItemAsync("day");
+               router.replace("/signin");
+             } catch (error) {
+               console.error("Error during logout:", error);
+             }
+           },
+         },
+       ]
+     );
+   };
 
-        router.replace("/signin");
-      }
-    };
-
-    performLogout();
+   handleLogout()
   }, []);
 
   return (
