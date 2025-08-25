@@ -34,8 +34,8 @@ const scheme = yup.object().shape({
     .string()
     .required("Department is required")
     .matches(
-      /^[a-zA-Z]+$/,
-      "Only letters, numbers, and underscores are allowed"
+    /^[A-Za-z &-]+$/,
+      "Only letters are allowed"
     ),
   program: yup.string().required("Program is required"),
   password: yup.string().required("Password is required"),
