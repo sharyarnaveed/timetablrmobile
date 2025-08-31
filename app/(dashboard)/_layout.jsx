@@ -36,6 +36,9 @@ const _layout = () => {
         );
         return () => subscription.remove();
       }
+      else{
+        router.push("/signin")
+      }
     };
 
     const checktoken = async () => {
@@ -89,7 +92,7 @@ const _layout = () => {
       });
 
       const notificationsaved = await SecureStore.getItemAsync("notification");
-      if (notificationsaved != "true") {
+      if (notificationsaved != "true"||!notificationsaved) {
         try {
           const token = await SecureStore.getItemAsync("accessToken");
           const responce = await axios.post(
@@ -103,13 +106,15 @@ const _layout = () => {
               withCredentials: true,
             }
           );
+          console.log(responce.data);
+          
           await SecureStore.setItemAsync("notification", "true");
         } catch (error) {
           console.log(error);
         }
       }
 
-      console.log("✅ Expo Push Token:", tokenData.data);
+      // console.log("✅ Expo Push Token:", tokenData.data);
     } catch (err) {
       console.error("❌ Error getting push token:", err);
       if (Platform.OS === "android" || Platform.OS === "ios") {

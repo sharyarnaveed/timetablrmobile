@@ -8,14 +8,13 @@ import {
   ScrollView,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import Week from "../../components/More";
 import Today from "../../components/Today";
 import { useTheme } from "../../context/ThemeContext";
 import useCurrentClass from "../../hooks/CurrentClass";
 import useupcomingClasses from "../../hooks/NotCurrentClass";
-
 
 const index = () => {
   const { isDark } = useTheme();

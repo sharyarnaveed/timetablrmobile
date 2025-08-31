@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Text, View } from "react-native";
 
 const logout = () => {
   const router = useRouter();

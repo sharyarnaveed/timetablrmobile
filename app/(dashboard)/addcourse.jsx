@@ -211,16 +211,6 @@ const addcourse = () => {
             >
               Add & View Repeat Courses
             </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: "#9ca3af",
-                marginTop: 8,
-                textAlign: "center",
-              }}
-            >
-              Manage your academic schedule
-            </Text>
           </View>
         </View>
 
@@ -255,7 +245,7 @@ const addcourse = () => {
                       : "#4b5563",
                 }}
               >
-                Add Repeat Course
+                Add Course
               </Text>
             </TouchableOpacity>
 
@@ -288,7 +278,7 @@ const addcourse = () => {
                       : "#4b5563",
                 }}
               >
-                View Repeat Courses
+                View Courses
               </Text>
             </TouchableOpacity>
           </View>
@@ -358,7 +348,9 @@ const addcourse = () => {
                                 height: 56,
                                 width: "100%",
                                 borderBottomWidth: 2,
-                                borderBottomColor: isDark ? "#374151" : "#d1d5db",
+                                borderBottomColor: isDark
+                                  ? "#374151"
+                                  : "#d1d5db",
                                 backgroundColor: "transparent",
                                 justifyContent: "center",
                                 paddingHorizontal: 8,
@@ -394,7 +386,9 @@ const addcourse = () => {
                               <View className="flex-1 bg-black bg-opacity-50 justify-center">
                                 <View
                                   style={{
-                                    backgroundColor: isDark ? "#1a1a1a" : "#fff",
+                                    backgroundColor: isDark
+                                      ? "#1a1a1a"
+                                      : "#fff",
                                     marginHorizontal: 16,
                                     borderRadius: 12,
                                     maxHeight: 384,
@@ -404,7 +398,9 @@ const addcourse = () => {
                                     style={{
                                       padding: 16,
                                       borderBottomWidth: 1,
-                                      borderBottomColor: isDark ? "#374151" : "#e5e7eb",
+                                      borderBottomColor: isDark
+                                        ? "#374151"
+                                        : "#e5e7eb",
                                     }}
                                   >
                                     <View className="flex-row justify-between items-center mb-3">
@@ -439,11 +435,15 @@ const addcourse = () => {
                                       style={{
                                         height: 64,
                                         borderWidth: 1,
-                                        borderColor: isDark ? "#4b5563" : "#d1d5db",
+                                        borderColor: isDark
+                                          ? "#4b5563"
+                                          : "#d1d5db",
                                         borderRadius: 8,
                                         paddingHorizontal: 12,
                                         fontSize: 16,
-                                        backgroundColor: isDark ? "#374151" : "#fff",
+                                        backgroundColor: isDark
+                                          ? "#374151"
+                                          : "#fff",
                                         color: isDark ? "#fff" : "#000",
                                       }}
                                       placeholder="Search programs..."
@@ -465,7 +465,9 @@ const addcourse = () => {
                                         style={{
                                           padding: 16,
                                           borderBottomWidth: 1,
-                                          borderBottomColor: isDark ? "#374151" : "#f3f4f6",
+                                          borderBottomColor: isDark
+                                            ? "#374151"
+                                            : "#f3f4f6",
                                         }}
                                         onPress={() => {
                                           onChange(item.program_name);
@@ -489,7 +491,9 @@ const addcourse = () => {
                                       <View className="p-4">
                                         <Text
                                           style={{
-                                            color: isDark ? "#9ca3af" : "#6b7280",
+                                            color: isDark
+                                              ? "#9ca3af"
+                                              : "#6b7280",
                                             textAlign: "center",
                                           }}
                                         >
@@ -558,7 +562,9 @@ const addcourse = () => {
                                 height: 56,
                                 width: "100%",
                                 borderBottomWidth: 2,
-                                borderBottomColor: isDark ? "#374151" : "#d1d5db",
+                                borderBottomColor: isDark
+                                  ? "#374151"
+                                  : "#d1d5db",
                                 backgroundColor: "transparent",
                                 justifyContent: "center",
                                 paddingHorizontal: 8,
@@ -594,7 +600,9 @@ const addcourse = () => {
                               <View className="flex-1 bg-black bg-opacity-50 justify-center">
                                 <View
                                   style={{
-                                    backgroundColor: isDark ? "#1a1a1a" : "#fff",
+                                    backgroundColor: isDark
+                                      ? "#1a1a1a"
+                                      : "#fff",
                                     marginHorizontal: 16,
                                     borderRadius: 12,
                                     maxHeight: 384,
@@ -604,7 +612,9 @@ const addcourse = () => {
                                     style={{
                                       padding: 16,
                                       borderBottomWidth: 1,
-                                      borderBottomColor: isDark ? "#374151" : "#e5e7eb",
+                                      borderBottomColor: isDark
+                                        ? "#374151"
+                                        : "#e5e7eb",
                                     }}
                                   >
                                     <View className="flex-row justify-between items-center mb-3">
@@ -639,11 +649,15 @@ const addcourse = () => {
                                       style={{
                                         height: 64,
                                         borderWidth: 1,
-                                        borderColor: isDark ? "#4b5563" : "#d1d5db",
+                                        borderColor: isDark
+                                          ? "#4b5563"
+                                          : "#d1d5db",
                                         borderRadius: 8,
                                         paddingHorizontal: 12,
                                         fontSize: 16,
-                                        backgroundColor: isDark ? "#374151" : "#fff",
+                                        backgroundColor: isDark
+                                          ? "#374151"
+                                          : "#fff",
                                         color: isDark ? "#fff" : "#000",
                                       }}
                                       placeholder="Search courses..."
@@ -663,7 +677,9 @@ const addcourse = () => {
                                         style={{
                                           padding: 16,
                                           borderBottomWidth: 1,
-                                          borderBottomColor: isDark ? "#374151" : "#f3f4f6",
+                                          borderBottomColor: isDark
+                                            ? "#374151"
+                                            : "#f3f4f6",
                                         }}
                                         onPress={() => {
                                           onChange(item.course_name);
@@ -685,7 +701,9 @@ const addcourse = () => {
                                       <View className="p-4">
                                         <Text
                                           style={{
-                                            color: isDark ? "#9ca3af" : "#6b7280",
+                                            color: isDark
+                                              ? "#9ca3af"
+                                              : "#6b7280",
                                             textAlign: "center",
                                           }}
                                         >
