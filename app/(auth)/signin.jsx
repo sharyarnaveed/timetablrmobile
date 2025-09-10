@@ -2,6 +2,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import axios from "axios";
 import { Link, router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
   
 import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
@@ -21,10 +22,10 @@ export default function signin() {
   } = useForm({
     resolver: yupResolver(scheme),
   });
-
+const [laoding,SetLoading]=useState(false)
   const onsubmit = async (data) => {
     await SecureStore.setItemAsync('username', data.username);
-
+    SetLoading(true)
     try {
       const responce = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/api/user/signin`, data);
       if (responce.data.success) {
@@ -32,6 +33,8 @@ export default function signin() {
           type: "success",
           text1: responce.data.message
         });
+    SetLoading(true)
+
         await SecureStore.setItemAsync('accessToken', responce.data.accesstoken);
         router.push("/(dashboard)/");
       } else {
@@ -39,6 +42,8 @@ export default function signin() {
           type: "error",
           text1: responce.data.message
         });
+    SetLoading(true)
+
       }
     } catch (error) {
       console.log(error);
@@ -46,6 +51,9 @@ export default function signin() {
         type: "error",
         text1: "Error in Sign In"
       });
+    }finally{
+    SetLoading(false)
+
     }
   };
 
@@ -116,7 +124,7 @@ export default function signin() {
         <TouchableOpacity 
           className="bg-black h-14 rounded-full justify-center items-center mt-6 shadow-sm"
           onPress={handleSubmit(onsubmit)}
-          
+          disabled={laoding}
         >
           <Text className="text-white text-lg font-semibold">Sign In</Text>
         </TouchableOpacity>
