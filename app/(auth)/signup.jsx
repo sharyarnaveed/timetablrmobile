@@ -1,6 +1,4 @@
 import { yupResolver } from "@hookform/resolvers/yup";
-// Remove the Picker import
-// import { Picker } from '@react-native-picker/picker';
 import axios from "axios";
 import { Link, router } from "expo-router";
 import { useEffect, useState } from "react";
@@ -33,13 +31,19 @@ const scheme = yup.object().shape({
   department: yup
     .string()
     .required("Department is required")
-    .matches(
-    /^[A-Za-z &-]+$/,
-      "Only letters are allowed"
-    ),
+    .matches(/^[A-Za-z &-]+$/, "Only letters are allowed"),
   program: yup.string().required("Program is required"),
-  password: yup.string().required("Password is required"),
-  repassword: yup.string().required("Re-Password is required"),
+  password: yup
+    .string()
+    .required("Password is required")
+    .matches(
+      /^[A-Za-z0-9_@]+$/,
+      "Only letters, numbers, and underscores and @ are allowed"
+    ),
+  repassword: yup.string().required("Re-Password is required").matches(
+      /^[A-Za-z0-9_@]+$/,
+      "Only letters, numbers, and underscores and @ are allowed"
+    ),
 });
 
 const signup = () => {
@@ -75,9 +79,10 @@ const signup = () => {
   });
 
   const isAgreed = watch("agree");
-
+  const [loading, SetLaoding] = useState(false);
   const onsubmit = async (data) => {
     try {
+      SetLaoding(true);
       const responce = await axios.post(
         `${process.env.EXPO_PUBLIC_API_URL}/api/user/signup`,
         data
@@ -88,17 +93,22 @@ const signup = () => {
           type: "success",
           text1: responce.data.message,
         });
+        SetLaoding(false);
+
         router.push("/signin");
       } else {
         Toast.show({
           type: "error",
           text1: responce.data.message,
         });
+        SetLaoding(false);
       }
 
       // SetPrograms(responce.data)
     } catch (error) {
       console.log("error in getting programs", error);
+    } finally {
+      SetLaoding(false);
     }
   };
 
@@ -373,9 +383,9 @@ const signup = () => {
           <TouchableOpacity
             className={`h-14 rounded-full justify-center items-center mt-6 shadow-sm ${
               isAgreed ? "bg-black" : "bg-gray-300 opacity-50"
-            }`}
+            } ${loading ? "opacity-50" : ""}`}
             onPress={handleSubmit(onsubmit)}
-            disabled={!isAgreed}
+            disabled={!isAgreed || loading}
           >
             <Text
               className={`text-lg font-semibold ${

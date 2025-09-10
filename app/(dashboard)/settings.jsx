@@ -31,7 +31,11 @@ const passwordSchema = yup.object().shape({
   newPassword: yup
     .string()
     .required("New password is required")
-    .min(6, "Password must be at least 6 characters"),
+    .min(6, "Password must be at least 6 characters")
+    .matches(
+      /^[A-Za-z0-9_@]+$/,
+      "Only letters, numbers, and underscores and @ are allowed"
+    ),
 });
 
 export default function Settings() {
@@ -39,7 +43,6 @@ export default function Settings() {
   const [activeForm, setActiveForm] = useState(null);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // Add form controls
   const {
@@ -69,10 +72,9 @@ export default function Settings() {
       const storedUsername = await SecureStore.getItemAsync("username");
       const storedEmail = await SecureStore.getItemAsync("email");
       const notificationStatus = await SecureStore.getItemAsync("notification");
-      
+
       if (storedUsername) setUsername(storedUsername);
       if (storedEmail) setEmail(storedEmail);
-      setNotificationsEnabled(notificationStatus === "true");
     } catch (error) {
       console.error("Error loading user data:", error);
     }
@@ -81,7 +83,7 @@ export default function Settings() {
   const onUsernameSubmit = async (data) => {
     try {
       const token = await SecureStore.getItemAsync("accessToken");
-     
+
       const response = await axios.put(
         `${process.env.EXPO_PUBLIC_API_URL}/api/user/changeusername`,
         { username: data.newUsername },
@@ -93,7 +95,7 @@ export default function Settings() {
           withCredentials: true,
         }
       );
-      
+
       if (response.data.success) {
         await SecureStore.setItemAsync("username", data.newUsername);
         setUsername(data.newUsername);
@@ -165,29 +167,27 @@ export default function Settings() {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await SecureStore.deleteItemAsync("accessToken");
-              await SecureStore.deleteItemAsync("username");
-              await SecureStore.deleteItemAsync("email");
-              await SecureStore.deleteItemAsync("timetable");
-              await SecureStore.deleteItemAsync("day");
-              router.replace("/signin");
-            } catch (error) {
-              console.error("Error during logout:", error);
-            }
-          },
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await SecureStore.deleteItemAsync("accessToken");
+            await SecureStore.deleteItemAsync("username");
+            await SecureStore.deleteItemAsync("email");
+            await SecureStore.deleteItemAsync("timetable");
+            await SecureStore.deleteItemAsync("day");
+            await SecureStore.deleteItemAsync("notification");
+
+            router.replace("/signin");
+          } catch (error) {
+            console.error("Error during logout:", error);
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleDeleteAccount = () => {
@@ -213,7 +213,7 @@ export default function Settings() {
                 }
               );
               console.log(response.data);
-              
+
               if (response.data.success) {
                 await SecureStore.deleteItemAsync("accessToken");
                 await SecureStore.deleteItemAsync("username");
@@ -244,22 +244,22 @@ export default function Settings() {
   };
 
   return (
-    <ScrollView 
-      style={{ 
-        flex: 1, 
-        backgroundColor: isDark ? '#000' : '#fff' 
+    <ScrollView
+      style={{
+        flex: 1,
+        backgroundColor: isDark ? "#000" : "#fff",
       }}
       contentContainerStyle={{ paddingBottom: 120 }}
     >
       <View style={{ flex: 1, padding: 16, paddingTop: 60 }}>
         {/* Header */}
         <View style={{ marginBottom: 32 }}>
-          <Text 
+          <Text
             style={{
               fontSize: 28,
               fontWeight: "bold",
               color: isDark ? "#fff" : "#000",
-              textAlign: "center"
+              textAlign: "center",
             }}
           >
             Settings
@@ -267,7 +267,7 @@ export default function Settings() {
         </View>
 
         {/* Profile Section */}
-        <View 
+        <View
           style={{
             backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
             padding: 24,
@@ -277,10 +277,10 @@ export default function Settings() {
             shadowOpacity: 0.1,
             shadowRadius: 8,
             elevation: 4,
-            alignItems: "center"
+            alignItems: "center",
           }}
         >
-          <View 
+          <View
             style={{
               width: 80,
               height: 80,
@@ -288,34 +288,34 @@ export default function Settings() {
               borderRadius: 40,
               alignItems: "center",
               justifyContent: "center",
-              marginBottom: 16
+              marginBottom: 16,
             }}
           >
-            <Text 
+            <Text
               style={{
                 fontSize: 32,
                 fontWeight: "bold",
-                color: isDark ? "#fff" : "#374151"
+                color: isDark ? "#fff" : "#374151",
               }}
             >
               {username.charAt(0).toUpperCase()}
             </Text>
           </View>
-          <Text 
+          <Text
             style={{
               fontSize: 20,
               fontWeight: "600",
               color: isDark ? "#fff" : "#374151",
-              marginBottom: 4
+              marginBottom: 4,
             }}
           >
             {username}
           </Text>
           {email && (
-            <Text 
+            <Text
               style={{
                 fontSize: 14,
-                color: isDark ? "#9ca3af" : "#6b7280"
+                color: isDark ? "#9ca3af" : "#6b7280",
               }}
             >
               {email}
@@ -326,23 +326,23 @@ export default function Settings() {
         {/* Settings Options */}
         <View style={{ marginBottom: 24 }}>
           {/* Theme Setting */}
-          <View 
+          <View
             style={{
               backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
               borderRadius: 16,
               marginBottom: 16,
-              overflow: "hidden"
+              overflow: "hidden",
             }}
           >
             <TouchableOpacity
               style={{
                 padding: 16,
                 flexDirection: "row",
-                alignItems: "center"
+                alignItems: "center",
               }}
               onPress={toggleTheme}
             >
-              <View 
+              <View
                 style={{
                   width: 40,
                   height: 40,
@@ -350,30 +350,30 @@ export default function Settings() {
                   borderRadius: 20,
                   alignItems: "center",
                   justifyContent: "center",
-                  marginRight: 16
+                  marginRight: 16,
                 }}
               >
-                <Ionicons 
-                  name={isDark ? "moon" : "sunny"} 
-                  size={20} 
-                  color={isDark ? "#fff" : "#374151"} 
+                <Ionicons
+                  name={isDark ? "moon" : "sunny"}
+                  size={20}
+                  color={isDark ? "#fff" : "#374151"}
                 />
               </View>
               <View style={{ flex: 1 }}>
-                <Text 
+                <Text
                   style={{
                     fontSize: 16,
                     fontWeight: "500",
                     color: isDark ? "#fff" : "#374151",
-                    marginBottom: 2
+                    marginBottom: 2,
                   }}
                 >
                   Theme
                 </Text>
-                <Text 
+                <Text
                   style={{
                     fontSize: 14,
-                    color: isDark ? "#9ca3af" : "#6b7280"
+                    color: isDark ? "#9ca3af" : "#6b7280",
                   }}
                 >
                   {isDark ? "Dark mode enabled" : "Light mode enabled"}
@@ -382,9 +382,9 @@ export default function Settings() {
               <Switch
                 value={isDark}
                 onValueChange={toggleTheme}
-                trackColor={{ 
-                  false: isDark ? "#374151" : "#d1d5db", 
-                  true: isDark ? "#fff" : "#000" 
+                trackColor={{
+                  false: isDark ? "#374151" : "#d1d5db",
+                  true: isDark ? "#fff" : "#000",
                 }}
                 thumbColor={isDark ? (isDark ? "#000" : "#fff") : "#f4f3f4"}
               />
@@ -395,12 +395,12 @@ export default function Settings() {
         {/* Account Management */}
         <View style={{ marginBottom: 24 }}>
           {/* Update Username Section */}
-          <View 
+          <View
             style={{
               backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
               borderRadius: 16,
               marginBottom: 16,
-              overflow: "hidden"
+              overflow: "hidden",
             }}
           >
             <TouchableOpacity
@@ -408,25 +408,25 @@ export default function Settings() {
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "space-between",
-                padding: 20
+                padding: 20,
               }}
               onPress={() => toggleForm("username")}
             >
               <View>
-                <Text 
+                <Text
                   style={{
                     fontSize: 18,
                     fontWeight: "600",
-                    color: isDark ? "#fff" : "#000"
+                    color: isDark ? "#fff" : "#000",
                   }}
                 >
                   Update Username
                 </Text>
-                <Text 
+                <Text
                   style={{
                     color: isDark ? "#9ca3af" : "#6b7280",
                     fontSize: 14,
-                    marginTop: 4
+                    marginTop: 4,
                   }}
                 >
                   Change your display name
@@ -439,17 +439,27 @@ export default function Settings() {
                   borderRadius: 16,
                   alignItems: "center",
                   justifyContent: "center",
-                  backgroundColor: activeForm === "username" 
-                    ? (isDark ? "#fff" : "#000")
-                    : (isDark ? "#374151" : "#d1d5db")
+                  backgroundColor:
+                    activeForm === "username"
+                      ? isDark
+                        ? "#fff"
+                        : "#000"
+                      : isDark
+                      ? "#374151"
+                      : "#d1d5db",
                 }}
               >
                 <Text
                   style={{
                     fontWeight: "bold",
-                    color: activeForm === "username" 
-                      ? (isDark ? "#000" : "#fff")
-                      : (isDark ? "#9ca3af" : "#6b7280")
+                    color:
+                      activeForm === "username"
+                        ? isDark
+                          ? "#000"
+                          : "#fff"
+                        : isDark
+                        ? "#9ca3af"
+                        : "#6b7280",
                   }}
                 >
                   {activeForm === "username" ? "−" : "+"}
@@ -460,21 +470,21 @@ export default function Settings() {
             {/* Username Form */}
             {activeForm === "username" && (
               <View style={{ paddingHorizontal: 20, paddingBottom: 20 }}>
-                <View 
+                <View
                   style={{
                     backgroundColor: isDark ? "#374151" : "#fff",
                     borderRadius: 12,
                     padding: 16,
                     borderWidth: 1,
-                    borderColor: isDark ? "#4b5563" : "#e5e7eb"
+                    borderColor: isDark ? "#4b5563" : "#e5e7eb",
                   }}
                 >
-                  <Text 
+                  <Text
                     style={{
                       fontSize: 14,
                       fontWeight: "500",
                       color: isDark ? "#d1d5db" : "#374151",
-                      marginBottom: 12
+                      marginBottom: 12,
                     }}
                   >
                     Enter new username
@@ -492,7 +502,7 @@ export default function Settings() {
                           paddingVertical: 12,
                           fontSize: 16,
                           color: isDark ? "#fff" : "#000",
-                          marginBottom: 12
+                          marginBottom: 12,
                         }}
                         placeholder="Enter new username"
                         placeholderTextColor={isDark ? "#9ca3af" : "#6b7280"}
@@ -504,11 +514,11 @@ export default function Settings() {
                   />
 
                   {usernameErrors.newUsername && (
-                    <Text 
+                    <Text
                       style={{
                         color: "#ef4444",
                         fontSize: 14,
-                        marginBottom: 12
+                        marginBottom: 12,
                       }}
                     >
                       {usernameErrors.newUsername.message}
@@ -520,15 +530,15 @@ export default function Settings() {
                       backgroundColor: isDark ? "#fff" : "#000",
                       borderRadius: 8,
                       paddingVertical: 12,
-                      alignItems: "center"
+                      alignItems: "center",
                     }}
                     onPress={handleUsernameSubmit(onUsernameSubmit)}
                   >
-                    <Text 
+                    <Text
                       style={{
                         color: isDark ? "#000" : "#fff",
                         fontWeight: "600",
-                        fontSize: 16
+                        fontSize: 16,
                       }}
                     >
                       Update Username
@@ -540,12 +550,12 @@ export default function Settings() {
           </View>
 
           {/* Change Password Section */}
-          <View 
+          <View
             style={{
               backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
               borderRadius: 16,
               marginBottom: 16,
-              overflow: "hidden"
+              overflow: "hidden",
             }}
           >
             <TouchableOpacity
@@ -553,25 +563,25 @@ export default function Settings() {
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "space-between",
-                padding: 20
+                padding: 20,
               }}
               onPress={() => toggleForm("password")}
             >
               <View>
-                <Text 
+                <Text
                   style={{
                     fontSize: 18,
                     fontWeight: "600",
-                    color: isDark ? "#fff" : "#000"
+                    color: isDark ? "#fff" : "#000",
                   }}
                 >
                   Change Password
                 </Text>
-                <Text 
+                <Text
                   style={{
                     color: isDark ? "#9ca3af" : "#6b7280",
                     fontSize: 14,
-                    marginTop: 4
+                    marginTop: 4,
                   }}
                 >
                   Update your security credentials
@@ -584,17 +594,27 @@ export default function Settings() {
                   borderRadius: 16,
                   alignItems: "center",
                   justifyContent: "center",
-                  backgroundColor: activeForm === "password" 
-                    ? (isDark ? "#fff" : "#000")
-                    : (isDark ? "#374151" : "#d1d5db")
+                  backgroundColor:
+                    activeForm === "password"
+                      ? isDark
+                        ? "#fff"
+                        : "#000"
+                      : isDark
+                      ? "#374151"
+                      : "#d1d5db",
                 }}
               >
                 <Text
                   style={{
                     fontWeight: "bold",
-                    color: activeForm === "password" 
-                      ? (isDark ? "#000" : "#fff")
-                      : (isDark ? "#9ca3af" : "#6b7280")
+                    color:
+                      activeForm === "password"
+                        ? isDark
+                          ? "#000"
+                          : "#fff"
+                        : isDark
+                        ? "#9ca3af"
+                        : "#6b7280",
                   }}
                 >
                   {activeForm === "password" ? "−" : "+"}
@@ -605,21 +625,21 @@ export default function Settings() {
             {/* Password Form */}
             {activeForm === "password" && (
               <View style={{ paddingHorizontal: 20, paddingBottom: 20 }}>
-                <View 
+                <View
                   style={{
                     backgroundColor: isDark ? "#374151" : "#fff",
                     borderRadius: 12,
                     padding: 16,
                     borderWidth: 1,
-                    borderColor: isDark ? "#4b5563" : "#e5e7eb"
+                    borderColor: isDark ? "#4b5563" : "#e5e7eb",
                   }}
                 >
-                  <Text 
+                  <Text
                     style={{
                       fontSize: 14,
                       fontWeight: "500",
                       color: isDark ? "#d1d5db" : "#374151",
-                      marginBottom: 12
+                      marginBottom: 12,
                     }}
                   >
                     Change your password
@@ -637,7 +657,7 @@ export default function Settings() {
                           paddingVertical: 12,
                           fontSize: 16,
                           color: isDark ? "#fff" : "#000",
-                          marginBottom: 12
+                          marginBottom: 12,
                         }}
                         placeholder="Current password"
                         placeholderTextColor={isDark ? "#9ca3af" : "#6b7280"}
@@ -649,11 +669,11 @@ export default function Settings() {
                   />
 
                   {passwordErrors.currentPassword && (
-                    <Text 
+                    <Text
                       style={{
                         color: "#ef4444",
                         fontSize: 14,
-                        marginBottom: 12
+                        marginBottom: 12,
                       }}
                     >
                       {passwordErrors.currentPassword.message}
@@ -672,7 +692,7 @@ export default function Settings() {
                           paddingVertical: 12,
                           fontSize: 16,
                           color: isDark ? "#fff" : "#000",
-                          marginBottom: 12
+                          marginBottom: 12,
                         }}
                         placeholder="New password"
                         placeholderTextColor={isDark ? "#9ca3af" : "#6b7280"}
@@ -684,11 +704,11 @@ export default function Settings() {
                   />
 
                   {passwordErrors.newPassword && (
-                    <Text 
+                    <Text
                       style={{
                         color: "#ef4444",
                         fontSize: 14,
-                        marginBottom: 12
+                        marginBottom: 12,
                       }}
                     >
                       {passwordErrors.newPassword.message}
@@ -700,15 +720,15 @@ export default function Settings() {
                       backgroundColor: isDark ? "#fff" : "#000",
                       borderRadius: 8,
                       paddingVertical: 12,
-                      alignItems: "center"
+                      alignItems: "center",
                     }}
                     onPress={handlePasswordSubmit(onPasswordSubmit)}
                   >
-                    <Text 
+                    <Text
                       style={{
                         color: isDark ? "#000" : "#fff",
                         fontWeight: "600",
-                        fontSize: 16
+                        fontSize: 16,
                       }}
                     >
                       Change Password
@@ -737,17 +757,17 @@ export default function Settings() {
             }}
             onPress={handleLogout}
           >
-            <Ionicons 
-              name="log-out-outline" 
-              size={20} 
-              color={isDark ? "#f87171" : "#dc2626"} 
+            <Ionicons
+              name="log-out-outline"
+              size={20}
+              color={isDark ? "#f87171" : "#dc2626"}
               style={{ marginRight: 8 }}
             />
-            <Text 
+            <Text
               style={{
                 color: isDark ? "#f87171" : "#dc2626",
                 fontSize: 16,
-                fontWeight: "600"
+                fontWeight: "600",
               }}
             >
               Logout
@@ -786,7 +806,6 @@ export default function Settings() {
             </Text>
           </TouchableOpacity>
         </View>
-
       </View>
     </ScrollView>
   );

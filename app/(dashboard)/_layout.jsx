@@ -256,18 +256,51 @@ const _layout = () => {
           }}
         />
 
-        <Tabs.Screen
-          name="logout"
-          options={{
-            tabBarIcon: () => (
-              <MaterialCommunityIcons
-                name="logout"
-                size={24}
-                color={isDark ? "#ff6b6b" : "#dc2626"}
-              />
-            ),
-          }}
-        />
+ 
+<Tabs.Screen
+  name="logout"
+  options={{
+    tabBarIcon: () => (
+      <MaterialCommunityIcons
+        name="logout"
+        size={24}
+        color={isDark ? "#ff6b6b" : "#dc2626"}
+      />
+    ),
+  }}
+  listeners={{
+    tabPress: (e) => {
+      // Prevent default behavior
+      e.preventDefault();
+      
+      // Show logout confirmation
+      Alert.alert("Logout", "Are you sure you want to logout?", [
+        { 
+          text: "Cancel", 
+          style: "cancel" 
+        },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await SecureStore.deleteItemAsync("accessToken");
+              await SecureStore.deleteItemAsync("username");
+              await SecureStore.deleteItemAsync("email");
+              await SecureStore.deleteItemAsync("timetable");
+              await SecureStore.deleteItemAsync("day");
+              await SecureStore.deleteItemAsync("notification");
+
+              router.replace("/signin");
+            } catch (error) {
+              console.error("Error during logout:", error);
+            }
+          },
+        },
+      ]);
+    },
+  }}
+/>
       </Tabs>
     </View>
   );

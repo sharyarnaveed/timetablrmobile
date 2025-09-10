@@ -7,34 +7,38 @@ const logout = () => {
   const router = useRouter();
 
   useEffect(() => {
-   const handleLogout = () => {
-     Alert.alert(
-       "Logout",
-       "Are you sure you want to logout?",
-       [
-         { text: "Cancel", style: "cancel" },
-         {
-           text: "Logout",
-           style: "destructive",
-           onPress: async () => {
-             try {
-               await SecureStore.deleteItemAsync("accessToken");
-               await SecureStore.deleteItemAsync("username");
-               await SecureStore.deleteItemAsync("email");
-               await SecureStore.deleteItemAsync("timetable");
-               await SecureStore.deleteItemAsync("day");
-               router.replace("/signin");
-             } catch (error) {
-               console.error("Error during logout:", error);
-             }
-           },
-         },
-       ]
-     );
-   };
+    const handleLogout = () => {
+      Alert.alert("Logout", "Are you sure you want to logout?", [
+        { 
+          text: "Cancel", 
+          style: "cancel",
+          onPress: () => {
+            router.navigate("/"); // Navigate away from logout screen
+          } 
+        },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await SecureStore.deleteItemAsync("accessToken");
+              await SecureStore.deleteItemAsync("username");
+              await SecureStore.deleteItemAsync("email");
+              await SecureStore.deleteItemAsync("timetable");
+              await SecureStore.deleteItemAsync("day");
+              await SecureStore.deleteItemAsync("notification");
 
-   handleLogout()
-  }, []);
+              router.replace("/signin");
+            } catch (error) {
+              console.error("Error during logout:", error);
+            }
+          },
+        },
+      ]);
+    };
+
+    handleLogout();
+  }, [router]); // Add router to dependency array
 
   return (
     <View className="flex-1 justify-center items-center bg-white">
