@@ -33,7 +33,7 @@ const [laoding,SetLoading]=useState(false)
           type: "success",
           text1: responce.data.message
         });
-    SetLoading(true)
+
 
         await SecureStore.setItemAsync('accessToken', responce.data.accesstoken);
         router.push("/(dashboard)/");
@@ -42,7 +42,7 @@ const [laoding,SetLoading]=useState(false)
           type: "error",
           text1: responce.data.message
         });
-    SetLoading(true)
+    SetLoading(false)
 
       }
     } catch (error) {
@@ -120,7 +120,12 @@ const [laoding,SetLoading]=useState(false)
             </View>
           )}
         />
-
+        <View className="flex-row justify-center items-center mt-8">
+          <Text className="text-gray-600 text-base">Dont Remember passowrd? </Text>
+          <TouchableOpacity>
+            <Link  href={"/forgotpassword"} className="text-black font-semibold text-base" >Forgot Password</Link>
+          </TouchableOpacity>
+        </View>
         <TouchableOpacity 
           className="bg-black h-14 rounded-full justify-center items-center mt-6 shadow-sm"
           onPress={handleSubmit(onsubmit)}
