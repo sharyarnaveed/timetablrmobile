@@ -8,7 +8,7 @@ import {
   ScrollView,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import Toast from "react-native-toast-message";
 import Week from "../../components/More";
@@ -111,37 +111,23 @@ const index = () => {
     init();
   }, []);
 
-
-  const handlereload=async()=>
-  {
-  const today = new Date();
+  const handlereload = async () => {
+    const today = new Date();
     const dayName = today.toLocaleDateString("en-US", { weekday: "long" });
+
     const Makeday = `${today.getFullYear()}-${String(
       today.getMonth() + 1
     ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-    const options = { weekday: "long", month: "long", day: "numeric" };
-    const formatted = today.toLocaleDateString("en-US", options);
-    setday(formatted);
-     const StoredDay = await SecureStore.getItemAsync("day");
-      const LocalTimetable = await SecureStore.getItemAsync("timetable");
-       if (
-        StoredDay !== dayName ||
-        !LocalTimetable ||
-        LocalTimetable.length === 0
-      ) {
-        await SecureStore.setItemAsync("day", dayName);
-        await getdata(dayName, Makeday);
-      } else {
-        setTimetableData(LocalTimetable);
-      }
- Toast.show({
-  type:"success",
-  text1:"Data Reloaded",
+    await getdata(dayName, Makeday);
+    const newTimetable = await SecureStore.getItemAsync("timetable");
 
- })
-
-  }
+    setTimetableData(newTimetable);
+    Toast.show({
+      type: "success",
+      text1: "Data Reloaded",
+    });
+  };
   return (
     <ScrollView
       style={{
@@ -250,59 +236,63 @@ const index = () => {
         </View>
 
         <View className="px-4 py-3 sm:px-6 sm:py-4">
-<View className="flex-row items-center justify-between px-4">
-  <TouchableOpacity
-  onPress={handlereload}
-    style={{
-      padding: 8,
-      borderRadius: 20,
-      backgroundColor: isDark ? "#333" : "#f3f4f6",
-    }}
-  >
-    <Ionicons name="reload" size={20} color={isDark ? "white" : "black"} />
-  </TouchableOpacity>
+          <View className="flex-row items-center justify-between px-4">
+            <TouchableOpacity
+              onPress={handlereload}
+              style={{
+                padding: 8,
+                borderRadius: 20,
+                backgroundColor: isDark ? "#333" : "#f3f4f6",
+              }}
+            >
+              <Ionicons
+                name="reload"
+                size={20}
+                color={isDark ? "white" : "black"}
+              />
+            </TouchableOpacity>
 
-  <View className="flex-row space-x-2">
-    {["Today", "Week"].map((tab) => (
-      <TouchableOpacity
-        key={tab}
-        style={{
-          paddingHorizontal: 24,
-          paddingVertical: 12,
-          borderRadius: 20,
-          backgroundColor:
-            selectedTab === tab
-              ? isDark
-                ? "#fff"
-                : "#000"
-              : isDark
-              ? "#333"
-              : "#f3f4f6",
-        }}
-        onPress={() => setSelectedTab(tab)}
-      >
-        <Text
-          style={{
-            fontWeight: "500",
-            color:
-              selectedTab === tab
-                ? isDark
-                  ? "#000"
-                  : "#fff"
-                : isDark
-                ? "#fff"
-                : "#4b5563",
-          }}
-        >
-          {tab}
-        </Text>
-      </TouchableOpacity>
-    ))}
-  </View>
+            <View className="flex-row space-x-2">
+              {["Today", "Week"].map((tab) => (
+                <TouchableOpacity
+                  key={tab}
+                  style={{
+                    paddingHorizontal: 24,
+                    paddingVertical: 12,
+                    borderRadius: 20,
+                    backgroundColor:
+                      selectedTab === tab
+                        ? isDark
+                          ? "#fff"
+                          : "#000"
+                        : isDark
+                        ? "#333"
+                        : "#f3f4f6",
+                  }}
+                  onPress={() => setSelectedTab(tab)}
+                >
+                  <Text
+                    style={{
+                      fontWeight: "500",
+                      color:
+                        selectedTab === tab
+                          ? isDark
+                            ? "#000"
+                            : "#fff"
+                          : isDark
+                          ? "#fff"
+                          : "#4b5563",
+                    }}
+                  >
+                    {tab}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
 
-  {/* Empty view for balance */}
-  <View style={{ width: 36 }} />
-</View>
+            {/* Empty view for balance */}
+            <View style={{ width: 36 }} />
+          </View>
         </View>
         {selectedTab == "Today" && (
           <Today thecurent={currentClass} Notcurrentclass={upcomingclasses} />
