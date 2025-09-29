@@ -11,7 +11,6 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { Alert, Platform, TouchableOpacity, View } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
-
 // Handle notifications when received
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -255,7 +254,25 @@ const _layout = () => {
             ),
           }}
         />
-
+<Tabs.Screen
+          name="reminder"
+          options={{
+            tabBarIcon: ({ focused }) => (
+             <Ionicons name="notifications"
+                size={24}
+                color={
+                  focused
+                    ? isDark
+                      ? "#fff"
+                      : "#000"
+                    : isDark
+                    ? "#888"
+                    : "#666"
+                }
+              />
+            ),
+          }}
+        />
  
 <Tabs.Screen
   name="logout"

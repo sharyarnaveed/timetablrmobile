@@ -8,14 +8,13 @@ const More = () => {
   const { isDark } = useTheme();
   const [selectedDay, setSelectedDay] = useState("Monday");
 
-  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
   const fullDays = [
     "Monday",
     "Tuesday",
     "Wednesday",
     "Thursday",
     "Friday",
-    "Saturday",
   ];
 
   const [scheduleData, SetScheduledata] = useState([]);
@@ -181,7 +180,7 @@ const More = () => {
                         color: isDark ? "#fff" : "#111827",
                       }}
                     >
-                      {covertionoftime(classItem.start_time)}
+                      {covertionoftime(classItem.start_time)} - {covertionoftime(classItem.end_time)}
                     </Text>
                   </View>
                 </View>
