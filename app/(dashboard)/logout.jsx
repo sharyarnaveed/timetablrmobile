@@ -41,9 +41,25 @@ const logout = () => {
   }, [router]); // Add router to dependency array
 
   return (
-    <View className="flex-1 justify-center items-center bg-white">
-      <ActivityIndicator size="large" color="#000" />
-      <Text className="mt-4 text-gray-600">Logging out...</Text>
+    <View 
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#f8f9fa",
+      }}
+    >
+      <ActivityIndicator size="large" color="#111827" />
+      <Text 
+        style={{
+          marginTop: 16,
+          fontSize: 16,
+          color: "#6b7280",
+          fontWeight: "500",
+        }}
+      >
+        Logging out...
+      </Text>
     </View>
   );
 };

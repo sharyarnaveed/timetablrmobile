@@ -343,62 +343,216 @@ const EventsPage = () => {
   };
 
   return (
-    <View className={`flex-1 ${isDark ? 'bg-black' : 'bg-white'}`} style={{ paddingTop: insets.top }}>
+    <View className={`flex-1 ${isDark ? 'bg-black' : 'bg-gray-50'}`} style={{ paddingTop: insets.top }}>
       <StatusBar 
         barStyle={isDark ? "light-content" : "dark-content"} 
         backgroundColor="transparent"
         translucent={true}
       />
       
-      {/* Clean Header */}
-      <View className="px-6 py-8">
-        <View className="flex-row justify-between items-center mb-6">
-          <View>
-            <Text className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-black'}`}>
-              Schedule
-            </Text>
-            <Text className={`text-base mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              {events.length} tasks • {upcomingCount} upcoming
-            </Text>
+      {/* Modernistic Header with accent */}
+      <View className="px-5 py-8">
+        <View className="flex-row justify-between items-center mb-8">
+          <View style={{ flex: 1 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: 10,
+              }}
+            >
+              <View
+                style={{
+                  width: 5,
+                  height: 28,
+                  borderRadius: 2.5,
+                  backgroundColor: isDark ? "#ffffff" : "#111827",
+                  marginRight: 12,
+                }}
+              />
+              <Text 
+                style={{
+                  fontSize: 38,
+                  fontWeight: "800",
+                  color: isDark ? "#ffffff" : "#111827",
+                  letterSpacing: -1,
+                }}
+              >
+                Schedule
+              </Text>
+            </View>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginLeft: 17,
+                backgroundColor: isDark
+                  ? "rgba(255, 255, 255, 0.06)"
+                  : "rgba(0, 0, 0, 0.04)",
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 20,
+                alignSelf: "flex-start",
+              }}
+            >
+              <Text 
+                style={{
+                  fontSize: 14,
+                  color: isDark ? "#9ca3af" : "#6b7280",
+                  fontWeight: "600",
+                }}
+              >
+                {events.length} tasks • {upcomingCount} upcoming
+              </Text>
+            </View>
           </View>
           
-          {/* Minimal Add Button */}
+          {/* Modernistic Floating Add Button */}
           <TouchableOpacity
-            className={`w-12 h-12 rounded-full justify-center items-center border-2 ${
-              isDark ? 'border-white' : 'border-black'
-            }`}
+            style={{
+              width: 60,
+              height: 60,
+              borderRadius: 20,
+              backgroundColor: isDark ? "#ffffff" : "#111827",
+              justifyContent: "center",
+              alignItems: "center",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.3,
+              shadowRadius: 16,
+              elevation: 8,
+              transform: [{ rotate: "-5deg" }],
+            }}
             onPress={() => setModalVisible(true)}
+            activeOpacity={0.8}
           >
-            <Text className={`text-2xl font-light ${isDark ? 'text-white' : 'text-black'}`}>
+            <Text 
+              style={{
+                fontSize: 32,
+                fontWeight: "300",
+                color: isDark ? "#000000" : "#ffffff",
+                transform: [{ rotate: "5deg" }],
+              }}
+            >
               +
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Simple Stats */}
-        <View className="flex-row space-x-4">
-          <View className={`flex-1 p-4 rounded-2xl ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
-            <Text className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-black'}`}>
+        {/* Modernistic Stats with glassmorphism */}
+        <View className="flex-row space-x-3">
+          <View 
+            style={{
+              flex: 1,
+              padding: 24,
+              borderRadius: 24,
+              backgroundColor: isDark
+                ? "rgba(17, 17, 17, 0.8)"
+                : "rgba(255, 255, 255, 0.8)",
+              borderWidth: isDark ? 1.5 : 1,
+              borderColor: isDark
+                ? "rgba(255, 255, 255, 0.1)"
+                : "rgba(0, 0, 0, 0.08)",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: isDark ? 0.3 : 0.1,
+              shadowRadius: 12,
+              elevation: 6,
+              overflow: "hidden",
+              position: "relative",
+            }}
+          >
+            <View
+              style={{
+                position: "absolute",
+                top: -20,
+                right: -20,
+                width: 60,
+                height: 60,
+                borderRadius: 30,
+                backgroundColor: isDark
+                  ? "rgba(255, 255, 255, 0.05)"
+                  : "rgba(0, 0, 0, 0.03)",
+              }}
+            />
+            <Text 
+              style={{
+                fontSize: 40,
+                fontWeight: "800",
+                color: isDark ? "#ffffff" : "#111827",
+                marginBottom: 8,
+                letterSpacing: -1,
+              }}
+            >
               {upcomingCount}
             </Text>
-            <Text className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            <Text 
+              style={{
+                fontSize: 14,
+                color: isDark ? "#6b7280" : "#9ca3af",
+                fontWeight: "600",
+                letterSpacing: 0.5,
+              }}
+            >
               Upcoming
             </Text>
           </View>
-          <View className={`flex-1 p-4 rounded-2xl ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
-            <Text className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-black'}`}>
+          <View 
+            style={{
+              flex: 1,
+              padding: 24,
+              borderRadius: 24,
+              backgroundColor: isDark ? "#ffffff" : "#111827",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.3,
+              shadowRadius: 16,
+              elevation: 8,
+              overflow: "hidden",
+              position: "relative",
+            }}
+          >
+            <View
+              style={{
+                position: "absolute",
+                bottom: -15,
+                left: -15,
+                width: 50,
+                height: 50,
+                borderRadius: 25,
+                backgroundColor: isDark
+                  ? "rgba(0, 0, 0, 0.1)"
+                  : "rgba(255, 255, 255, 0.1)",
+              }}
+            />
+            <Text 
+              style={{
+                fontSize: 40,
+                fontWeight: "800",
+                color: isDark ? "#000000" : "#ffffff",
+                marginBottom: 8,
+                letterSpacing: -1,
+              }}
+            >
               {overdueCount}
             </Text>
-            <Text className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            <Text 
+              style={{
+                fontSize: 14,
+                color: isDark ? "#6b7280" : "#d1d5db",
+                fontWeight: "600",
+                letterSpacing: 0.5,
+              }}
+            >
               Overdue
             </Text>
           </View>
         </View>
       </View>
 
-      {/* Clean Events List */}
+      {/* Modern Events List */}
       <ScrollView 
-        className="flex-1 px-6" 
+        className="flex-1 px-5" 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 20 }}
       >
@@ -406,9 +560,19 @@ const EventsPage = () => {
           <TouchableOpacity
             key={event.id}
             activeOpacity={0.7}
-            className={`rounded-2xl p-6 mb-4 border ${
-              isDark ? 'border-gray-800 bg-gray-900/50' : 'border-gray-200 bg-gray-50/50'
-            }`}
+            style={{
+              borderRadius: 20,
+              padding: 20,
+              marginBottom: 12,
+              backgroundColor: isDark ? "#111111" : "#ffffff",
+              borderWidth: isDark ? 1 : 0,
+              borderColor: isDark ? "#1f1f1f" : "transparent",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: isDark ? 0.2 : 0.05,
+              shadowRadius: 8,
+              elevation: 3,
+            }}
           >
             <View className="flex-row justify-between items-start mb-3">
               <View className="flex-row items-center flex-1">
@@ -451,41 +615,105 @@ const EventsPage = () => {
         ))}
         
         {events.length === 0 && (
-          <View className="flex-1 justify-center items-center py-20">
-            <Text className="text-6xl mb-6">📅</Text>
-            <Text className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>
+          <View 
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              paddingVertical: 60,
+            }}
+          >
+            <Text style={{ fontSize: 64, marginBottom: 20 }}>📅</Text>
+            <Text 
+              style={{
+                fontSize: 22,
+                fontWeight: "600",
+                marginBottom: 8,
+                color: isDark ? "#ffffff" : "#111827",
+              }}
+            >
               No tasks yet
             </Text>
-            <Text className={`text-base text-center ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            <Text 
+              style={{
+                fontSize: 16,
+                textAlign: "center",
+                color: isDark ? "#6b7280" : "#9ca3af",
+                paddingHorizontal: 40,
+              }}
+            >
               Add your first task to get started
             </Text>
           </View>
         )}
       </ScrollView>
 
-      {/* Clean Modal with Validation */}
+      {/* Modern Modal with Validation */}
       <Modal
         animationType="slide"
         transparent={true}
         visible={modalVisible}
         onRequestClose={handleCloseModal}
       >
-        <View className="flex-1 bg-black/50 justify-end">
-          <View className={`rounded-t-3xl px-6 py-8 ${isDark ? 'bg-black' : 'bg-white'}`} 
-                style={{ minHeight: '85%' }}>
+        <View 
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            justifyContent: "flex-end",
+          }}
+        >
+          <View 
+            style={{
+              borderTopLeftRadius: 32,
+              borderTopRightRadius: 32,
+              paddingHorizontal: 24,
+              paddingTop: 32,
+              paddingBottom: 40,
+              minHeight: "85%",
+              backgroundColor: isDark ? "#000000" : "#ffffff",
+            }}
+          >
             
-            {/* Modal Header */}
-            <View className="flex-row justify-between items-center mb-8">
-              <Text className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-black'}`}>
+            {/* Modern Modal Header */}
+            <View 
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 32,
+              }}
+            >
+              <Text 
+                style={{
+                  fontSize: 28,
+                  fontWeight: "700",
+                  color: isDark ? "#ffffff" : "#111827",
+                  letterSpacing: -0.5,
+                }}
+              >
                 Add Task
               </Text>
               <TouchableOpacity
-                className={`w-10 h-10 rounded-full justify-center items-center ${
-                  isDark ? 'bg-gray-900' : 'bg-gray-100'
-                }`}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: isDark ? "#111111" : "#f3f4f6",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
                 onPress={handleCloseModal}
+                activeOpacity={0.7}
               >
-                <Text className={`text-lg ${isDark ? 'text-white' : 'text-black'}`}>×</Text>
+                <Text 
+                  style={{
+                    fontSize: 24,
+                    color: isDark ? "#ffffff" : "#111827",
+                    fontWeight: "300",
+                  }}
+                >
+                  ×
+                </Text>
               </TouchableOpacity>
             </View>
 

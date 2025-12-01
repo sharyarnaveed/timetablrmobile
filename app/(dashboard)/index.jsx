@@ -132,156 +132,294 @@ const index = () => {
     <ScrollView
       style={{
         flex: 1,
-        backgroundColor: isDark ? "#000" : "#fff",
+        backgroundColor: isDark ? "#000000" : "#f8f9fa",
       }}
+      showsVerticalScrollIndicator={false}
     >
       <View className="flex-1">
-        <View className="px-4 pt-12 pb-6 sm:px-8 sm:pt-16 sm:pb-8">
+        {/* Modernistic Asymmetric Welcome Card */}
+        <View className="px-5 pt-20 pb-6">
+          {/* Decorative accent line */}
           <View
             style={{
-              backgroundColor: isDark ? "#1a1a1a" : "#000",
-              borderRadius: 24,
-              padding: 16,
+              position: "absolute",
+              top: 60,
+              left: 5,
+              right: 5,
+              height: 2,
+              backgroundColor: isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.03)",
+              borderRadius: 1,
+            }}
+          />
+          
+          <View
+            style={{
+              backgroundColor: isDark ? "#111111" : "#ffffff",
+              borderRadius: 32,
+              padding: 28,
               shadowColor: "#000",
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-              elevation: 8,
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: isDark ? 0.4 : 0.12,
+              shadowRadius: 20,
+              elevation: 12,
+              borderWidth: isDark ? 1 : 0,
+              borderColor: isDark ? "#1f1f1f" : "transparent",
+              overflow: "hidden",
             }}
           >
-            <View className="flex-row justify-between items-center">
-              <View className="flex-1">
-                <Text
+            {/* Decorative gradient overlay */}
+            <View
+              style={{
+                position: "absolute",
+                top: -50,
+                right: -50,
+                width: 150,
+                height: 150,
+                borderRadius: 75,
+                backgroundColor: isDark
+                  ? "rgba(255, 255, 255, 0.03)"
+                  : "rgba(0, 0, 0, 0.02)",
+              }}
+            />
+            
+            <View className="flex-row justify-between items-start">
+              <View className="flex-1 mr-6" style={{ zIndex: 1 }}>
+                <View
                   style={{
-                    fontSize: 16,
-                    fontWeight: "300",
-                    color: isDark ? "#d1d5db" : "#d1d5db",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 12,
                   }}
                 >
-                  Welcome
-                </Text>
+                  <View
+                    style={{
+                      width: 4,
+                      height: 4,
+                      borderRadius: 2,
+                      backgroundColor: isDark ? "#ffffff" : "#111827",
+                      marginRight: 8,
+                    }}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontWeight: "600",
+                      color: isDark ? "#6b7280" : "#9ca3af",
+                      letterSpacing: 1.5,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Welcome back
+                  </Text>
+                </View>
                 <Text
                   style={{
-                    fontSize: 20,
-                    fontWeight: "bold",
-                    color: "#fff",
-                    marginTop: 4,
+                    fontSize: 32,
+                    fontWeight: "800",
+                    color: isDark ? "#ffffff" : "#111827",
+                    marginBottom: 12,
+                    letterSpacing: -1,
+                    lineHeight: 38,
                   }}
                 >
                   {TheUsername}
                 </Text>
-                <Text
+                <View
                   style={{
-                    fontSize: 12,
-                    color: isDark ? "#9ca3af" : "#9ca3af",
-                    marginTop: 8,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    backgroundColor: isDark
+                      ? "rgba(255, 255, 255, 0.05)"
+                      : "rgba(0, 0, 0, 0.03)",
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 20,
+                    alignSelf: "flex-start",
                   }}
                 >
-                  {theday}
-                </Text>
+                  <Ionicons
+                    name="calendar-outline"
+                    size={14}
+                    color={isDark ? "#9ca3af" : "#6b7280"}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      color: isDark ? "#9ca3af" : "#6b7280",
+                      marginLeft: 6,
+                      fontWeight: "500",
+                    }}
+                  >
+                    {theday}
+                  </Text>
+                </View>
               </View>
+              
               <View
-                style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 8,
+                  zIndex: 1,
+                }}
               >
-                {/* Message Icon */}
+                {/* Message Icon with glassmorphism */}
                 <TouchableOpacity
                   style={{
                     width: 48,
                     height: 48,
-                    backgroundColor: "rgba(255, 255, 255, 0.2)",
+                    backgroundColor: isDark
+                      ? "rgba(255, 255, 255, 0.1)"
+                      : "rgba(0, 0, 0, 0.06)",
                     borderRadius: 24,
                     alignItems: "center",
                     justifyContent: "center",
+                    borderWidth: 1,
+                    borderColor: isDark
+                      ? "rgba(255, 255, 255, 0.1)"
+                      : "rgba(0, 0, 0, 0.08)",
+                    backdropFilter: "blur(10px)",
                   }}
                   onPress={handleMessagePress}
+                  activeOpacity={0.6}
                 >
-                  <Ionicons name="chatbubble-outline" size={24} color="#fff" />
+                  <Ionicons
+                    name="chatbubble-outline"
+                    size={22}
+                    color={isDark ? "#ffffff" : "#111827"}
+                  />
                 </TouchableOpacity>
 
-                {/* Avatar */}
-                <View
-                  style={{
-                    width: 56,
-                    height: 56,
-                    backgroundColor: "#fff",
-                    borderRadius: 28,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Link
+                {/* Avatar with modern design */}
+                <Link href="/settings">
+                  <View
                     style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 24,
+                      width: 56,
+                      height: 56,
+                      backgroundColor: isDark ? "#ffffff" : "#111827",
+                      borderRadius: 20,
                       alignItems: "center",
                       justifyContent: "center",
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 6 },
+                      shadowOpacity: 0.2,
+                      shadowRadius: 12,
+                      elevation: 6,
+                      transform: [{ rotate: "-5deg" }],
                     }}
-                    href="/settings"
                   >
                     <Text
                       style={{
-                        color: "#000",
-                        fontWeight: "bold",
-                        fontSize: 30,
-                        textAlign: "center",
+                        color: isDark ? "#000000" : "#ffffff",
+                        fontWeight: "800",
+                        fontSize: 24,
+                        letterSpacing: 0.5,
+                        transform: [{ rotate: "5deg" }],
                       }}
                     >
                       {firstchar.toUpperCase()}
                     </Text>
-                  </Link>
-                </View>
+                  </View>
+                </Link>
               </View>
             </View>
           </View>
         </View>
 
-        <View className="px-4 py-3 sm:px-6 sm:py-4">
-          <View className="flex-row items-center justify-between px-4">
+        {/* Modernistic Floating Tab Selector */}
+        <View className="px-5 pb-8">
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              backgroundColor: isDark ? "#111111" : "#ffffff",
+              borderRadius: 24,
+              padding: 6,
+              borderWidth: isDark ? 1 : 0,
+              borderColor: isDark ? "#1f1f1f" : "transparent",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: isDark ? 0.3 : 0.1,
+              shadowRadius: 12,
+              elevation: 6,
+            }}
+          >
             <TouchableOpacity
               onPress={handlereload}
               style={{
-                padding: 8,
+                width: 48,
+                height: 48,
                 borderRadius: 20,
-                backgroundColor: isDark ? "#333" : "#f3f4f6",
+                backgroundColor: isDark
+                  ? "rgba(255, 255, 255, 0.08)"
+                  : "rgba(0, 0, 0, 0.04)",
+                alignItems: "center",
+                justifyContent: "center",
+                borderWidth: 1,
+                borderColor: isDark
+                  ? "rgba(255, 255, 255, 0.1)"
+                  : "rgba(0, 0, 0, 0.06)",
               }}
+              activeOpacity={0.7}
             >
               <Ionicons
-                name="reload"
-                size={20}
-                color={isDark ? "white" : "black"}
+                name="refresh"
+                size={22}
+                color={isDark ? "#ffffff" : "#111827"}
               />
             </TouchableOpacity>
 
-            <View className="flex-row space-x-2">
+            <View
+              style={{
+                flexDirection: "row",
+                backgroundColor: isDark
+                  ? "rgba(255, 255, 255, 0.05)"
+                  : "rgba(0, 0, 0, 0.03)",
+                borderRadius: 18,
+                padding: 4,
+                flex: 1,
+                marginHorizontal: 8,
+              }}
+            >
               {["Today", "Week"].map((tab) => (
                 <TouchableOpacity
                   key={tab}
                   style={{
-                    paddingHorizontal: 24,
+                    flex: 1,
                     paddingVertical: 12,
-                    borderRadius: 20,
+                    borderRadius: 14,
                     backgroundColor:
                       selectedTab === tab
                         ? isDark
-                          ? "#fff"
-                          : "#000"
-                        : isDark
-                        ? "#333"
-                        : "#f3f4f6",
+                          ? "#ffffff"
+                          : "#111827"
+                        : "transparent",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    shadowColor:
+                      selectedTab === tab ? "#000" : "transparent",
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: selectedTab === tab ? 0.1 : 0,
+                    shadowRadius: 4,
+                    elevation: selectedTab === tab ? 2 : 0,
                   }}
                   onPress={() => setSelectedTab(tab)}
+                  activeOpacity={0.7}
                 >
                   <Text
                     style={{
-                      fontWeight: "500",
+                      fontWeight: selectedTab === tab ? "700" : "500",
+                      fontSize: 15,
                       color:
                         selectedTab === tab
                           ? isDark
-                            ? "#000"
-                            : "#fff"
+                            ? "#000000"
+                            : "#ffffff"
                           : isDark
-                          ? "#fff"
-                          : "#4b5563",
+                          ? "#9ca3af"
+                          : "#6b7280",
+                      letterSpacing: 0.3,
                     }}
                   >
                     {tab}
@@ -290,10 +428,12 @@ const index = () => {
               ))}
             </View>
 
-            {/* Empty view for balance */}
-            <View style={{ width: 36 }} />
+            {/* Spacer */}
+            <View style={{ width: 48 }} />
           </View>
         </View>
+
+        {/* Content */}
         {selectedTab == "Today" && (
           <Today thecurent={currentClass} Notcurrentclass={upcomingclasses} />
         )}

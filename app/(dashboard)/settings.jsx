@@ -247,55 +247,125 @@ export default function Settings() {
     <ScrollView
       style={{
         flex: 1,
-        backgroundColor: isDark ? "#000" : "#fff",
+        backgroundColor: isDark ? "#000000" : "#f8f9fa",
       }}
       contentContainerStyle={{ paddingBottom: 120 }}
+      showsVerticalScrollIndicator={false}
     >
-      <View style={{ flex: 1, padding: 16, paddingTop: 60 }}>
-        {/* Header */}
-        <View style={{ marginBottom: 32 }}>
-          <Text
+      <View style={{ flex: 1, padding: 20, paddingTop: 60 }}>
+        {/* Modernistic Header with accent */}
+        <View style={{ marginBottom: 40 }}>
+          <View
             style={{
-              fontSize: 28,
-              fontWeight: "bold",
-              color: isDark ? "#fff" : "#000",
-              textAlign: "center",
+              flexDirection: "row",
+              alignItems: "center",
+              marginBottom: 12,
             }}
           >
-            Settings
+            <View
+              style={{
+                width: 6,
+                height: 32,
+                borderRadius: 3,
+                backgroundColor: isDark ? "#ffffff" : "#111827",
+                marginRight: 12,
+              }}
+            />
+            <Text
+              style={{
+                fontSize: 38,
+                fontWeight: "800",
+                color: isDark ? "#ffffff" : "#111827",
+                letterSpacing: -1,
+              }}
+            >
+              Settings
+            </Text>
+          </View>
+          <Text
+            style={{
+              fontSize: 15,
+              color: isDark ? "#6b7280" : "#9ca3af",
+              marginLeft: 18,
+              fontWeight: "500",
+            }}
+          >
+            Manage your account and preferences
           </Text>
         </View>
 
-        {/* Profile Section */}
+        {/* Modernistic Profile Section with asymmetric design */}
         <View
           style={{
-            backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
-            padding: 24,
-            borderRadius: 16,
-            marginBottom: 24,
+            backgroundColor: isDark ? "#111111" : "#ffffff",
+            padding: 32,
+            borderRadius: 32,
+            marginBottom: 28,
             shadowColor: "#000",
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 4,
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: isDark ? 0.4 : 0.12,
+            shadowRadius: 20,
+            elevation: 10,
             alignItems: "center",
+            borderWidth: isDark ? 1 : 0,
+            borderColor: isDark ? "#1f1f1f" : "transparent",
+            overflow: "hidden",
+            position: "relative",
           }}
         >
+          {/* Decorative elements */}
           <View
             style={{
+              position: "absolute",
+              top: -30,
+              right: -30,
+              width: 120,
+              height: 120,
+              borderRadius: 60,
+              backgroundColor: isDark
+                ? "rgba(255, 255, 255, 0.03)"
+                : "rgba(0, 0, 0, 0.02)",
+            }}
+          />
+          <View
+            style={{
+              position: "absolute",
+              bottom: -20,
+              left: -20,
               width: 80,
               height: 80,
-              backgroundColor: isDark ? "#374151" : "#e5e7eb",
               borderRadius: 40,
+              backgroundColor: isDark
+                ? "rgba(255, 255, 255, 0.02)"
+                : "rgba(0, 0, 0, 0.015)",
+            }}
+          />
+          
+          <View
+            style={{
+              width: 108,
+              height: 108,
+              backgroundColor: isDark ? "#ffffff" : "#111827",
+              borderRadius: 28,
               alignItems: "center",
               justifyContent: "center",
-              marginBottom: 16,
+              marginBottom: 24,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.25,
+              shadowRadius: 16,
+              elevation: 8,
+              transform: [{ rotate: "-3deg" }],
+              zIndex: 1,
             }}
           >
             <Text
               style={{
-                fontSize: 32,
-                fontWeight: "bold",
-                color: isDark ? "#fff" : "#374151",
+                fontSize: 48,
+                fontWeight: "800",
+                color: isDark ? "#000000" : "#ffffff",
+                letterSpacing: 1.5,
+                transform: [{ rotate: "3deg" }],
               }}
             >
               {username.charAt(0).toUpperCase()}
@@ -303,69 +373,111 @@ export default function Settings() {
           </View>
           <Text
             style={{
-              fontSize: 20,
-              fontWeight: "600",
-              color: isDark ? "#fff" : "#374151",
-              marginBottom: 4,
+              fontSize: 28,
+              fontWeight: "800",
+              color: isDark ? "#ffffff" : "#111827",
+              marginBottom: 10,
+              letterSpacing: -0.8,
+              zIndex: 1,
             }}
           >
             {username}
           </Text>
           {email && (
-            <Text
+            <View
               style={{
-                fontSize: 14,
-                color: isDark ? "#9ca3af" : "#6b7280",
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: isDark
+                  ? "rgba(255, 255, 255, 0.08)"
+                  : "rgba(0, 0, 0, 0.04)",
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 24,
+                zIndex: 1,
               }}
             >
-              {email}
-            </Text>
+              <Ionicons
+                name="mail-outline"
+                size={16}
+                color={isDark ? "#9ca3af" : "#6b7280"}
+              />
+              <Text
+                style={{
+                  fontSize: 15,
+                  color: isDark ? "#9ca3af" : "#6b7280",
+                  marginLeft: 8,
+                  fontWeight: "500",
+                }}
+              >
+                {email}
+              </Text>
+            </View>
           )}
         </View>
 
-        {/* Settings Options */}
+        {/* Modernistic Settings Options */}
         <View style={{ marginBottom: 24 }}>
-          {/* Theme Setting */}
+          {/* Theme Setting with glassmorphism */}
           <View
             style={{
-              backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
-              borderRadius: 16,
+              backgroundColor: isDark
+                ? "rgba(17, 17, 17, 0.8)"
+                : "rgba(255, 255, 255, 0.8)",
+              borderRadius: 24,
               marginBottom: 16,
               overflow: "hidden",
+              borderWidth: isDark ? 1.5 : 1,
+              borderColor: isDark
+                ? "rgba(255, 255, 255, 0.1)"
+                : "rgba(0, 0, 0, 0.08)",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: isDark ? 0.3 : 0.1,
+              shadowRadius: 12,
+              elevation: 6,
             }}
           >
             <TouchableOpacity
               style={{
-                padding: 16,
+                padding: 24,
                 flexDirection: "row",
                 alignItems: "center",
               }}
               onPress={toggleTheme}
+              activeOpacity={0.7}
             >
               <View
                 style={{
-                  width: 40,
-                  height: 40,
-                  backgroundColor: isDark ? "#374151" : "#e5e7eb",
-                  borderRadius: 20,
+                  width: 56,
+                  height: 56,
+                  backgroundColor: isDark
+                    ? "rgba(255, 255, 255, 0.12)"
+                    : "rgba(17, 24, 39, 0.08)",
+                  borderRadius: 18,
                   alignItems: "center",
                   justifyContent: "center",
-                  marginRight: 16,
+                  marginRight: 18,
+                  borderWidth: 1,
+                  borderColor: isDark
+                    ? "rgba(255, 255, 255, 0.1)"
+                    : "rgba(0, 0, 0, 0.06)",
                 }}
               >
                 <Ionicons
                   name={isDark ? "moon" : "sunny"}
-                  size={20}
-                  color={isDark ? "#fff" : "#374151"}
+                  size={26}
+                  color={isDark ? "#ffffff" : "#111827"}
                 />
               </View>
               <View style={{ flex: 1 }}>
                 <Text
                   style={{
-                    fontSize: 16,
-                    fontWeight: "500",
-                    color: isDark ? "#fff" : "#374151",
-                    marginBottom: 2,
+                    fontSize: 18,
+                    fontWeight: "700",
+                    color: isDark ? "#ffffff" : "#111827",
+                    marginBottom: 6,
+                    letterSpacing: -0.3,
                   }}
                 >
                   Theme
@@ -373,7 +485,8 @@ export default function Settings() {
                 <Text
                   style={{
                     fontSize: 14,
-                    color: isDark ? "#9ca3af" : "#6b7280",
+                    color: isDark ? "#6b7280" : "#9ca3af",
+                    fontWeight: "500",
                   }}
                 >
                   {isDark ? "Dark mode enabled" : "Light mode enabled"}
@@ -384,23 +497,31 @@ export default function Settings() {
                 onValueChange={toggleTheme}
                 trackColor={{
                   false: isDark ? "#374151" : "#d1d5db",
-                  true: isDark ? "#fff" : "#000",
+                  true: isDark ? "#ffffff" : "#111827",
                 }}
-                thumbColor={isDark ? (isDark ? "#000" : "#fff") : "#f4f3f4"}
+                thumbColor={isDark ? "#000000" : "#ffffff"}
+                ios_backgroundColor={isDark ? "#374151" : "#d1d5db"}
               />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Account Management */}
+        {/* Modern Account Management */}
         <View style={{ marginBottom: 24 }}>
           {/* Update Username Section */}
           <View
             style={{
-              backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
-              borderRadius: 16,
+              backgroundColor: isDark ? "#111111" : "#ffffff",
+              borderRadius: 20,
               marginBottom: 16,
               overflow: "hidden",
+              borderWidth: isDark ? 1 : 0,
+              borderColor: isDark ? "#1f1f1f" : "transparent",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: isDark ? 0.2 : 0.05,
+              shadowRadius: 8,
+              elevation: 3,
             }}
           >
             <TouchableOpacity
@@ -411,22 +532,23 @@ export default function Settings() {
                 padding: 20,
               }}
               onPress={() => toggleForm("username")}
+              activeOpacity={0.7}
             >
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text
                   style={{
                     fontSize: 18,
                     fontWeight: "600",
-                    color: isDark ? "#fff" : "#000",
+                    color: isDark ? "#ffffff" : "#111827",
+                    marginBottom: 4,
                   }}
                 >
                   Update Username
                 </Text>
                 <Text
                   style={{
-                    color: isDark ? "#9ca3af" : "#6b7280",
+                    color: isDark ? "#6b7280" : "#9ca3af",
                     fontSize: 14,
-                    marginTop: 4,
                   }}
                 >
                   Change your display name
@@ -434,32 +556,33 @@ export default function Settings() {
               </View>
               <View
                 style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 16,
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
                   alignItems: "center",
                   justifyContent: "center",
                   backgroundColor:
                     activeForm === "username"
                       ? isDark
-                        ? "#fff"
-                        : "#000"
+                        ? "#ffffff"
+                        : "#111827"
                       : isDark
-                      ? "#374151"
-                      : "#d1d5db",
+                      ? "#1f1f1f"
+                      : "#f3f4f6",
                 }}
               >
                 <Text
                   style={{
-                    fontWeight: "bold",
+                    fontWeight: "600",
+                    fontSize: 18,
                     color:
                       activeForm === "username"
                         ? isDark
-                          ? "#000"
-                          : "#fff"
+                          ? "#000000"
+                          : "#ffffff"
                         : isDark
-                        ? "#9ca3af"
-                        : "#6b7280",
+                        ? "#6b7280"
+                        : "#9ca3af",
                   }}
                 >
                   {activeForm === "username" ? "−" : "+"}
@@ -467,24 +590,24 @@ export default function Settings() {
               </View>
             </TouchableOpacity>
 
-            {/* Username Form */}
+            {/* Modern Username Form */}
             {activeForm === "username" && (
               <View style={{ paddingHorizontal: 20, paddingBottom: 20 }}>
                 <View
                   style={{
-                    backgroundColor: isDark ? "#374151" : "#fff",
-                    borderRadius: 12,
-                    padding: 16,
+                    backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
+                    borderRadius: 16,
+                    padding: 20,
                     borderWidth: 1,
-                    borderColor: isDark ? "#4b5563" : "#e5e7eb",
+                    borderColor: isDark ? "#1f1f1f" : "#e5e7eb",
                   }}
                 >
                   <Text
                     style={{
-                      fontSize: 14,
-                      fontWeight: "500",
+                      fontSize: 15,
+                      fontWeight: "600",
                       color: isDark ? "#d1d5db" : "#374151",
-                      marginBottom: 12,
+                      marginBottom: 16,
                     }}
                   >
                     Enter new username
@@ -496,16 +619,18 @@ export default function Settings() {
                     render={({ field: { onChange, value } }) => (
                       <TextInput
                         style={{
-                          backgroundColor: isDark ? "#4b5563" : "#f9fafb",
-                          borderRadius: 8,
+                          backgroundColor: isDark ? "#111111" : "#ffffff",
+                          borderRadius: 12,
                           paddingHorizontal: 16,
-                          paddingVertical: 12,
+                          paddingVertical: 14,
                           fontSize: 16,
-                          color: isDark ? "#fff" : "#000",
+                          color: isDark ? "#ffffff" : "#111827",
                           marginBottom: 12,
+                          borderWidth: 1,
+                          borderColor: isDark ? "#1f1f1f" : "#e5e7eb",
                         }}
                         placeholder="Enter new username"
-                        placeholderTextColor={isDark ? "#9ca3af" : "#6b7280"}
+                        placeholderTextColor={isDark ? "#6b7280" : "#9ca3af"}
                         value={value}
                         onChangeText={onChange}
                         autoCapitalize="none"
@@ -517,8 +642,9 @@ export default function Settings() {
                     <Text
                       style={{
                         color: "#ef4444",
-                        fontSize: 14,
+                        fontSize: 13,
                         marginBottom: 12,
+                        marginTop: -4,
                       }}
                     >
                       {usernameErrors.newUsername.message}
@@ -527,16 +653,18 @@ export default function Settings() {
 
                   <TouchableOpacity
                     style={{
-                      backgroundColor: isDark ? "#fff" : "#000",
-                      borderRadius: 8,
-                      paddingVertical: 12,
+                      backgroundColor: isDark ? "#ffffff" : "#111827",
+                      borderRadius: 12,
+                      paddingVertical: 14,
                       alignItems: "center",
+                      marginTop: 8,
                     }}
                     onPress={handleUsernameSubmit(onUsernameSubmit)}
+                    activeOpacity={0.8}
                   >
                     <Text
                       style={{
-                        color: isDark ? "#000" : "#fff",
+                        color: isDark ? "#000000" : "#ffffff",
                         fontWeight: "600",
                         fontSize: 16,
                       }}
@@ -549,13 +677,20 @@ export default function Settings() {
             )}
           </View>
 
-          {/* Change Password Section */}
+          {/* Modern Change Password Section */}
           <View
             style={{
-              backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
-              borderRadius: 16,
+              backgroundColor: isDark ? "#111111" : "#ffffff",
+              borderRadius: 20,
               marginBottom: 16,
               overflow: "hidden",
+              borderWidth: isDark ? 1 : 0,
+              borderColor: isDark ? "#1f1f1f" : "transparent",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: isDark ? 0.2 : 0.05,
+              shadowRadius: 8,
+              elevation: 3,
             }}
           >
             <TouchableOpacity
@@ -566,22 +701,23 @@ export default function Settings() {
                 padding: 20,
               }}
               onPress={() => toggleForm("password")}
+              activeOpacity={0.7}
             >
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text
                   style={{
                     fontSize: 18,
                     fontWeight: "600",
-                    color: isDark ? "#fff" : "#000",
+                    color: isDark ? "#ffffff" : "#111827",
+                    marginBottom: 4,
                   }}
                 >
                   Change Password
                 </Text>
                 <Text
                   style={{
-                    color: isDark ? "#9ca3af" : "#6b7280",
+                    color: isDark ? "#6b7280" : "#9ca3af",
                     fontSize: 14,
-                    marginTop: 4,
                   }}
                 >
                   Update your security credentials
@@ -589,32 +725,33 @@ export default function Settings() {
               </View>
               <View
                 style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 16,
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
                   alignItems: "center",
                   justifyContent: "center",
                   backgroundColor:
                     activeForm === "password"
                       ? isDark
-                        ? "#fff"
-                        : "#000"
+                        ? "#ffffff"
+                        : "#111827"
                       : isDark
-                      ? "#374151"
-                      : "#d1d5db",
+                      ? "#1f1f1f"
+                      : "#f3f4f6",
                 }}
               >
                 <Text
                   style={{
-                    fontWeight: "bold",
+                    fontWeight: "600",
+                    fontSize: 18,
                     color:
                       activeForm === "password"
                         ? isDark
-                          ? "#000"
-                          : "#fff"
+                          ? "#000000"
+                          : "#ffffff"
                         : isDark
-                        ? "#9ca3af"
-                        : "#6b7280",
+                        ? "#6b7280"
+                        : "#9ca3af",
                   }}
                 >
                   {activeForm === "password" ? "−" : "+"}
@@ -622,24 +759,24 @@ export default function Settings() {
               </View>
             </TouchableOpacity>
 
-            {/* Password Form */}
+            {/* Modern Password Form */}
             {activeForm === "password" && (
               <View style={{ paddingHorizontal: 20, paddingBottom: 20 }}>
                 <View
                   style={{
-                    backgroundColor: isDark ? "#374151" : "#fff",
-                    borderRadius: 12,
-                    padding: 16,
+                    backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
+                    borderRadius: 16,
+                    padding: 20,
                     borderWidth: 1,
-                    borderColor: isDark ? "#4b5563" : "#e5e7eb",
+                    borderColor: isDark ? "#1f1f1f" : "#e5e7eb",
                   }}
                 >
                   <Text
                     style={{
-                      fontSize: 14,
-                      fontWeight: "500",
+                      fontSize: 15,
+                      fontWeight: "600",
                       color: isDark ? "#d1d5db" : "#374151",
-                      marginBottom: 12,
+                      marginBottom: 16,
                     }}
                   >
                     Change your password
@@ -651,16 +788,18 @@ export default function Settings() {
                     render={({ field: { onChange, value } }) => (
                       <TextInput
                         style={{
-                          backgroundColor: isDark ? "#4b5563" : "#f9fafb",
-                          borderRadius: 8,
+                          backgroundColor: isDark ? "#111111" : "#ffffff",
+                          borderRadius: 12,
                           paddingHorizontal: 16,
-                          paddingVertical: 12,
+                          paddingVertical: 14,
                           fontSize: 16,
-                          color: isDark ? "#fff" : "#000",
+                          color: isDark ? "#ffffff" : "#111827",
                           marginBottom: 12,
+                          borderWidth: 1,
+                          borderColor: isDark ? "#1f1f1f" : "#e5e7eb",
                         }}
                         placeholder="Current password"
-                        placeholderTextColor={isDark ? "#9ca3af" : "#6b7280"}
+                        placeholderTextColor={isDark ? "#6b7280" : "#9ca3af"}
                         value={value}
                         onChangeText={onChange}
                         secureTextEntry
@@ -672,8 +811,9 @@ export default function Settings() {
                     <Text
                       style={{
                         color: "#ef4444",
-                        fontSize: 14,
+                        fontSize: 13,
                         marginBottom: 12,
+                        marginTop: -4,
                       }}
                     >
                       {passwordErrors.currentPassword.message}
@@ -686,16 +826,18 @@ export default function Settings() {
                     render={({ field: { onChange, value } }) => (
                       <TextInput
                         style={{
-                          backgroundColor: isDark ? "#4b5563" : "#f9fafb",
-                          borderRadius: 8,
+                          backgroundColor: isDark ? "#111111" : "#ffffff",
+                          borderRadius: 12,
                           paddingHorizontal: 16,
-                          paddingVertical: 12,
+                          paddingVertical: 14,
                           fontSize: 16,
-                          color: isDark ? "#fff" : "#000",
+                          color: isDark ? "#ffffff" : "#111827",
                           marginBottom: 12,
+                          borderWidth: 1,
+                          borderColor: isDark ? "#1f1f1f" : "#e5e7eb",
                         }}
                         placeholder="New password"
-                        placeholderTextColor={isDark ? "#9ca3af" : "#6b7280"}
+                        placeholderTextColor={isDark ? "#6b7280" : "#9ca3af"}
                         value={value}
                         onChangeText={onChange}
                         secureTextEntry
@@ -707,8 +849,9 @@ export default function Settings() {
                     <Text
                       style={{
                         color: "#ef4444",
-                        fontSize: 14,
+                        fontSize: 13,
                         marginBottom: 12,
+                        marginTop: -4,
                       }}
                     >
                       {passwordErrors.newPassword.message}
@@ -717,16 +860,18 @@ export default function Settings() {
 
                   <TouchableOpacity
                     style={{
-                      backgroundColor: isDark ? "#fff" : "#000",
-                      borderRadius: 8,
-                      paddingVertical: 12,
+                      backgroundColor: isDark ? "#ffffff" : "#111827",
+                      borderRadius: 12,
+                      paddingVertical: 14,
                       alignItems: "center",
+                      marginTop: 8,
                     }}
                     onPress={handlePasswordSubmit(onPasswordSubmit)}
+                    activeOpacity={0.8}
                   >
                     <Text
                       style={{
-                        color: isDark ? "#000" : "#fff",
+                        color: isDark ? "#000000" : "#ffffff",
                         fontWeight: "600",
                         fontSize: 16,
                       }}
@@ -740,32 +885,38 @@ export default function Settings() {
           </View>
         </View>
 
-        {/* Logout and Delete Account Buttons */}
+        {/* Modern Logout and Delete Account Buttons */}
         <View>
           {/* Logout Button */}
           <TouchableOpacity
             style={{
-              backgroundColor: isDark ? "#7f1d1d" : "#fee2e2",
-              padding: 16,
-              borderRadius: 12,
+              backgroundColor: isDark ? "#1f1f1f" : "#ffffff",
+              padding: 18,
+              borderRadius: 16,
               alignItems: "center",
               flexDirection: "row",
               justifyContent: "center",
-              borderWidth: 1,
-              borderColor: isDark ? "#991b1b" : "#fecaca",
-              marginBottom: 16, // Add some space before logout
+              borderWidth: 1.5,
+              borderColor: isDark ? "#7f1d1d" : "#fee2e2",
+              marginBottom: 12,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: isDark ? 0.2 : 0.05,
+              shadowRadius: 4,
+              elevation: 2,
             }}
             onPress={handleLogout}
+            activeOpacity={0.8}
           >
             <Ionicons
               name="log-out-outline"
               size={20}
-              color={isDark ? "#f87171" : "#dc2626"}
-              style={{ marginRight: 8 }}
+              color={isDark ? "#ef4444" : "#dc2626"}
+              style={{ marginRight: 10 }}
             />
             <Text
               style={{
-                color: isDark ? "#f87171" : "#dc2626",
+                color: isDark ? "#ef4444" : "#dc2626",
                 fontSize: 16,
                 fontWeight: "600",
               }}
@@ -777,27 +928,33 @@ export default function Settings() {
           {/* Delete Account Button */}
           <TouchableOpacity
             style={{
-              backgroundColor: isDark ? "#991b1b" : "#fee2e2",
-              padding: 16,
-              borderRadius: 12,
+              backgroundColor: isDark ? "#1f1f1f" : "#ffffff",
+              padding: 18,
+              borderRadius: 16,
               alignItems: "center",
               flexDirection: "row",
               justifyContent: "center",
-              borderWidth: 1,
-              borderColor: isDark ? "#991b1b" : "#fecaca",
-              marginBottom: 16, // Add some space before logout
+              borderWidth: 1.5,
+              borderColor: isDark ? "#991b1b" : "#fee2e2",
+              marginBottom: 16,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: isDark ? 0.2 : 0.05,
+              shadowRadius: 4,
+              elevation: 2,
             }}
             onPress={handleDeleteAccount}
+            activeOpacity={0.8}
           >
             <Ionicons
               name="trash-outline"
               size={20}
-              color={isDark ? "#f87171" : "#dc2626"}
-              style={{ marginRight: 8 }}
+              color={isDark ? "#ef4444" : "#dc2626"}
+              style={{ marginRight: 10 }}
             />
             <Text
               style={{
-                color: isDark ? "#f87171" : "#dc2626",
+                color: isDark ? "#ef4444" : "#dc2626",
                 fontSize: 16,
                 fontWeight: "600",
               }}

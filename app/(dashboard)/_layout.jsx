@@ -133,28 +133,31 @@ const _layout = () => {
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: isDark ? "#1a1a1a" : "#ffffff",
+            backgroundColor: isDark
+              ? "rgba(17, 17, 17, 0.95)"
+              : "rgba(255, 255, 255, 0.95)",
             borderTopWidth: 0,
-            elevation: 8,
-            shadowOpacity: 0.15,
-            shadowOffset: { width: 0, height: 4 },
-            shadowRadius: 6,
+            elevation: 20,
+            shadowOpacity: isDark ? 0.5 : 0.15,
+            shadowOffset: { width: 0, height: -8 },
+            shadowRadius: 20,
             shadowColor: "#000",
-            borderRadius: 30,
+            borderRadius: 36,
             marginHorizontal: 16,
             marginBottom: 20,
-            height: 65,
-            paddingBottom: 8,
-            paddingTop: 8,
+            height: 76,
+            paddingBottom: 14,
+            paddingTop: 14,
             position: "absolute",
             left: 0,
             right: 0,
-            bottom: 30,
-            borderWidth: isDark ? 1 : 0,
-            borderColor: isDark ? "#333" : "transparent",
+            bottom: 0,
+            borderWidth: isDark ? 1.5 : 1,
+            borderColor: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.08)",
+            backdropFilter: "blur(20px)",
           },
-          tabBarActiveTintColor: isDark ? "#fff" : "#000",
-          tabBarInactiveTintColor: isDark ? "#888" : "#666",
+          tabBarActiveTintColor: isDark ? "#ffffff" : "#111827",
+          tabBarInactiveTintColor: isDark ? "#6b7280" : "#9ca3af",
           tabBarShowLabel: false,
           tabBarIconStyle: {
             marginBottom: 0,
@@ -162,8 +165,8 @@ const _layout = () => {
           },
           tabBarItemStyle: {
             borderRadius: 20,
-            marginHorizontal: 8,
-            marginVertical: 8,
+            marginHorizontal: 6,
+            marginVertical: 6,
             justifyContent: "center",
             alignItems: "center",
           },
@@ -173,19 +176,41 @@ const _layout = () => {
           name="index"
           options={{
             tabBarIcon: ({ focused }) => (
-              <Ionicons
-                name={focused ? "home" : "home-outline"}
-                size={24}
-                color={
-                  focused
+              <View
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 18,
+                  backgroundColor: focused
                     ? isDark
-                      ? "#fff"
-                      : "#000"
-                    : isDark
-                    ? "#888"
-                    : "#666"
-                }
-              />
+                      ? "rgba(255, 255, 255, 0.2)"
+                      : "rgba(17, 24, 39, 0.12)"
+                    : "transparent",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: focused ? 1 : 0,
+                  borderColor: focused
+                    ? isDark
+                      ? "rgba(255, 255, 255, 0.2)"
+                      : "rgba(17, 24, 39, 0.15)"
+                    : "transparent",
+                  transform: focused ? [{ scale: 1.1 }] : [{ scale: 1 }],
+                }}
+              >
+                <Ionicons
+                  name={focused ? "home" : "home-outline"}
+                  size={focused ? 26 : 24}
+                  color={
+                    focused
+                      ? isDark
+                        ? "#ffffff"
+                        : "#111827"
+                      : isDark
+                      ? "#6b7280"
+                      : "#9ca3af"
+                  }
+                />
+              </View>
             ),
           }}
         />
@@ -194,19 +219,41 @@ const _layout = () => {
           name="addcourse"
           options={{
             tabBarIcon: ({ focused }) => (
-              <AntDesign
-                name="pluscircle"
-                size={24}
-                color={
-                  focused
+              <View
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 18,
+                  backgroundColor: focused
                     ? isDark
-                      ? "#fff"
-                      : "#000"
-                    : isDark
-                    ? "#888"
-                    : "#666"
-                }
-              />
+                      ? "rgba(255, 255, 255, 0.2)"
+                      : "rgba(17, 24, 39, 0.12)"
+                    : "transparent",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: focused ? 1 : 0,
+                  borderColor: focused
+                    ? isDark
+                      ? "rgba(255, 255, 255, 0.2)"
+                      : "rgba(17, 24, 39, 0.15)"
+                    : "transparent",
+                  transform: focused ? [{ scale: 1.1 }] : [{ scale: 1 }],
+                }}
+              >
+                <AntDesign
+                  name="pluscircle"
+                  size={focused ? 26 : 24}
+                  color={
+                    focused
+                      ? isDark
+                        ? "#ffffff"
+                        : "#111827"
+                      : isDark
+                      ? "#6b7280"
+                      : "#9ca3af"
+                  }
+                />
+              </View>
             ),
           }}
         />
@@ -215,76 +262,150 @@ const _layout = () => {
           name="settings"
           options={{
             tabBarIcon: ({ focused }) => (
-              <View style={{ alignItems: "center" }}>
+              <View
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 18,
+                  backgroundColor: focused
+                    ? isDark
+                      ? "rgba(255, 255, 255, 0.2)"
+                      : "rgba(17, 24, 39, 0.12)"
+                    : "transparent",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  position: "relative",
+                  borderWidth: focused ? 1 : 0,
+                  borderColor: focused
+                    ? isDark
+                      ? "rgba(255, 255, 255, 0.2)"
+                      : "rgba(17, 24, 39, 0.15)"
+                    : "transparent",
+                  transform: focused ? [{ scale: 1.1 }] : [{ scale: 1 }],
+                }}
+              >
                 <Feather
                   name="settings"
-                  size={24}
+                  size={focused ? 24 : 22}
                   color={
                     focused
                       ? isDark
-                        ? "#fff"
-                        : "#000"
+                        ? "#ffffff"
+                        : "#111827"
                       : isDark
-                      ? "#888"
-                      : "#666"
+                      ? "#6b7280"
+                      : "#9ca3af"
                   }
                 />
-                {/* Theme Toggle Indicator */}
+                {/* Modern Theme Toggle Indicator */}
                 <TouchableOpacity
                   onPress={toggleTheme}
                   style={{
                     position: "absolute",
-                    top: -8,
-                    right: -8,
-                    width: 16,
-                    height: 16,
-                    borderRadius: 8,
-                    backgroundColor: isDark ? "#FFA500" : "#4B5563",
+                    top: -6,
+                    right: -6,
+                    width: 20,
+                    height: 20,
+                    borderRadius: 10,
+                    backgroundColor: isDark ? "#f59e0b" : "#4b5563",
                     justifyContent: "center",
                     alignItems: "center",
+                    borderWidth: 2.5,
+                    borderColor: isDark ? "#111111" : "#ffffff",
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 4,
+                    elevation: 3,
                   }}
+                  activeOpacity={0.8}
                 >
                   <Ionicons
                     name={isDark ? "sunny" : "moon"}
                     size={10}
-                    color="#fff"
+                    color="#ffffff"
                   />
                 </TouchableOpacity>
               </View>
             ),
           }}
         />
-<Tabs.Screen
+        <Tabs.Screen
           name="reminder"
           options={{
             tabBarIcon: ({ focused }) => (
-             <Ionicons name="notifications"
-                size={24}
-                color={
-                  focused
+              <View
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 18,
+                  backgroundColor: focused
                     ? isDark
-                      ? "#fff"
-                      : "#000"
-                    : isDark
-                    ? "#888"
-                    : "#666"
-                }
-              />
+                      ? "rgba(255, 255, 255, 0.2)"
+                      : "rgba(17, 24, 39, 0.12)"
+                    : "transparent",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: focused ? 1 : 0,
+                  borderColor: focused
+                    ? isDark
+                      ? "rgba(255, 255, 255, 0.2)"
+                      : "rgba(17, 24, 39, 0.15)"
+                    : "transparent",
+                  transform: focused ? [{ scale: 1.1 }] : [{ scale: 1 }],
+                }}
+              >
+                <Ionicons
+                  name={focused ? "notifications" : "notifications-outline"}
+                  size={focused ? 26 : 24}
+                  color={
+                    focused
+                      ? isDark
+                        ? "#ffffff"
+                        : "#111827"
+                      : isDark
+                      ? "#6b7280"
+                      : "#9ca3af"
+                  }
+                />
+              </View>
             ),
           }}
         />
  
-<Tabs.Screen
-  name="logout"
-  options={{
-    tabBarIcon: () => (
-      <MaterialCommunityIcons
-        name="logout"
-        size={24}
-        color={isDark ? "#ff6b6b" : "#dc2626"}
-      />
-    ),
-  }}
+        <Tabs.Screen
+          name="logout"
+          options={{
+            tabBarIcon: ({ focused }) => (
+              <View
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 18,
+                  backgroundColor: focused
+                    ? isDark
+                      ? "rgba(239, 68, 68, 0.2)"
+                      : "rgba(239, 68, 68, 0.12)"
+                    : "transparent",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: focused ? 1 : 0,
+                  borderColor: focused
+                    ? isDark
+                      ? "rgba(239, 68, 68, 0.3)"
+                      : "rgba(239, 68, 68, 0.2)"
+                    : "transparent",
+                  transform: focused ? [{ scale: 1.1 }] : [{ scale: 1 }],
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="logout"
+                  size={focused ? 24 : 22}
+                  color={isDark ? "#ef4444" : "#dc2626"}
+                />
+              </View>
+            ),
+          }}
   listeners={{
     tabPress: (e) => {
       // Prevent default behavior

@@ -177,36 +177,74 @@ const addcourse = () => {
         contentContainerStyle={{ paddingBottom: 150 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="px-6 pt-16 pb-8 sm:px-12 sm:pt-24 sm:pb-12 md:px-24 md:pt-32 md:pb-16">
+        <View className="px-5 pt-20 pb-8">
           <View
             style={{
-              backgroundColor: isDark ? "#1a1a1a" : "#000",
-              borderRadius: 24,
-              padding: 24,
+              backgroundColor: isDark ? "#111111" : "#ffffff",
+              borderRadius: 32,
+              padding: 32,
               shadowColor: "#000",
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-              elevation: 8,
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: isDark ? 0.4 : 0.12,
+              shadowRadius: 20,
+              elevation: 12,
               alignItems: "center",
+              borderWidth: isDark ? 1 : 0,
+              borderColor: isDark ? "#1f1f1f" : "transparent",
+              overflow: "hidden",
+              position: "relative",
             }}
           >
-            <Text
+            {/* Decorative elements */}
+            <View
               style={{
-                fontSize: 16,
-                fontWeight: "300",
-                color: "#d1d5db",
-                textAlign: "center",
+                position: "absolute",
+                top: -40,
+                right: -40,
+                width: 120,
+                height: 120,
+                borderRadius: 60,
+                backgroundColor: isDark
+                  ? "rgba(255, 255, 255, 0.03)"
+                  : "rgba(0, 0, 0, 0.02)",
+              }}
+            />
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: 12,
               }}
             >
-              Repeat Course Management
-            </Text>
+              <View
+                style={{
+                  width: 4,
+                  height: 4,
+                  borderRadius: 2,
+                  backgroundColor: isDark ? "#ffffff" : "#111827",
+                  marginRight: 8,
+                }}
+              />
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: "600",
+                  color: isDark ? "#6b7280" : "#9ca3af",
+                  letterSpacing: 1.5,
+                  textTransform: "uppercase",
+                }}
+              >
+                Repeat Course Management
+              </Text>
+            </View>
             <Text
               style={{
-                fontSize: 24,
-                fontWeight: "bold",
-                color: "#fff",
-                marginTop: 4,
+                fontSize: 32,
+                fontWeight: "800",
+                color: isDark ? "#ffffff" : "#111827",
                 textAlign: "center",
+                letterSpacing: -1,
+                lineHeight: 38,
               }}
             >
               Add & View Repeat Courses
@@ -214,35 +252,54 @@ const addcourse = () => {
           </View>
         </View>
 
-        <View className="px-6 py-4 sm:px-12 sm:py-6 md:px-24 md:py-8">
-          <View className="flex-row justify-center space-x-2">
+        <View className="px-5 py-6">
+          <View 
+            style={{
+              flexDirection: "row",
+              backgroundColor: isDark
+                ? "rgba(17, 17, 17, 0.8)"
+                : "rgba(255, 255, 255, 0.8)",
+              borderRadius: 24,
+              padding: 6,
+              borderWidth: isDark ? 1.5 : 1,
+              borderColor: isDark
+                ? "rgba(255, 255, 255, 0.1)"
+                : "rgba(0, 0, 0, 0.08)",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: isDark ? 0.3 : 0.1,
+              shadowRadius: 12,
+              elevation: 6,
+            }}
+          >
             <TouchableOpacity
               style={{
-                paddingHorizontal: 24,
+                flex: 1,
                 paddingVertical: 12,
-                borderRadius: 20,
+                borderRadius: 12,
                 backgroundColor:
                   activeTab === "addCourse"
                     ? isDark
-                      ? "#fff"
-                      : "#000"
-                    : isDark
-                    ? "#333"
-                    : "#f3f4f6",
+                      ? "#ffffff"
+                      : "#111827"
+                    : "transparent",
+                alignItems: "center",
               }}
               onPress={() => setActiveTab("addCourse")}
+              activeOpacity={0.7}
             >
               <Text
                 style={{
-                  fontWeight: "500",
+                  fontWeight: "600",
+                  fontSize: 15,
                   color:
                     activeTab === "addCourse"
                       ? isDark
-                        ? "#000"
-                        : "#fff"
+                        ? "#000000"
+                        : "#ffffff"
                       : isDark
-                      ? "#fff"
-                      : "#4b5563",
+                      ? "#9ca3af"
+                      : "#6b7280",
                 }}
               >
                 Add Course
@@ -251,31 +308,32 @@ const addcourse = () => {
 
             <TouchableOpacity
               style={{
-                paddingHorizontal: 24,
+                flex: 1,
                 paddingVertical: 12,
-                borderRadius: 20,
+                borderRadius: 12,
                 backgroundColor:
                   activeTab === "viewCourse"
                     ? isDark
-                      ? "#fff"
-                      : "#000"
-                    : isDark
-                    ? "#333"
-                    : "#f3f4f6",
+                      ? "#ffffff"
+                      : "#111827"
+                    : "transparent",
+                alignItems: "center",
               }}
               onPress={() => setActiveTab("viewCourse")}
+              activeOpacity={0.7}
             >
               <Text
                 style={{
-                  fontWeight: "500",
+                  fontWeight: "600",
+                  fontSize: 15,
                   color:
                     activeTab === "viewCourse"
                       ? isDark
-                        ? "#000"
-                        : "#fff"
+                        ? "#000000"
+                        : "#ffffff"
                       : isDark
-                      ? "#fff"
-                      : "#4b5563",
+                      ? "#9ca3af"
+                      : "#6b7280",
                 }}
               >
                 View Courses
@@ -285,17 +343,17 @@ const addcourse = () => {
         </View>
 
         {/* Tab Content */}
-        <View className="px-6 sm:px-12 md:px-24">
+        <View className="px-5">
           {activeTab === "addCourse" ? (
-            <View className="pt-8 sm:pt-12">
-              <View className="items-center mb-16">
+            <View className="pt-6">
+              <View className="items-center mb-12">
                 <Text
                   style={{
-                    fontSize: 40,
-                    fontWeight: "100",
-                    color: isDark ? "#fff" : "#000",
-                    marginBottom: 16,
-                    letterSpacing: 2,
+                    fontSize: 32,
+                    fontWeight: "700",
+                    color: isDark ? "#ffffff" : "#111827",
+                    marginBottom: 12,
+                    letterSpacing: -0.5,
                     textAlign: "center",
                   }}
                 >
@@ -303,10 +361,11 @@ const addcourse = () => {
                 </Text>
                 <View
                   style={{
-                    width: 32,
-                    height: 1,
-                    backgroundColor: isDark ? "#fff" : "#000",
-                    opacity: 0.4,
+                    width: 40,
+                    height: 2,
+                    backgroundColor: isDark ? "#ffffff" : "#111827",
+                    opacity: 0.2,
+                    borderRadius: 1,
                   }}
                 />
               </View>
@@ -738,24 +797,29 @@ const addcourse = () => {
                 </View>
               </View>
 
-              {/* Add Course Button with proper spacing */}
-              <View style={{ marginTop: 40, marginBottom: 20 }}>
+              {/* Modern Add Course Button */}
+              <View style={{ marginTop: 32, marginBottom: 20 }}>
                 <TouchableOpacity
                   style={{
-                    backgroundColor: isDark ? "#fff" : "#000",
-                    paddingVertical: 24,
+                    backgroundColor: isDark ? "#ffffff" : "#111827",
+                    paddingVertical: 18,
                     alignItems: "center",
-                    borderRadius: 12,
+                    borderRadius: 16,
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: isDark ? 0.3 : 0.1,
+                    shadowRadius: 8,
+                    elevation: 4,
                   }}
                   onPress={handleSubmit(onSubmit)}
+                  activeOpacity={0.8}
                 >
                   <Text
                     style={{
-                      color: isDark ? "#000" : "#fff",
-                      fontSize: 14,
-                      textTransform: "uppercase",
-                      letterSpacing: 2,
-                      fontWeight: "500",
+                      color: isDark ? "#000000" : "#ffffff",
+                      fontSize: 16,
+                      fontWeight: "600",
+                      letterSpacing: 0.5,
                     }}
                   >
                     Add Course
@@ -765,21 +829,28 @@ const addcourse = () => {
             </View>
           ) : (
             <View>
-              <View className="flex-row justify-between space-x-4 mb-6">
+              <View className="flex-row justify-between space-x-3 mb-8">
                 <View
                   style={{
                     flex: 1,
-                    backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
+                    backgroundColor: isDark ? "#111111" : "#ffffff",
                     padding: 24,
-                    borderRadius: 16,
+                    borderRadius: 20,
                     alignItems: "center",
+                    borderWidth: isDark ? 1 : 0,
+                    borderColor: isDark ? "#1f1f1f" : "transparent",
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: isDark ? 0.2 : 0.05,
+                    shadowRadius: 8,
+                    elevation: 3,
                   }}
                 >
                   <Text
                     style={{
-                      fontSize: 32,
-                      fontWeight: "bold",
-                      color: isDark ? "#fff" : "#000",
+                      fontSize: 36,
+                      fontWeight: "700",
+                      color: isDark ? "#ffffff" : "#111827",
                       marginBottom: 8,
                     }}
                   >
@@ -788,28 +859,33 @@ const addcourse = () => {
                   <Text
                     style={{
                       fontSize: 14,
-                      color: isDark ? "#9ca3af" : "#6b7280",
+                      color: isDark ? "#6b7280" : "#9ca3af",
                       fontWeight: "500",
                     }}
                   >
-                    Total Repeat Courses
+                    Total Courses
                   </Text>
                 </View>
 
                 <View
                   style={{
                     flex: 1,
-                    backgroundColor: isDark ? "#fff" : "#000",
+                    backgroundColor: isDark ? "#ffffff" : "#111827",
                     padding: 24,
-                    borderRadius: 16,
+                    borderRadius: 20,
                     alignItems: "center",
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: isDark ? 0.3 : 0.1,
+                    shadowRadius: 8,
+                    elevation: 4,
                   }}
                 >
                   <Text
                     style={{
-                      fontSize: 32,
-                      fontWeight: "bold",
-                      color: isDark ? "#000" : "#fff",
+                      fontSize: 36,
+                      fontWeight: "700",
+                      color: isDark ? "#000000" : "#ffffff",
                       marginBottom: 8,
                     }}
                   >
@@ -830,10 +906,11 @@ const addcourse = () => {
               <View>
                 <Text
                   style={{
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: "600",
-                    color: isDark ? "#fff" : "#374151",
-                    marginBottom: 16,
+                    color: isDark ? "#ffffff" : "#111827",
+                    marginBottom: 20,
+                    letterSpacing: -0.3,
                   }}
                 >
                   Your Courses
@@ -844,24 +921,25 @@ const addcourse = () => {
                     <View
                       key={repeat.repeat_id}
                       style={{
-                        backgroundColor: isDark ? "#1a1a1a" : "#fff",
-                        padding: 16,
-                        borderRadius: 12,
+                        backgroundColor: isDark ? "#111111" : "#ffffff",
+                        padding: 20,
+                        borderRadius: 18,
                         shadowColor: "#000",
-                        shadowOpacity: 0.05,
-                        shadowRadius: 4,
-                        elevation: 2,
-                        borderWidth: 1,
-                        borderColor: isDark ? "#374151" : "#e5e7eb",
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: isDark ? 0.2 : 0.05,
+                        shadowRadius: 8,
+                        elevation: 3,
+                        borderWidth: isDark ? 1 : 0,
+                        borderColor: isDark ? "#1f1f1f" : "transparent",
                       }}
                     >
-                      <View className="flex-row justify-between items-start mb-2">
-                        <View className="flex-1">
+                      <View className="flex-row justify-between items-center">
+                        <View className="flex-1 mr-4">
                           <Text
                             style={{
                               fontWeight: "600",
-                              color: isDark ? "#fff" : "#374151",
-                              fontSize: 16,
+                              color: isDark ? "#ffffff" : "#111827",
+                              fontSize: 17,
                             }}
                           >
                             {repeat.course_name}
@@ -870,16 +948,19 @@ const addcourse = () => {
                         <TouchableOpacity
                           onPress={() => deletecourse(repeat.repeat_id)}
                           style={{
-                            backgroundColor: isDark ? "#7f1d1d" : "#fee2e2",
-                            paddingHorizontal: 8,
-                            paddingVertical: 4,
-                            borderRadius: 8,
+                            backgroundColor: isDark ? "#1f1f1f" : "#fee2e2",
+                            paddingHorizontal: 12,
+                            paddingVertical: 8,
+                            borderRadius: 12,
+                            borderWidth: 1,
+                            borderColor: isDark ? "#7f1d1d" : "#fecaca",
                           }}
+                          activeOpacity={0.7}
                         >
                           <AntDesign
                             name="delete"
-                            size={20}
-                            color={isDark ? "#f87171" : "#dc2626"}
+                            size={18}
+                            color={isDark ? "#ef4444" : "#dc2626"}
                           />
                         </TouchableOpacity>
                       </View>
