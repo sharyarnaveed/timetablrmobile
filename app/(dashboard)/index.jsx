@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import NetInfo from "@react-native-community/netinfo";
 import axios from "axios";
 import { Link, router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -24,6 +25,7 @@ const index = () => {
   const [theday, setday] = useState("");
   const [firstchar, Setchar] = useState("");
   const [timetableData, setTimetableData] = useState(null);
+  const [isOnline, setIsOnline] = useState(true);
 
   const GOOGLE_FORM_URL = "https://forms.gle/6nN8mEKFfn4d8p8v5";
 
@@ -58,10 +60,21 @@ const index = () => {
         "timetable",
         JSON.stringify(response.data.timetable)
       );
+      await SecureStore.setItemAsync("lastFetchTime", new Date().toISOString());
 
       setTimetableData(JSON.stringify(response.data.timetable));
     } catch (error) {
       console.log("API Error:", error.response?.data || error.message);
+      // Load from local storage if API fails
+      const LocalTimetable = await SecureStore.getItemAsync("timetable");
+      if (LocalTimetable) {
+        setTimetableData(LocalTimetable);
+        Toast.show({
+          type: "info",
+          text1: "Using Offline Data",
+          text2: "Showing cached timetable",
+        });
+      }
     }
   };
 
@@ -96,22 +109,74 @@ const index = () => {
       const StoredDay = await SecureStore.getItemAsync("day");
       const LocalTimetable = await SecureStore.getItemAsync("timetable");
 
+      // Check network status
+      const netState = await NetInfo.fetch();
+      setIsOnline(netState.isConnected);
+
       if (
         StoredDay !== dayName ||
         !LocalTimetable ||
         LocalTimetable.length === 0
       ) {
         await SecureStore.setItemAsync("day", dayName);
-        await getdata(dayName, Makeday);
+        if (netState.isConnected) {
+          await getdata(dayName, Makeday);
+        } else {
+          // Use local storage when offline
+          if (LocalTimetable) {
+            setTimetableData(LocalTimetable);
+            Toast.show({
+              type: "info",
+              text1: "Offline Mode",
+              text2: "Showing cached timetable",
+            });
+          }
+        }
       } else {
         setTimetableData(LocalTimetable);
       }
     };
 
     init();
+
+    // Listen for network status changes
+    const unsubscribe = NetInfo.addEventListener(state => {
+      const wasOffline = !isOnline;
+      setIsOnline(state.isConnected);
+      
+      // Auto-reload when coming back online
+      if (wasOffline && state.isConnected) {
+        Toast.show({
+          type: "success",
+          text1: "Back Online",
+          text2: "Refreshing timetable...",
+        });
+        setTimeout(async () => {
+          await SecureStore.setItemAsync("day", dayName);
+          await getdata(dayName, Makeday);
+        }, 500);
+      } else if (!state.isConnected) {
+        Toast.show({
+          type: "info",
+          text1: "Offline Mode",
+          text2: "Using cached data",
+        });
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handlereload = async () => {
+    if (!isOnline) {
+      Toast.show({
+        type: "error",
+        text1: "No Internet Connection",
+        text2: "Cannot refresh while offline",
+      });
+      return;
+    }
+
     const today = new Date();
     const dayName = today.toLocaleDateString("en-US", { weekday: "long" });
 
@@ -128,298 +193,216 @@ const index = () => {
       text1: "Data Reloaded",
     });
   };
+
   return (
     <ScrollView
       style={{
         flex: 1,
-        backgroundColor: isDark ? "#000000" : "#f8f9fa",
+        backgroundColor: isDark ? "#000000" : "#fafafa",
       }}
       showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: 120 }}
     >
-      <View className="flex-1">
-        {/* Modernistic Asymmetric Welcome Card */}
-        <View className="px-5 pt-20 pb-6">
-          {/* Decorative accent line */}
+      <View style={{ flex: 1 }}>
+        {/* Header Section */}
+        <View style={{ paddingHorizontal: 24, paddingTop: 60, paddingBottom: 24 }}>
+          {/* Top Bar */}
           <View
             style={{
-              position: "absolute",
-              top: 60,
-              left: 5,
-              right: 5,
-              height: 2,
-              backgroundColor: isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.03)",
-              borderRadius: 1,
-            }}
-          />
-          
-          <View
-            style={{
-              backgroundColor: isDark ? "#111111" : "#ffffff",
-              borderRadius: 32,
-              padding: 28,
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: isDark ? 0.4 : 0.12,
-              shadowRadius: 20,
-              elevation: 12,
-              borderWidth: isDark ? 1 : 0,
-              borderColor: isDark ? "#1f1f1f" : "transparent",
-              overflow: "hidden",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 32,
             }}
           >
-            {/* Decorative gradient overlay */}
+            {/* Date Badge */}
             <View
               style={{
-                position: "absolute",
-                top: -50,
-                right: -50,
-                width: 150,
-                height: 150,
-                borderRadius: 75,
-                backgroundColor: isDark
-                  ? "rgba(255, 255, 255, 0.03)"
-                  : "rgba(0, 0, 0, 0.02)",
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: isDark ? "#111111" : "#ffffff",
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+                borderRadius: 100,
+                borderWidth: 1,
+                borderColor: isDark ? "#1a1a1a" : "#f0f0f0",
               }}
-            />
-            
-            <View className="flex-row justify-between items-start">
-              <View className="flex-1 mr-6" style={{ zIndex: 1 }}>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginBottom: 12,
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 4,
-                      height: 4,
-                      borderRadius: 2,
-                      backgroundColor: isDark ? "#ffffff" : "#111827",
-                      marginRight: 8,
-                    }}
-                  />
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      fontWeight: "600",
-                      color: isDark ? "#6b7280" : "#9ca3af",
-                      letterSpacing: 1.5,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Welcome back
-                  </Text>
-                </View>
-                <Text
-                  style={{
-                    fontSize: 32,
-                    fontWeight: "800",
-                    color: isDark ? "#ffffff" : "#111827",
-                    marginBottom: 12,
-                    letterSpacing: -1,
-                    lineHeight: 38,
-                  }}
-                >
-                  {TheUsername}
-                </Text>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    backgroundColor: isDark
-                      ? "rgba(255, 255, 255, 0.05)"
-                      : "rgba(0, 0, 0, 0.03)",
-                    paddingHorizontal: 12,
-                    paddingVertical: 6,
-                    borderRadius: 20,
-                    alignSelf: "flex-start",
-                  }}
-                >
-                  <Ionicons
-                    name="calendar-outline"
-                    size={14}
-                    color={isDark ? "#9ca3af" : "#6b7280"}
-                  />
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      color: isDark ? "#9ca3af" : "#6b7280",
-                      marginLeft: 6,
-                      fontWeight: "500",
-                    }}
-                  >
-                    {theday}
-                  </Text>
-                </View>
-              </View>
-              
+            >
               <View
                 style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 8,
-                  zIndex: 1,
+                  width: 8,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: isOnline ? (isDark ? "#ffffff" : "#000000") : "#ff6b6b",
+                  marginRight: 10,
+                }}
+              />
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: "600",
+                  color: isDark ? "#888888" : "#666666",
+                  letterSpacing: 0.3,
                 }}
               >
-                {/* Message Icon with glassmorphism */}
-                <TouchableOpacity
-                  style={{
-                    width: 48,
-                    height: 48,
-                    backgroundColor: isDark
-                      ? "rgba(255, 255, 255, 0.1)"
-                      : "rgba(0, 0, 0, 0.06)",
-                    borderRadius: 24,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderWidth: 1,
-                    borderColor: isDark
-                      ? "rgba(255, 255, 255, 0.1)"
-                      : "rgba(0, 0, 0, 0.08)",
-                    backdropFilter: "blur(10px)",
-                  }}
-                  onPress={handleMessagePress}
-                  activeOpacity={0.6}
-                >
-                  <Ionicons
-                    name="chatbubble-outline"
-                    size={22}
-                    color={isDark ? "#ffffff" : "#111827"}
-                  />
-                </TouchableOpacity>
+                {isOnline ? theday : `${theday} • Offline`}
+              </Text>
+            </View>
 
-                {/* Avatar with modern design */}
-                <Link href="/settings">
+            {/* Action Buttons */}
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+              <TouchableOpacity
+                onPress={handleMessagePress}
+                activeOpacity={0.7}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  backgroundColor: isDark ? "#111111" : "#ffffff",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 1,
+                  borderColor: isDark ? "#1a1a1a" : "#f0f0f0",
+                }}
+              >
+                <Ionicons
+                  name="chatbubble-outline"
+                  size={20}
+                  color={isDark ? "#ffffff" : "#000000"}
+                />
+              </TouchableOpacity>
+
+              <Link href="/settings" asChild>
+                <TouchableOpacity activeOpacity={0.7}>
                   <View
                     style={{
-                      width: 56,
-                      height: 56,
-                      backgroundColor: isDark ? "#ffffff" : "#111827",
-                      borderRadius: 20,
+                      width: 44,
+                      height: 44,
+                      borderRadius: 22,
+                      backgroundColor: isDark ? "#ffffff" : "#000000",
                       alignItems: "center",
                       justifyContent: "center",
-                      shadowColor: "#000",
-                      shadowOffset: { width: 0, height: 6 },
-                      shadowOpacity: 0.2,
-                      shadowRadius: 12,
-                      elevation: 6,
-                      transform: [{ rotate: "-5deg" }],
                     }}
                   >
                     <Text
                       style={{
+                        fontSize: 18,
+                        fontWeight: "700",
                         color: isDark ? "#000000" : "#ffffff",
-                        fontWeight: "800",
-                        fontSize: 24,
-                        letterSpacing: 0.5,
-                        transform: [{ rotate: "5deg" }],
                       }}
                     >
                       {firstchar.toUpperCase()}
                     </Text>
                   </View>
-                </Link>
-              </View>
+                </TouchableOpacity>
+              </Link>
             </View>
+          </View>
+
+          {/* Welcome Section */}
+          <View style={{ marginBottom: 8 }}>
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: "500",
+                color: isDark ? "#555555" : "#999999",
+                letterSpacing: 2,
+                textTransform: "uppercase",
+                marginBottom: 8,
+              }}
+            >
+              Welcome back
+            </Text>
+            <Text
+              style={{
+                fontSize: 42,
+                fontWeight: "800",
+                color: isDark ? "#ffffff" : "#000000",
+                letterSpacing: -1.5,
+                lineHeight: 48,
+              }}
+            >
+              {TheUsername}
+            </Text>
           </View>
         </View>
 
-        {/* Modernistic Floating Tab Selector */}
-        <View className="px-5 pb-8">
+        {/* Tab Selector */}
+        <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
           <View
             style={{
               flexDirection: "row",
               alignItems: "center",
-              justifyContent: "space-between",
-              backgroundColor: isDark ? "#111111" : "#ffffff",
-              borderRadius: 24,
+              backgroundColor: isDark ? "#0a0a0a" : "#ffffff",
+              borderRadius: 20,
               padding: 6,
-              borderWidth: isDark ? 1 : 0,
-              borderColor: isDark ? "#1f1f1f" : "transparent",
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: isDark ? 0.3 : 0.1,
-              shadowRadius: 12,
-              elevation: 6,
+              borderWidth: 1,
+              borderColor: isDark ? "#1a1a1a" : "#f0f0f0",
             }}
           >
+            {/* Refresh Button */}
             <TouchableOpacity
               onPress={handlereload}
+              activeOpacity={0.7}
               style={{
                 width: 48,
                 height: 48,
-                borderRadius: 20,
-                backgroundColor: isDark
-                  ? "rgba(255, 255, 255, 0.08)"
-                  : "rgba(0, 0, 0, 0.04)",
+                borderRadius: 16,
+                backgroundColor: isDark ? "#151515" : "#f5f5f5",
                 alignItems: "center",
                 justifyContent: "center",
-                borderWidth: 1,
-                borderColor: isDark
-                  ? "rgba(255, 255, 255, 0.1)"
-                  : "rgba(0, 0, 0, 0.06)",
               }}
-              activeOpacity={0.7}
             >
               <Ionicons
                 name="refresh"
-                size={22}
-                color={isDark ? "#ffffff" : "#111827"}
+                size={20}
+                color={isDark ? "#888888" : "#666666"}
               />
             </TouchableOpacity>
 
+            {/* Tab Pills */}
             <View
               style={{
-                flexDirection: "row",
-                backgroundColor: isDark
-                  ? "rgba(255, 255, 255, 0.05)"
-                  : "rgba(0, 0, 0, 0.03)",
-                borderRadius: 18,
-                padding: 4,
                 flex: 1,
-                marginHorizontal: 8,
+                flexDirection: "row",
+                marginLeft: 8,
+                backgroundColor: isDark ? "#151515" : "#f5f5f5",
+                borderRadius: 14,
+                padding: 4,
               }}
             >
               {["Today", "Week"].map((tab) => (
                 <TouchableOpacity
                   key={tab}
+                  onPress={() => setSelectedTab(tab)}
+                  activeOpacity={0.8}
                   style={{
                     flex: 1,
-                    paddingVertical: 12,
-                    borderRadius: 14,
+                    paddingVertical: 14,
+                    borderRadius: 12,
                     backgroundColor:
                       selectedTab === tab
                         ? isDark
                           ? "#ffffff"
-                          : "#111827"
+                          : "#000000"
                         : "transparent",
                     alignItems: "center",
                     justifyContent: "center",
-                    shadowColor:
-                      selectedTab === tab ? "#000" : "transparent",
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: selectedTab === tab ? 0.1 : 0,
-                    shadowRadius: 4,
-                    elevation: selectedTab === tab ? 2 : 0,
                   }}
-                  onPress={() => setSelectedTab(tab)}
-                  activeOpacity={0.7}
                 >
                   <Text
                     style={{
+                      fontSize: 14,
                       fontWeight: selectedTab === tab ? "700" : "500",
-                      fontSize: 15,
                       color:
                         selectedTab === tab
                           ? isDark
                             ? "#000000"
                             : "#ffffff"
                           : isDark
-                          ? "#9ca3af"
-                          : "#6b7280",
-                      letterSpacing: 0.3,
+                          ? "#666666"
+                          : "#999999",
+                      letterSpacing: 0.5,
                     }}
                   >
                     {tab}
@@ -427,18 +410,15 @@ const index = () => {
                 </TouchableOpacity>
               ))}
             </View>
-
-            {/* Spacer */}
-            <View style={{ width: 48 }} />
           </View>
         </View>
 
         {/* Content */}
-        {selectedTab == "Today" && (
+        {selectedTab === "Today" && (
           <Today thecurent={currentClass} Notcurrentclass={upcomingclasses} />
         )}
 
-        {selectedTab == "Week" && <Week />}
+        {selectedTab === "Week" && <Week />}
       </View>
     </ScrollView>
   );

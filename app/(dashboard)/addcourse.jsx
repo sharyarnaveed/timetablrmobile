@@ -1,14 +1,17 @@
-import AntDesign from "@expo/vector-icons/AntDesign";
+import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
+  Dimensions,
   FlatList,
   Modal,
+  Platform,
   SafeAreaView,
   ScrollView,
+  StatusBar,
   Text,
   TextInput,
   TouchableOpacity,
@@ -17,6 +20,8 @@ import {
 import Toast from "react-native-toast-message";
 import * as yup from "yup";
 import { useTheme } from "../../context/ThemeContext";
+
+const { width } = Dimensions.get("window");
 
 const schema = yup.object().shape({
   program: yup.string().required("Program is required"),
@@ -42,6 +47,22 @@ const addcourse = () => {
   } = useForm({
     resolver: yupResolver(schema),
   });
+
+  // Theme colors
+  const colors = {
+    background: isDark ? "#0a0a0a" : "#f8fafc",
+    card: isDark ? "rgba(30, 30, 30, 0.8)" : "rgba(255, 255, 255, 0.9)",
+    cardSolid: isDark ? "#1a1a1a" : "#ffffff",
+    text: isDark ? "#ffffff" : "#0f172a",
+    textSecondary: isDark ? "#a1a1aa" : "#64748b",
+    textMuted: isDark ? "#71717a" : "#94a3b8",
+    border: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.06)",
+    accent: isDark ? "#8b5cf6" : "#6366f1",
+    accentLight: isDark ? "rgba(139, 92, 246, 0.15)" : "rgba(99, 102, 241, 0.1)",
+    success: "#10b981",
+    danger: "#ef4444",
+    dangerBg: isDark ? "rgba(239, 68, 68, 0.15)" : "rgba(239, 68, 68, 0.1)",
+  };
 
   const onSubmit = async (data) => {
     const token = await SecureStore.getItemAsync("accessToken");
@@ -165,141 +186,163 @@ const addcourse = () => {
     getrepeatcourses();
   }, []);
 
+  // Glassmorphism card style
+  const glassCard = {
+    backgroundColor: colors.card,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: isDark ? 0.4 : 0.1,
+        shadowRadius: 20,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  };
+
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: isDark ? "#000" : "#fff",
-      }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 150 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="px-5 pt-20 pb-8">
-          <View
-            style={{
-              backgroundColor: isDark ? "#111111" : "#ffffff",
-              borderRadius: 32,
-              padding: 32,
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: isDark ? 0.4 : 0.12,
-              shadowRadius: 20,
-              elevation: 12,
-              alignItems: "center",
-              borderWidth: isDark ? 1 : 0,
-              borderColor: isDark ? "#1f1f1f" : "transparent",
-              overflow: "hidden",
-              position: "relative",
-            }}
-          >
-            {/* Decorative elements */}
+        {/* Hero Header */}
+        <View style={{ paddingHorizontal: 20, paddingTop: 60, paddingBottom: 24 }}>
+          <View style={{ ...glassCard, padding: 28, overflow: "hidden" }}>
+            {/* Decorative accent */}
             <View
               style={{
                 position: "absolute",
-                top: -40,
-                right: -40,
-                width: 120,
-                height: 120,
-                borderRadius: 60,
-                backgroundColor: isDark
-                  ? "rgba(255, 255, 255, 0.03)"
-                  : "rgba(0, 0, 0, 0.02)",
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 3,
+                backgroundColor: colors.accent,
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+              }}
+            />
+            
+            {/* Floating shapes */}
+            <View
+              style={{
+                position: "absolute",
+                top: -30,
+                right: -30,
+                width: 100,
+                height: 100,
+                borderRadius: 50,
+                backgroundColor: colors.accentLight,
               }}
             />
             <View
               style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginBottom: 12,
+                position: "absolute",
+                bottom: -20,
+                left: 40,
+                width: 60,
+                height: 60,
+                borderRadius: 30,
+                backgroundColor: colors.accentLight,
+                opacity: 0.5,
               }}
-            >
+            />
+
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
               <View
                 style={{
-                  width: 4,
-                  height: 4,
-                  borderRadius: 2,
-                  backgroundColor: isDark ? "#ffffff" : "#111827",
-                  marginRight: 8,
-                }}
-              />
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: "600",
-                  color: isDark ? "#6b7280" : "#9ca3af",
-                  letterSpacing: 1.5,
-                  textTransform: "uppercase",
+                  width: 44,
+                  height: 44,
+                  borderRadius: 14,
+                  backgroundColor: colors.accentLight,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginRight: 12,
                 }}
               >
-                Repeat Course Management
-              </Text>
+                <Ionicons name="book" size={22} color={colors.accent} />
+              </View>
+              <View>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: "700",
+                    color: colors.accent,
+                    letterSpacing: 1.5,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Course Management
+                </Text>
+              </View>
             </View>
+
             <Text
               style={{
-                fontSize: 32,
+                fontSize: 28,
                 fontWeight: "800",
-                color: isDark ? "#ffffff" : "#111827",
-                textAlign: "center",
-                letterSpacing: -1,
-                lineHeight: 38,
+                color: colors.text,
+                letterSpacing: -0.5,
+                lineHeight: 34,
               }}
             >
-              Add & View Repeat Courses
+              Repeat Courses
+            </Text>
+            <Text
+              style={{
+                fontSize: 15,
+                color: colors.textSecondary,
+                marginTop: 8,
+                lineHeight: 22,
+              }}
+            >
+              Add and manage your repeat courses seamlessly
             </Text>
           </View>
         </View>
 
-        <View className="px-5 py-6">
-          <View 
+        {/* Tab Switcher */}
+        <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
+          <View
             style={{
+              ...glassCard,
               flexDirection: "row",
-              backgroundColor: isDark
-                ? "rgba(17, 17, 17, 0.8)"
-                : "rgba(255, 255, 255, 0.8)",
-              borderRadius: 24,
               padding: 6,
-              borderWidth: isDark ? 1.5 : 1,
-              borderColor: isDark
-                ? "rgba(255, 255, 255, 0.1)"
-                : "rgba(0, 0, 0, 0.08)",
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: isDark ? 0.3 : 0.1,
-              shadowRadius: 12,
-              elevation: 6,
             }}
           >
             <TouchableOpacity
               style={{
                 flex: 1,
-                paddingVertical: 12,
-                borderRadius: 12,
-                backgroundColor:
-                  activeTab === "addCourse"
-                    ? isDark
-                      ? "#ffffff"
-                      : "#111827"
-                    : "transparent",
+                paddingVertical: 14,
+                paddingHorizontal: 16,
+                borderRadius: 18,
+                backgroundColor: activeTab === "addCourse" ? colors.accent : "transparent",
+                flexDirection: "row",
                 alignItems: "center",
+                justifyContent: "center",
               }}
               onPress={() => setActiveTab("addCourse")}
               activeOpacity={0.7}
             >
+              <Ionicons
+                name="add-circle"
+                size={18}
+                color={activeTab === "addCourse" ? "#ffffff" : colors.textMuted}
+                style={{ marginRight: 8 }}
+              />
               <Text
                 style={{
                   fontWeight: "600",
-                  fontSize: 15,
-                  color:
-                    activeTab === "addCourse"
-                      ? isDark
-                        ? "#000000"
-                        : "#ffffff"
-                      : isDark
-                      ? "#9ca3af"
-                      : "#6b7280",
+                  fontSize: 14,
+                  color: activeTab === "addCourse" ? "#ffffff" : colors.textMuted,
                 }}
               >
                 Add Course
@@ -309,31 +352,28 @@ const addcourse = () => {
             <TouchableOpacity
               style={{
                 flex: 1,
-                paddingVertical: 12,
-                borderRadius: 12,
-                backgroundColor:
-                  activeTab === "viewCourse"
-                    ? isDark
-                      ? "#ffffff"
-                      : "#111827"
-                    : "transparent",
+                paddingVertical: 14,
+                paddingHorizontal: 16,
+                borderRadius: 18,
+                backgroundColor: activeTab === "viewCourse" ? colors.accent : "transparent",
+                flexDirection: "row",
                 alignItems: "center",
+                justifyContent: "center",
               }}
               onPress={() => setActiveTab("viewCourse")}
               activeOpacity={0.7}
             >
+              <Ionicons
+                name="list"
+                size={18}
+                color={activeTab === "viewCourse" ? "#ffffff" : colors.textMuted}
+                style={{ marginRight: 8 }}
+              />
               <Text
                 style={{
                   fontWeight: "600",
-                  fontSize: 15,
-                  color:
-                    activeTab === "viewCourse"
-                      ? isDark
-                        ? "#000000"
-                        : "#ffffff"
-                      : isDark
-                      ? "#9ca3af"
-                      : "#6b7280",
+                  fontSize: 14,
+                  color: activeTab === "viewCourse" ? "#ffffff" : colors.textMuted,
                 }}
               >
                 View Courses
@@ -343,49 +383,62 @@ const addcourse = () => {
         </View>
 
         {/* Tab Content */}
-        <View className="px-5">
+        <View style={{ paddingHorizontal: 20 }}>
           {activeTab === "addCourse" ? (
-            <View className="pt-6">
-              <View className="items-center mb-12">
-                <Text
-                  style={{
-                    fontSize: 32,
-                    fontWeight: "700",
-                    color: isDark ? "#ffffff" : "#111827",
-                    marginBottom: 12,
-                    letterSpacing: -0.5,
-                    textAlign: "center",
-                  }}
-                >
-                  Add Course
-                </Text>
-                <View
-                  style={{
-                    width: 40,
-                    height: 2,
-                    backgroundColor: isDark ? "#ffffff" : "#111827",
-                    opacity: 0.2,
-                    borderRadius: 1,
-                  }}
-                />
-              </View>
-
-              {/* Ultra Clean Form */}
-              <View className="space-y-12">
-                <View>
+            <View>
+              {/* Form Card */}
+              <View style={{ ...glassCard, padding: 24, marginBottom: 20 }}>
+                <View style={{ marginBottom: 32 }}>
                   <Text
                     style={{
-                      fontSize: 12,
-                      textTransform: "uppercase",
-                      letterSpacing: 2,
-                      color: isDark ? "#9ca3af" : "#6b7280",
-                      marginBottom: 24,
-                      fontWeight: "500",
+                      fontSize: 22,
+                      fontWeight: "700",
+                      color: colors.text,
+                      marginBottom: 6,
                     }}
                   >
-                    01 — Program
+                    Add New Course
                   </Text>
-                  <View className="relative">
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      color: colors.textSecondary,
+                    }}
+                  >
+                    Fill in the details below to add a repeat course
+                  </Text>
+                </View>
+
+                {/* Form Fields */}
+                <View style={{ gap: 28 }}>
+                  {/* Program Field */}
+                  <View>
+                    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+                      <View
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: 8,
+                          backgroundColor: colors.accentLight,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          marginRight: 10,
+                        }}
+                      >
+                        <Text style={{ fontSize: 12, fontWeight: "700", color: colors.accent }}>01</Text>
+                      </View>
+                      <Text
+                        style={{
+                          fontSize: 13,
+                          fontWeight: "600",
+                          color: colors.textSecondary,
+                          letterSpacing: 0.5,
+                        }}
+                      >
+                        Select Program
+                      </Text>
+                    </View>
+                    
                     <Controller
                       name="program"
                       control={control}
@@ -401,73 +454,84 @@ const addcourse = () => {
                         );
 
                         return (
-                          <View className="mb-4">
+                          <View>
                             <TouchableOpacity
                               style={{
                                 height: 56,
                                 width: "100%",
-                                borderBottomWidth: 2,
-                                borderBottomColor: isDark
-                                  ? "#374151"
-                                  : "#d1d5db",
-                                backgroundColor: "transparent",
-                                justifyContent: "center",
-                                paddingHorizontal: 8,
+                                backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
+                                borderRadius: 16,
+                                borderWidth: 1.5,
+                                borderColor: errors.program ? colors.danger : colors.border,
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                paddingHorizontal: 16,
+                                flexDirection: "row",
                               }}
                               onPress={() => setIsProgramPickerVisible(true)}
                             >
                               <Text
                                 style={{
-                                  fontSize: 16,
-                                  color: selectedProgram
-                                    ? isDark
-                                      ? "#fff"
-                                      : "#000"
-                                    : isDark
-                                    ? "#9ca3af"
-                                    : "#6b7280",
+                                  fontSize: 15,
+                                  color: selectedProgram ? colors.text : colors.textMuted,
+                                  flex: 1,
                                 }}
+                                numberOfLines={1}
                               >
-                                {selectedProgram
-                                  ? selectedProgram.program_name
-                                  : "Select Program"}
+                                {selectedProgram ? selectedProgram.program_name : "Choose a program..."}
                               </Text>
+                              <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
                             </TouchableOpacity>
 
+                            {/* Program Modal */}
                             <Modal
                               visible={isProgramPickerVisible}
                               animationType="slide"
                               transparent={true}
-                              onRequestClose={() =>
-                                setIsProgramPickerVisible(false)
-                              }
+                              onRequestClose={() => setIsProgramPickerVisible(false)}
                             >
-                              <View className="flex-1 bg-black bg-opacity-50 justify-center">
+                              <View
+                                style={{
+                                  flex: 1,
+                                  backgroundColor: "rgba(0,0,0,0.6)",
+                                  justifyContent: "flex-end",
+                                }}
+                              >
                                 <View
                                   style={{
-                                    backgroundColor: isDark
-                                      ? "#1a1a1a"
-                                      : "#fff",
-                                    marginHorizontal: 16,
-                                    borderRadius: 12,
-                                    maxHeight: 384,
+                                    backgroundColor: colors.cardSolid,
+                                    borderTopLeftRadius: 28,
+                                    borderTopRightRadius: 28,
+                                    maxHeight: "70%",
+                                    paddingBottom: 34,
                                   }}
                                 >
+                                  {/* Modal Handle */}
+                                  <View style={{ alignItems: "center", paddingTop: 12, paddingBottom: 8 }}>
+                                    <View
+                                      style={{
+                                        width: 40,
+                                        height: 4,
+                                        borderRadius: 2,
+                                        backgroundColor: colors.border,
+                                      }}
+                                    />
+                                  </View>
+
+                                  {/* Modal Header */}
                                   <View
                                     style={{
-                                      padding: 16,
+                                      padding: 20,
                                       borderBottomWidth: 1,
-                                      borderBottomColor: isDark
-                                        ? "#374151"
-                                        : "#e5e7eb",
+                                      borderBottomColor: colors.border,
                                     }}
                                   >
-                                    <View className="flex-row justify-between items-center mb-3">
+                                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                                       <Text
                                         style={{
-                                          fontSize: 18,
-                                          fontWeight: "600",
-                                          color: isDark ? "#fff" : "#000",
+                                          fontSize: 20,
+                                          fontWeight: "700",
+                                          color: colors.text,
                                         }}
                                       >
                                         Select Program
@@ -477,56 +541,59 @@ const addcourse = () => {
                                           setIsProgramPickerVisible(false);
                                           setProgramSearchText("");
                                         }}
+                                        style={{
+                                          width: 36,
+                                          height: 36,
+                                          borderRadius: 18,
+                                          backgroundColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                        }}
                                       >
-                                        <Text
-                                          style={{
-                                            color: isDark ? "#fff" : "#000",
-                                            fontSize: 18,
-                                            fontWeight: "bold",
-                                          }}
-                                        >
-                                          ✕
-                                        </Text>
+                                        <Ionicons name="close" size={20} color={colors.text} />
                                       </TouchableOpacity>
                                     </View>
 
-                                    <TextInput
+                                    {/* Search Input */}
+                                    <View
                                       style={{
-                                        height: 64,
-                                        borderWidth: 1,
-                                        borderColor: isDark
-                                          ? "#4b5563"
-                                          : "#d1d5db",
-                                        borderRadius: 8,
-                                        paddingHorizontal: 12,
-                                        fontSize: 16,
-                                        backgroundColor: isDark
-                                          ? "#374151"
-                                          : "#fff",
-                                        color: isDark ? "#fff" : "#000",
+                                        flexDirection: "row",
+                                        alignItems: "center",
+                                        backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)",
+                                        borderRadius: 14,
+                                        paddingHorizontal: 14,
+                                        height: 50,
                                       }}
-                                      placeholder="Search programs..."
-                                      placeholderTextColor={
-                                        isDark ? "#9ca3af" : "#6b7280"
-                                      }
-                                      value={programSearchText}
-                                      onChangeText={setProgramSearchText}
-                                      autoFocus={true}
-                                    />
+                                    >
+                                      <Ionicons name="search" size={20} color={colors.textMuted} />
+                                      <TextInput
+                                        style={{
+                                          flex: 1,
+                                          marginLeft: 10,
+                                          fontSize: 16,
+                                          color: colors.text,
+                                        }}
+                                        placeholder="Search programs..."
+                                        placeholderTextColor={colors.textMuted}
+                                        value={programSearchText}
+                                        onChangeText={setProgramSearchText}
+                                        autoFocus={true}
+                                      />
+                                    </View>
                                   </View>
+
                                   <FlatList
                                     data={filteredPrograms}
-                                    keyExtractor={(item) =>
-                                      item.program_id.toString()
-                                    }
+                                    keyExtractor={(item) => item.program_id.toString()}
                                     renderItem={({ item }) => (
                                       <TouchableOpacity
                                         style={{
-                                          padding: 16,
+                                          paddingVertical: 16,
+                                          paddingHorizontal: 20,
                                           borderBottomWidth: 1,
-                                          borderBottomColor: isDark
-                                            ? "#374151"
-                                            : "#f3f4f6",
+                                          borderBottomColor: colors.border,
+                                          flexDirection: "row",
+                                          alignItems: "center",
                                         }}
                                         onPress={() => {
                                           onChange(item.program_name);
@@ -536,24 +603,41 @@ const addcourse = () => {
                                           getcourse(item.program_id);
                                         }}
                                       >
+                                        <View
+                                          style={{
+                                            width: 40,
+                                            height: 40,
+                                            borderRadius: 12,
+                                            backgroundColor: colors.accentLight,
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            marginRight: 14,
+                                          }}
+                                        >
+                                          <Ionicons name="school" size={18} color={colors.accent} />
+                                        </View>
                                         <Text
                                           style={{
-                                            fontSize: 16,
-                                            color: isDark ? "#fff" : "#000",
+                                            fontSize: 15,
+                                            color: colors.text,
+                                            fontWeight: "500",
+                                            flex: 1,
                                           }}
                                         >
                                           {item.program_name}
                                         </Text>
+                                        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
                                       </TouchableOpacity>
                                     )}
                                     ListEmptyComponent={
-                                      <View className="p-4">
+                                      <View style={{ padding: 40, alignItems: "center" }}>
+                                        <Ionicons name="search-outline" size={48} color={colors.textMuted} />
                                         <Text
                                           style={{
-                                            color: isDark
-                                              ? "#9ca3af"
-                                              : "#6b7280",
+                                            color: colors.textSecondary,
                                             textAlign: "center",
+                                            marginTop: 12,
+                                            fontSize: 15,
                                           }}
                                         >
                                           No programs found
@@ -566,40 +650,47 @@ const addcourse = () => {
                             </Modal>
 
                             {errors.program && (
-                              <Text className="text-red-500 text-sm mt-1">
-                                {errors.program.message}
-                              </Text>
+                              <View style={{ flexDirection: "row", alignItems: "center", marginTop: 8 }}>
+                                <Ionicons name="alert-circle" size={14} color={colors.danger} />
+                                <Text style={{ color: colors.danger, fontSize: 13, marginLeft: 6 }}>
+                                  {errors.program.message}
+                                </Text>
+                              </View>
                             )}
                           </View>
                         );
                       }}
                     />
-                    <View className="absolute right-0 top-0">
+                  </View>
+
+                  {/* Course Field */}
+                  <View>
+                    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
                       <View
                         style={{
-                          width: 4,
-                          height: 24,
-                          backgroundColor: isDark ? "#fff" : "#000",
+                          width: 28,
+                          height: 28,
+                          borderRadius: 8,
+                          backgroundColor: colors.accentLight,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          marginRight: 10,
                         }}
-                      />
+                      >
+                        <Text style={{ fontSize: 12, fontWeight: "700", color: colors.accent }}>02</Text>
+                      </View>
+                      <Text
+                        style={{
+                          fontSize: 13,
+                          fontWeight: "600",
+                          color: colors.textSecondary,
+                          letterSpacing: 0.5,
+                        }}
+                      >
+                        Select Course
+                      </Text>
                     </View>
-                  </View>
-                </View>
 
-                <View>
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      textTransform: "uppercase",
-                      letterSpacing: 2,
-                      color: isDark ? "#9ca3af" : "#6b7280",
-                      marginBottom: 24,
-                      fontWeight: "500",
-                    }}
-                  >
-                    02 — Course
-                  </Text>
-                  <View className="relative">
                     <Controller
                       name="course"
                       control={control}
@@ -615,73 +706,84 @@ const addcourse = () => {
                         );
 
                         return (
-                          <View className="mb-4">
+                          <View>
                             <TouchableOpacity
                               style={{
                                 height: 56,
                                 width: "100%",
-                                borderBottomWidth: 2,
-                                borderBottomColor: isDark
-                                  ? "#374151"
-                                  : "#d1d5db",
-                                backgroundColor: "transparent",
-                                justifyContent: "center",
-                                paddingHorizontal: 8,
+                                backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
+                                borderRadius: 16,
+                                borderWidth: 1.5,
+                                borderColor: errors.course ? colors.danger : colors.border,
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                paddingHorizontal: 16,
+                                flexDirection: "row",
                               }}
                               onPress={() => setIsCoursePickerVisible(true)}
                             >
                               <Text
                                 style={{
-                                  fontSize: 16,
-                                  color: selectedCourse
-                                    ? isDark
-                                      ? "#fff"
-                                      : "#000"
-                                    : isDark
-                                    ? "#9ca3af"
-                                    : "#6b7280",
+                                  fontSize: 15,
+                                  color: selectedCourse ? colors.text : colors.textMuted,
+                                  flex: 1,
                                 }}
+                                numberOfLines={1}
                               >
-                                {selectedCourse
-                                  ? selectedCourse.course_name
-                                  : "Select Course"}
+                                {selectedCourse ? selectedCourse.course_name : "Choose a course..."}
                               </Text>
+                              <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
                             </TouchableOpacity>
 
+                            {/* Course Modal */}
                             <Modal
                               visible={isCoursePickerVisible}
                               animationType="slide"
                               transparent={true}
-                              onRequestClose={() =>
-                                setIsCoursePickerVisible(false)
-                              }
+                              onRequestClose={() => setIsCoursePickerVisible(false)}
                             >
-                              <View className="flex-1 bg-black bg-opacity-50 justify-center">
+                              <View
+                                style={{
+                                  flex: 1,
+                                  backgroundColor: "rgba(0,0,0,0.6)",
+                                  justifyContent: "flex-end",
+                                }}
+                              >
                                 <View
                                   style={{
-                                    backgroundColor: isDark
-                                      ? "#1a1a1a"
-                                      : "#fff",
-                                    marginHorizontal: 16,
-                                    borderRadius: 12,
-                                    maxHeight: 384,
+                                    backgroundColor: colors.cardSolid,
+                                    borderTopLeftRadius: 28,
+                                    borderTopRightRadius: 28,
+                                    maxHeight: "70%",
+                                    paddingBottom: 34,
                                   }}
                                 >
+                                  {/* Modal Handle */}
+                                  <View style={{ alignItems: "center", paddingTop: 12, paddingBottom: 8 }}>
+                                    <View
+                                      style={{
+                                        width: 40,
+                                        height: 4,
+                                        borderRadius: 2,
+                                        backgroundColor: colors.border,
+                                      }}
+                                    />
+                                  </View>
+
+                                  {/* Modal Header */}
                                   <View
                                     style={{
-                                      padding: 16,
+                                      padding: 20,
                                       borderBottomWidth: 1,
-                                      borderBottomColor: isDark
-                                        ? "#374151"
-                                        : "#e5e7eb",
+                                      borderBottomColor: colors.border,
                                     }}
                                   >
-                                    <View className="flex-row justify-between items-center mb-3">
+                                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                                       <Text
                                         style={{
-                                          fontSize: 18,
-                                          fontWeight: "600",
-                                          color: isDark ? "#fff" : "#000",
+                                          fontSize: 20,
+                                          fontWeight: "700",
+                                          color: colors.text,
                                         }}
                                       >
                                         Select Course
@@ -691,54 +793,59 @@ const addcourse = () => {
                                           setIsCoursePickerVisible(false);
                                           setCourseSearchText("");
                                         }}
+                                        style={{
+                                          width: 36,
+                                          height: 36,
+                                          borderRadius: 18,
+                                          backgroundColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                        }}
                                       >
-                                        <Text
-                                          style={{
-                                            color: isDark ? "#fff" : "#000",
-                                            fontSize: 18,
-                                            fontWeight: "bold",
-                                          }}
-                                        >
-                                          ✕
-                                        </Text>
+                                        <Ionicons name="close" size={20} color={colors.text} />
                                       </TouchableOpacity>
                                     </View>
 
-                                    <TextInput
+                                    {/* Search Input */}
+                                    <View
                                       style={{
-                                        height: 64,
-                                        borderWidth: 1,
-                                        borderColor: isDark
-                                          ? "#4b5563"
-                                          : "#d1d5db",
-                                        borderRadius: 8,
-                                        paddingHorizontal: 12,
-                                        fontSize: 16,
-                                        backgroundColor: isDark
-                                          ? "#374151"
-                                          : "#fff",
-                                        color: isDark ? "#fff" : "#000",
+                                        flexDirection: "row",
+                                        alignItems: "center",
+                                        backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)",
+                                        borderRadius: 14,
+                                        paddingHorizontal: 14,
+                                        height: 50,
                                       }}
-                                      placeholder="Search courses..."
-                                      placeholderTextColor={
-                                        isDark ? "#9ca3af" : "#6b7280"
-                                      }
-                                      value={courseSearchText}
-                                      onChangeText={setCourseSearchText}
-                                      autoFocus={true}
-                                    />
+                                    >
+                                      <Ionicons name="search" size={20} color={colors.textMuted} />
+                                      <TextInput
+                                        style={{
+                                          flex: 1,
+                                          marginLeft: 10,
+                                          fontSize: 16,
+                                          color: colors.text,
+                                        }}
+                                        placeholder="Search courses..."
+                                        placeholderTextColor={colors.textMuted}
+                                        value={courseSearchText}
+                                        onChangeText={setCourseSearchText}
+                                        autoFocus={true}
+                                      />
+                                    </View>
                                   </View>
+
                                   <FlatList
                                     data={filteredCourses}
-                                    keyExtractor={(item, index) => index}
+                                    keyExtractor={(item, index) => index.toString()}
                                     renderItem={({ item }) => (
                                       <TouchableOpacity
                                         style={{
-                                          padding: 16,
+                                          paddingVertical: 16,
+                                          paddingHorizontal: 20,
                                           borderBottomWidth: 1,
-                                          borderBottomColor: isDark
-                                            ? "#374151"
-                                            : "#f3f4f6",
+                                          borderBottomColor: colors.border,
+                                          flexDirection: "row",
+                                          alignItems: "center",
                                         }}
                                         onPress={() => {
                                           onChange(item.course_name);
@@ -746,27 +853,44 @@ const addcourse = () => {
                                           setCourseSearchText("");
                                         }}
                                       >
+                                        <View
+                                          style={{
+                                            width: 40,
+                                            height: 40,
+                                            borderRadius: 12,
+                                            backgroundColor: colors.accentLight,
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            marginRight: 14,
+                                          }}
+                                        >
+                                          <Ionicons name="document-text" size={18} color={colors.accent} />
+                                        </View>
                                         <Text
                                           style={{
-                                            fontSize: 16,
-                                            color: isDark ? "#fff" : "#000",
+                                            fontSize: 15,
+                                            color: colors.text,
+                                            fontWeight: "500",
+                                            flex: 1,
                                           }}
                                         >
                                           {item.course_name}
                                         </Text>
+                                        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
                                       </TouchableOpacity>
                                     )}
                                     ListEmptyComponent={
-                                      <View className="p-4">
+                                      <View style={{ padding: 40, alignItems: "center" }}>
+                                        <Ionicons name="document-outline" size={48} color={colors.textMuted} />
                                         <Text
                                           style={{
-                                            color: isDark
-                                              ? "#9ca3af"
-                                              : "#6b7280",
+                                            color: colors.textSecondary,
                                             textAlign: "center",
+                                            marginTop: 12,
+                                            fontSize: 15,
                                           }}
                                         >
-                                          No courses found
+                                          {selectedProgramId ? "No courses found" : "Select a program first"}
                                         </Text>
                                       </View>
                                     }
@@ -776,50 +900,52 @@ const addcourse = () => {
                             </Modal>
 
                             {errors.course && (
-                              <Text className="text-red-500 text-sm mt-1">
-                                {errors.course.message}
-                              </Text>
+                              <View style={{ flexDirection: "row", alignItems: "center", marginTop: 8 }}>
+                                <Ionicons name="alert-circle" size={14} color={colors.danger} />
+                                <Text style={{ color: colors.danger, fontSize: 13, marginLeft: 6 }}>
+                                  {errors.course.message}
+                                </Text>
+                              </View>
                             )}
                           </View>
                         );
                       }}
                     />
-                    <View className="absolute right-0 top-0">
-                      <View
-                        style={{
-                          width: 4,
-                          height: 24,
-                          backgroundColor: isDark ? "#fff" : "#000",
-                        }}
-                      />
-                    </View>
                   </View>
                 </View>
-              </View>
 
-              {/* Modern Add Course Button */}
-              <View style={{ marginTop: 32, marginBottom: 20 }}>
+                {/* Submit Button */}
                 <TouchableOpacity
                   style={{
-                    backgroundColor: isDark ? "#ffffff" : "#111827",
+                    backgroundColor: colors.accent,
                     paddingVertical: 18,
                     alignItems: "center",
                     borderRadius: 16,
-                    shadowColor: "#000",
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: isDark ? 0.3 : 0.1,
-                    shadowRadius: 8,
-                    elevation: 4,
+                    marginTop: 32,
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    ...Platform.select({
+                      ios: {
+                        shadowColor: colors.accent,
+                        shadowOffset: { width: 0, height: 8 },
+                        shadowOpacity: 0.35,
+                        shadowRadius: 12,
+                      },
+                      android: {
+                        elevation: 8,
+                      },
+                    }),
                   }}
                   onPress={handleSubmit(onSubmit)}
-                  activeOpacity={0.8}
+                  activeOpacity={0.85}
                 >
+                  <Ionicons name="add-circle" size={20} color="#ffffff" style={{ marginRight: 8 }} />
                   <Text
                     style={{
-                      color: isDark ? "#000000" : "#ffffff",
+                      color: "#ffffff",
                       fontSize: 16,
-                      fontWeight: "600",
-                      letterSpacing: 0.5,
+                      fontWeight: "700",
+                      letterSpacing: 0.3,
                     }}
                   >
                     Add Course
@@ -829,37 +955,43 @@ const addcourse = () => {
             </View>
           ) : (
             <View>
-              <View className="flex-row justify-between space-x-3 mb-8">
+              {/* Stats Cards */}
+              <View style={{ flexDirection: "row", gap: 12, marginBottom: 24 }}>
                 <View
                   style={{
                     flex: 1,
-                    backgroundColor: isDark ? "#111111" : "#ffffff",
-                    padding: 24,
-                    borderRadius: 20,
+                    ...glassCard,
+                    padding: 20,
                     alignItems: "center",
-                    borderWidth: isDark ? 1 : 0,
-                    borderColor: isDark ? "#1f1f1f" : "transparent",
-                    shadowColor: "#000",
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: isDark ? 0.2 : 0.05,
-                    shadowRadius: 8,
-                    elevation: 3,
                   }}
                 >
+                  <View
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 14,
+                      backgroundColor: colors.accentLight,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 12,
+                    }}
+                  >
+                    <Ionicons name="library" size={22} color={colors.accent} />
+                  </View>
                   <Text
                     style={{
-                      fontSize: 36,
-                      fontWeight: "700",
-                      color: isDark ? "#ffffff" : "#111827",
-                      marginBottom: 8,
+                      fontSize: 32,
+                      fontWeight: "800",
+                      color: colors.text,
+                      marginBottom: 4,
                     }}
                   >
                     {RePeatCourse.length}
                   </Text>
                   <Text
                     style={{
-                      fontSize: 14,
-                      color: isDark ? "#6b7280" : "#9ca3af",
+                      fontSize: 13,
+                      color: colors.textSecondary,
                       fontWeight: "500",
                     }}
                   >
@@ -870,31 +1002,50 @@ const addcourse = () => {
                 <View
                   style={{
                     flex: 1,
-                    backgroundColor: isDark ? "#ffffff" : "#111827",
-                    padding: 24,
-                    borderRadius: 20,
+                    backgroundColor: colors.accent,
+                    borderRadius: 24,
+                    padding: 20,
                     alignItems: "center",
-                    shadowColor: "#000",
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: isDark ? 0.3 : 0.1,
-                    shadowRadius: 8,
-                    elevation: 4,
+                    ...Platform.select({
+                      ios: {
+                        shadowColor: colors.accent,
+                        shadowOffset: { width: 0, height: 8 },
+                        shadowOpacity: 0.35,
+                        shadowRadius: 12,
+                      },
+                      android: {
+                        elevation: 8,
+                      },
+                    }),
                   }}
                 >
+                  <View
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 14,
+                      backgroundColor: "rgba(255,255,255,0.2)",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 12,
+                    }}
+                  >
+                    <Ionicons name="checkmark-circle" size={22} color="#ffffff" />
+                  </View>
                   <Text
                     style={{
-                      fontSize: 36,
-                      fontWeight: "700",
-                      color: isDark ? "#000000" : "#ffffff",
-                      marginBottom: 8,
+                      fontSize: 32,
+                      fontWeight: "800",
+                      color: "#ffffff",
+                      marginBottom: 4,
                     }}
                   >
                     {RePeatCourse.length}
                   </Text>
                   <Text
                     style={{
-                      fontSize: 14,
-                      color: isDark ? "#6b7280" : "#d1d5db",
+                      fontSize: 13,
+                      color: "rgba(255,255,255,0.8)",
                       fontWeight: "500",
                     }}
                   >
@@ -903,43 +1054,70 @@ const addcourse = () => {
                 </View>
               </View>
 
-              <View>
-                <Text
-                  style={{
-                    fontSize: 20,
-                    fontWeight: "600",
-                    color: isDark ? "#ffffff" : "#111827",
-                    marginBottom: 20,
-                    letterSpacing: -0.3,
-                  }}
-                >
-                  Your Courses
-                </Text>
+              {/* Courses List */}
+              <View style={{ ...glassCard, padding: 20, marginBottom: 20 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+                  <View
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 10,
+                      backgroundColor: colors.accentLight,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginRight: 12,
+                    }}
+                  >
+                    <Ionicons name="list" size={18} color={colors.accent} />
+                  </View>
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: "700",
+                      color: colors.text,
+                    }}
+                  >
+                    Your Courses
+                  </Text>
+                </View>
 
-                <View className="space-y-3">
-                  {RePeatCourse.map((repeat, index) => (
-                    <View
-                      key={repeat.repeat_id}
-                      style={{
-                        backgroundColor: isDark ? "#111111" : "#ffffff",
-                        padding: 20,
-                        borderRadius: 18,
-                        shadowColor: "#000",
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: isDark ? 0.2 : 0.05,
-                        shadowRadius: 8,
-                        elevation: 3,
-                        borderWidth: isDark ? 1 : 0,
-                        borderColor: isDark ? "#1f1f1f" : "transparent",
-                      }}
-                    >
-                      <View className="flex-row justify-between items-center">
-                        <View className="flex-1 mr-4">
+                {RePeatCourse.length > 0 ? (
+                  <View style={{ gap: 12 }}>
+                    {RePeatCourse.map((repeat, index) => (
+                      <View
+                        key={repeat.repeat_id}
+                        style={{
+                          backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
+                          padding: 16,
+                          borderRadius: 16,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          borderWidth: 1,
+                          borderColor: colors.border,
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: 12,
+                            backgroundColor: colors.accentLight,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            marginRight: 14,
+                          }}
+                        >
+                          <Text style={{ fontSize: 16, fontWeight: "700", color: colors.accent }}>
+                            {(index + 1).toString().padStart(2, "0")}
+                          </Text>
+                        </View>
+                        <View style={{ flex: 1 }}>
                           <Text
                             style={{
                               fontWeight: "600",
-                              color: isDark ? "#ffffff" : "#111827",
-                              fontSize: 17,
+                              color: colors.text,
+                              fontSize: 15,
+                              lineHeight: 20,
                             }}
                           >
                             {repeat.course_name}
@@ -948,25 +1126,56 @@ const addcourse = () => {
                         <TouchableOpacity
                           onPress={() => deletecourse(repeat.repeat_id)}
                           style={{
-                            backgroundColor: isDark ? "#1f1f1f" : "#fee2e2",
-                            paddingHorizontal: 12,
-                            paddingVertical: 8,
+                            backgroundColor: colors.dangerBg,
+                            width: 40,
+                            height: 40,
                             borderRadius: 12,
-                            borderWidth: 1,
-                            borderColor: isDark ? "#7f1d1d" : "#fecaca",
+                            alignItems: "center",
+                            justifyContent: "center",
                           }}
                           activeOpacity={0.7}
                         >
-                          <AntDesign
-                            name="delete"
-                            size={18}
-                            color={isDark ? "#ef4444" : "#dc2626"}
-                          />
+                          <Ionicons name="trash-outline" size={18} color={colors.danger} />
                         </TouchableOpacity>
                       </View>
+                    ))}
+                  </View>
+                ) : (
+                  <View style={{ alignItems: "center", paddingVertical: 40 }}>
+                    <View
+                      style={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: 40,
+                        backgroundColor: colors.accentLight,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginBottom: 16,
+                      }}
+                    >
+                      <Ionicons name="folder-open-outline" size={36} color={colors.accent} />
                     </View>
-                  ))}
-                </View>
+                    <Text
+                      style={{
+                        fontSize: 17,
+                        fontWeight: "600",
+                        color: colors.text,
+                        marginBottom: 6,
+                      }}
+                    >
+                      No courses yet
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        color: colors.textSecondary,
+                        textAlign: "center",
+                      }}
+                    >
+                      Add your first repeat course to get started
+                    </Text>
+                  </View>
+                )}
               </View>
             </View>
           )}

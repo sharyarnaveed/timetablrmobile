@@ -41,141 +41,130 @@ const Today = ({ thecurent, Notcurrentclass }) => {
   }, [thecurent, Notcurrentclass]);
 
   const multipleCurrent = thecurent.length > 1;
-  const singleCurrent = thecurent.length === 1;
 
   return (
-    <View style={{ backgroundColor: isDark ? "#000" : "#fff" }}>
-      {/* Progress and Stats */}
-      <View className="px-6 mb-8">
-        <View className="flex-row justify-between space-x-2">
+    <View style={{ backgroundColor: isDark ? "#000000" : "#fafafa" }}>
+      {/* Stats Cards */}
+      <View style={{ paddingHorizontal: 24, marginBottom: 32 }}>
+        <View style={{ flexDirection: "row", gap: 12 }}>
+          {/* Progress Card */}
           <View
             style={{
-              flex: 1,
-              backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
-              padding: 12,
-              borderRadius: 16,
-              alignItems: "center",
+              flex: 1.5,
+              backgroundColor: isDark ? "#0a0a0a" : "#ffffff",
+              padding: 20,
+              borderRadius: 20,
+              borderWidth: 1,
+              borderColor: isDark ? "#1a1a1a" : "#f0f0f0",
             }}
           >
-            <View className="items-center mb-4">
-              <Text
-                style={{
-                  fontSize: 24,
-                  fontWeight: "bold",
-                  color: isDark ? "#fff" : "#000",
-                  marginBottom: 8,
-                }}
-              >
-                {Math.round(progress)}%
-              </Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: isDark ? "#9ca3af" : "#6b7280",
-                  fontWeight: "500",
-                }}
-              >
-                Complete
-              </Text>
-            </View>
+            <Text
+              style={{
+                fontSize: 11,
+                fontWeight: "600",
+                color: isDark ? "#555555" : "#999999",
+                letterSpacing: 1.5,
+                textTransform: "uppercase",
+                marginBottom: 12,
+              }}
+            >
+              Progress
+            </Text>
+            <Text
+              style={{
+                fontSize: 36,
+                fontWeight: "800",
+                color: isDark ? "#ffffff" : "#000000",
+                marginBottom: 16,
+              }}
+            >
+              {Math.round(progress)}%
+            </Text>
             <View
               style={{
                 width: "100%",
-                backgroundColor: isDark ? "#374151" : "#e5e7eb",
-                borderRadius: 6,
-                height: 12,
+                backgroundColor: isDark ? "#1a1a1a" : "#f0f0f0",
+                borderRadius: 4,
+                height: 6,
                 overflow: "hidden",
               }}
             >
               <View
                 style={{
-                  backgroundColor: isDark ? "#fff" : "#000",
-                  height: 12,
-                  borderRadius: 6,
+                  backgroundColor: isDark ? "#ffffff" : "#000000",
+                  height: 6,
+                  borderRadius: 4,
                   width: `${progress}%`,
                 }}
               />
             </View>
-            <View className="flex-row justify-between w-full mt-2">
-              {[0, 25, 50, 75, 100].map((threshold) => (
-                <View
-                  key={threshold}
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor:
-                      progress >= threshold
-                        ? isDark
-                          ? "#fff"
-                          : "#000"
-                        : isDark
-                        ? "#374151"
-                        : "#d1d5db",
-                  }}
-                />
-              ))}
+          </View>
+
+          {/* Stats Column */}
+          <View style={{ flex: 1, gap: 12 }}>
+            {/* Total Classes */}
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: isDark ? "#ffffff" : "#000000",
+                padding: 16,
+                borderRadius: 20,
+                justifyContent: "center",
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 28,
+                  fontWeight: "800",
+                  color: isDark ? "#000000" : "#ffffff",
+                }}
+              >
+                {totalength}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: "500",
+                  color: isDark ? "#666666" : "#888888",
+                  letterSpacing: 0.5,
+                }}
+              >
+                Total
+              </Text>
             </View>
-          </View>
 
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: isDark ? "#fff" : "#000",
-              padding: 24,
-              borderRadius: 16,
-              alignItems: "center",
-            }}
-          >
-            <Text
+            {/* Remaining */}
+            <View
               style={{
-                fontSize: 24,
-                fontWeight: "bold",
-                color: isDark ? "#000" : "#fff",
-                marginBottom: 8,
+                flex: 1,
+                backgroundColor: isDark ? "#0a0a0a" : "#ffffff",
+                padding: 16,
+                borderRadius: 20,
+                justifyContent: "center",
+                borderWidth: 1,
+                borderColor: isDark ? "#1a1a1a" : "#f0f0f0",
               }}
             >
-              {totalength}
-            </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: isDark ? "#6b7280" : "#d1d5db",
-                fontWeight: "500",
-              }}
-            >
-              Classes
-            </Text>
-          </View>
-
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
-              padding: 24,
-              borderRadius: 16,
-              alignItems: "center",
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 24,
-                fontWeight: "bold",
-                color: isDark ? "#fff" : "#000",
-                marginBottom: 8,
-              }}
-            >
-              {leftlength}
-            </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: isDark ? "#9ca3af" : "#6b7280",
-                fontWeight: "300",
-              }}
-            >
-              Left
-            </Text>
+              <Text
+                style={{
+                  fontSize: 28,
+                  fontWeight: "800",
+                  color: isDark ? "#ffffff" : "#000000",
+                }}
+              >
+                {leftlength}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: "500",
+                  color: isDark ? "#555555" : "#999999",
+                  letterSpacing: 0.5,
+                }}
+              >
+                Left
+              </Text>
+            </View>
           </View>
         </View>
       </View>
@@ -183,210 +172,278 @@ const Today = ({ thecurent, Notcurrentclass }) => {
       {(thecurent && thecurent.length > 0) ||
       (Notcurrentclass && Notcurrentclass.length > 0) ? (
         <>
+          {/* Current Class Section */}
           {thecurent.length > 0 && (
-            <View className="mx-6 mb-6">
-              <Text
+            <View style={{ paddingHorizontal: 24, marginBottom: 32 }}>
+              <View
                 style={{
-                  fontSize: 18,
-                  fontWeight: "600",
-                  color: isDark ? "#fff" : "#374151",
+                  flexDirection: "row",
+                  alignItems: "center",
                   marginBottom: 16,
                 }}
               >
-                {multipleCurrent ? "Current Classes" : "Current Class"}
-              </Text>
+                <View
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: isDark ? "#ffffff" : "#000000",
+                    marginRight: 12,
+                  }}
+                />
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: "600",
+                    color: isDark ? "#888888" : "#666666",
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {multipleCurrent ? "Happening Now" : "Happening Now"}
+                </Text>
+              </View>
 
-              <View className="space-y-4">
-                {thecurent.map((cls, index) => (
+              {thecurent.map((cls, index) => (
+                <View
+                  key={index}
+                  style={{
+                    backgroundColor: isDark ? "#ffffff" : "#000000",
+                    padding: 24,
+                    borderRadius: 24,
+                    marginBottom: index < thecurent.length - 1 ? 12 : 0,
+                  }}
+                >
                   <View
-                    key={index}
                     style={{
-                      backgroundColor: isDark ? "#1a1a1a" : "#000",
-                      padding: 24,
-                      borderRadius: 16,
-                      shadowColor: "#000",
-                      shadowOpacity: 0.1,
-                      shadowRadius: 8,
-                      elevation: 4,
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
                     }}
                   >
-                    <View className="flex-row justify-between items-start mb-4">
-                      <View className="flex-1">
-                        <Text
-                          style={{
-                            color: "#fff",
-                            fontSize: 14,
-                            fontWeight: "semibold",
-                            marginBottom: 8,
-                          }}
-                        >
-                          {cls.course_name}
-                        </Text>
-                        <Text
-                          style={{
-                            color: "#d1d5db",
-                            fontSize: 13,
-                            marginBottom: 4,
-                          }}
-                        >
-                          📍 {cls.venue}
-                        </Text>
-                        <Text
-                          style={{
-                            color: "#d1d5db",
-                            fontSize: 14,
-                          }}
-                        >
-                          {covertionoftime(cls.start_time)} -{" "}
-                          {covertionoftime(cls.end_time)}
-                        </Text>
-                        <Text
-                          style={{
-                            color: "#d1d5db",
-                            fontSize: 14,
-                          }}
-                        >
-                          👨‍🏫 {cls.teacher_name}
-                        </Text>
-                      </View>
-                      <View
+                    <View style={{ flex: 1 }}>
+                      <Text
                         style={{
-                          backgroundColor: "#fff",
-                          paddingHorizontal: 16,
-                          paddingVertical: 8,
-                          borderRadius: 20,
+                          fontSize: 18,
+                          fontWeight: "700",
+                          color: isDark ? "#000000" : "#ffffff",
+                          marginBottom: 12,
+                          letterSpacing: -0.3,
                         }}
                       >
+                        {cls.course_name}
+                      </Text>
+                      <View style={{ gap: 6 }}>
                         <Text
                           style={{
-                            color: "#000",
-                            fontSize: 12,
-                            fontWeight: "bold",
+                            fontSize: 14,
+                            color: isDark ? "#666666" : "#999999",
+                            fontWeight: "500",
                           }}
                         >
-                          LIVE
+                          {cls.venue}
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            color: isDark ? "#666666" : "#999999",
+                            fontWeight: "500",
+                          }}
+                        >
+                          {covertionoftime(cls.start_time)} — {covertionoftime(cls.end_time)}
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            color: isDark ? "#666666" : "#999999",
+                            fontWeight: "500",
+                          }}
+                        >
+                          {cls.teacher_name}
                         </Text>
                       </View>
                     </View>
+                    <View
+                      style={{
+                        backgroundColor: isDark ? "#000000" : "#ffffff",
+                        paddingHorizontal: 14,
+                        paddingVertical: 8,
+                        borderRadius: 100,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          fontWeight: "700",
+                          color: isDark ? "#ffffff" : "#000000",
+                          letterSpacing: 1,
+                        }}
+                      >
+                        LIVE
+                      </Text>
+                    </View>
                   </View>
-                ))}
-              </View>
+                </View>
+              ))}
             </View>
           )}
 
+          {/* Upcoming Classes Section */}
           {Notcurrentclass.length > 0 ? (
-            <View className="mx-6 mb-36">
-              <Text
+            <View style={{ paddingHorizontal: 24, paddingBottom: 40 }}>
+              <View
                 style={{
-                  fontSize: 18,
-                  fontWeight: "600",
-                  color: isDark ? "#fff" : "#374151",
+                  flexDirection: "row",
+                  alignItems: "center",
                   marginBottom: 16,
                 }}
               >
-                Upcoming Classes
-              </Text>
+                <View
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: isDark ? "#333333" : "#cccccc",
+                    marginRight: 12,
+                  }}
+                />
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: "600",
+                    color: isDark ? "#555555" : "#999999",
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Up Next
+                </Text>
+              </View>
 
-              <View className="space-y-3">
-                {Notcurrentclass.map((classItem, index) => (
+              {Notcurrentclass.map((classItem, index) => (
+                <View
+                  key={index}
+                  style={{
+                    backgroundColor: isDark ? "#0a0a0a" : "#ffffff",
+                    padding: 20,
+                    borderRadius: 20,
+                    marginBottom: 10,
+                    borderWidth: 1,
+                    borderColor: isDark ? "#1a1a1a" : "#f0f0f0",
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  {/* Time Indicator */}
                   <View
-                    key={index}
                     style={{
-                      backgroundColor: isDark ? "#1a1a1a" : "#fff",
-                      padding: 16,
-                      borderRadius: 12,
-                      shadowColor: "#000",
-                      shadowOpacity: 0.05,
-                      shadowRadius: 4,
-                      elevation: 2,
-                      borderWidth: 1,
-                      borderColor: isDark ? "#374151" : "#e5e7eb",
-                      flexDirection: "row",
-                      justifyContent: "space-between",
+                      width: 56,
                       alignItems: "center",
+                      marginRight: 16,
                     }}
                   >
-                    <View className="flex-1">
-                      <Text
-                        style={{
-                          fontWeight: "600",
-                          color: isDark ? "#fff" : "#374151",
-                        }}
-                      >
-                        {classItem.course_name}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          color: isDark ? "#9ca3af" : "#6b7280",
-                        }}
-                      >
-                        {classItem.venue} • {classItem.teacher_name}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          color: isDark ? "#9ca3af" : "#6b7280",
-                        }}
-                      >
-                        {covertionoftime(classItem.start_time)} -{" "}
-                        {covertionoftime(classItem.end_time)}
-                      </Text>
-                    </View>
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        fontWeight: "700",
+                        color: isDark ? "#ffffff" : "#000000",
+                      }}
+                    >
+                      {covertionoftime(classItem.start_time).split(" ")[0]}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 10,
+                        fontWeight: "500",
+                        color: isDark ? "#555555" : "#999999",
+                      }}
+                    >
+                      {covertionoftime(classItem.start_time).split(" ")[1]}
+                    </Text>
                   </View>
-                ))}
-              </View>
+
+                  {/* Divider */}
+                  <View
+                    style={{
+                      width: 1,
+                      height: 40,
+                      backgroundColor: isDark ? "#1a1a1a" : "#f0f0f0",
+                      marginRight: 16,
+                    }}
+                  />
+
+                  {/* Class Details */}
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        fontSize: 15,
+                        fontWeight: "600",
+                        color: isDark ? "#ffffff" : "#000000",
+                        marginBottom: 4,
+                        letterSpacing: -0.2,
+                      }}
+                    >
+                      {classItem.course_name}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        color: isDark ? "#555555" : "#999999",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {classItem.venue} · {classItem.teacher_name}
+                    </Text>
+                  </View>
+                </View>
+              ))}
             </View>
           ) : thecurent.length > 0 ? (
             <View
               style={{
                 marginHorizontal: 24,
-                marginBottom: 144,
-                backgroundColor: isDark ? "#1a1a1a" : "#eff6ff",
-                padding: 32,
-                borderRadius: 16,
+                marginBottom: 40,
+                backgroundColor: isDark ? "#0a0a0a" : "#ffffff",
+                padding: 40,
+                borderRadius: 24,
                 alignItems: "center",
                 borderWidth: 1,
-                borderColor: isDark ? "#374151" : "#dbeafe",
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 8,
-                elevation: 4,
+                borderColor: isDark ? "#1a1a1a" : "#f0f0f0",
               }}
             >
               <View
                 style={{
                   width: 64,
                   height: 64,
-                  backgroundColor: isDark ? "#374151" : "#dbeafe",
+                  backgroundColor: isDark ? "#1a1a1a" : "#f5f5f5",
                   borderRadius: 32,
                   alignItems: "center",
                   justifyContent: "center",
-                  marginBottom: 16,
+                  marginBottom: 20,
                 }}
               >
-                <Text style={{ fontSize: 32 }}>📚</Text>
+                <Text style={{ fontSize: 28 }}>✓</Text>
               </View>
               <Text
                 style={{
-                  fontSize: 20,
-                  fontWeight: "600",
-                  color: isDark ? "#fff" : "#374151",
+                  fontSize: 18,
+                  fontWeight: "700",
+                  color: isDark ? "#ffffff" : "#000000",
                   marginBottom: 8,
+                  letterSpacing: -0.3,
                 }}
               >
-                No More Classes Today
+                All Done for Today
               </Text>
               <Text
                 style={{
                   fontSize: 14,
-                  color: isDark ? "#9ca3af" : "#6b7280",
+                  color: isDark ? "#555555" : "#999999",
                   textAlign: "center",
-                  marginBottom: 16,
+                  fontWeight: "500",
                 }}
               >
-                Enjoy your time!
+                No more classes remaining
               </Text>
             </View>
           ) : null}
@@ -395,52 +452,48 @@ const Today = ({ thecurent, Notcurrentclass }) => {
         <View
           style={{
             marginHorizontal: 24,
-            marginBottom: 144,
-            backgroundColor: isDark ? "#1a1a1a" : "#eff6ff",
-            padding: 32,
-            borderRadius: 16,
+            marginBottom: 40,
+            backgroundColor: isDark ? "#0a0a0a" : "#ffffff",
+            padding: 40,
+            borderRadius: 24,
             alignItems: "center",
             borderWidth: 1,
-            borderColor: isDark ? "#374151" : "#dbeafe",
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 4,
+            borderColor: isDark ? "#1a1a1a" : "#f0f0f0",
           }}
         >
           <View
             style={{
               width: 64,
               height: 64,
-              backgroundColor: isDark ? "#374151" : "#dbeafe",
+              backgroundColor: isDark ? "#1a1a1a" : "#f5f5f5",
               borderRadius: 32,
               alignItems: "center",
               justifyContent: "center",
-              marginBottom: 16,
+              marginBottom: 20,
             }}
           >
-            <Text style={{ fontSize: 32 }}>📚</Text>
+            <Text style={{ fontSize: 28 }}>☀️</Text>
           </View>
           <Text
             style={{
-              fontSize: 20,
-              fontWeight: "600",
-              color: isDark ? "#fff" : "#374151",
+              fontSize: 18,
+              fontWeight: "700",
+              color: isDark ? "#ffffff" : "#000000",
               marginBottom: 8,
+              letterSpacing: -0.3,
             }}
           >
-            No Classes Today
+            Free Day
           </Text>
           <Text
             style={{
               fontSize: 14,
-              color: isDark ? "#9ca3af" : "#6b7280",
+              color: isDark ? "#555555" : "#999999",
               textAlign: "center",
-              marginBottom: 16,
+              fontWeight: "500",
             }}
           >
-            Enjoy your free day!
+            No classes scheduled today
           </Text>
         </View>
       )}
