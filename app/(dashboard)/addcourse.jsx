@@ -48,20 +48,20 @@ const addcourse = () => {
     resolver: yupResolver(schema),
   });
 
-  // Theme colors
+  // Theme colors - Monochrome Black & White
   const colors = {
-    background: isDark ? "#0a0a0a" : "#f8fafc",
-    card: isDark ? "rgba(30, 30, 30, 0.8)" : "rgba(255, 255, 255, 0.9)",
-    cardSolid: isDark ? "#1a1a1a" : "#ffffff",
-    text: isDark ? "#ffffff" : "#0f172a",
-    textSecondary: isDark ? "#a1a1aa" : "#64748b",
-    textMuted: isDark ? "#71717a" : "#94a3b8",
-    border: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.06)",
-    accent: isDark ? "#8b5cf6" : "#6366f1",
-    accentLight: isDark ? "rgba(139, 92, 246, 0.15)" : "rgba(99, 102, 241, 0.1)",
-    success: "#10b981",
-    danger: "#ef4444",
-    dangerBg: isDark ? "rgba(239, 68, 68, 0.15)" : "rgba(239, 68, 68, 0.1)",
+    background: isDark ? "#000000" : "#ffffff",
+    card: isDark ? "rgba(20, 20, 20, 0.9)" : "rgba(250, 250, 250, 0.9)",
+    cardSolid: isDark ? "#0a0a0a" : "#fafafa",
+    text: isDark ? "#ffffff" : "#000000",
+    textSecondary: isDark ? "#b3b3b3" : "#4d4d4d",
+    textMuted: isDark ? "#808080" : "#666666",
+    border: isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.08)",
+    accent: isDark ? "#ffffff" : "#000000",
+    accentLight: isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.06)",
+    success: isDark ? "#ffffff" : "#000000",
+    danger: isDark ? "#e6e6e6" : "#1a1a1a",
+    dangerBg: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)",
   };
 
   const onSubmit = async (data) => {
@@ -335,14 +335,14 @@ const addcourse = () => {
               <Ionicons
                 name="add-circle"
                 size={18}
-                color={activeTab === "addCourse" ? "#ffffff" : colors.textMuted}
+                color={activeTab === "addCourse" ? (isDark ? "#000000" : "#ffffff") : colors.textMuted}
                 style={{ marginRight: 8 }}
               />
               <Text
                 style={{
                   fontWeight: "600",
                   fontSize: 14,
-                  color: activeTab === "addCourse" ? "#ffffff" : colors.textMuted,
+                  color: activeTab === "addCourse" ? (isDark ? "#000000" : "#ffffff") : colors.textMuted,
                 }}
               >
                 Add Course
@@ -366,14 +366,14 @@ const addcourse = () => {
               <Ionicons
                 name="list"
                 size={18}
-                color={activeTab === "viewCourse" ? "#ffffff" : colors.textMuted}
+                color={activeTab === "viewCourse" ? (isDark ? "#000000" : "#ffffff") : colors.textMuted}
                 style={{ marginRight: 8 }}
               />
               <Text
                 style={{
                   fontWeight: "600",
                   fontSize: 14,
-                  color: activeTab === "viewCourse" ? "#ffffff" : colors.textMuted,
+                  color: activeTab === "viewCourse" ? (isDark ? "#000000" : "#ffffff") : colors.textMuted,
                 }}
               >
                 View Courses
@@ -939,10 +939,10 @@ const addcourse = () => {
                   onPress={handleSubmit(onSubmit)}
                   activeOpacity={0.85}
                 >
-                  <Ionicons name="add-circle" size={20} color="#ffffff" style={{ marginRight: 8 }} />
+                  <Ionicons name="add-circle" size={20} color={isDark ? "#000000" : "#ffffff"} style={{ marginRight: 8 }} />
                   <Text
                     style={{
-                      color: "#ffffff",
+                      color: isDark ? "#000000" : "#ffffff",
                       fontSize: 16,
                       fontWeight: "700",
                       letterSpacing: 0.3,
@@ -1024,19 +1024,19 @@ const addcourse = () => {
                       width: 48,
                       height: 48,
                       borderRadius: 14,
-                      backgroundColor: "rgba(255,255,255,0.2)",
+                      backgroundColor: isDark ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.2)",
                       alignItems: "center",
                       justifyContent: "center",
                       marginBottom: 12,
                     }}
                   >
-                    <Ionicons name="checkmark-circle" size={22} color="#ffffff" />
+                    <Ionicons name="checkmark-circle" size={22} color={isDark ? "#000000" : "#ffffff"} />
                   </View>
                   <Text
                     style={{
                       fontSize: 32,
                       fontWeight: "800",
-                      color: "#ffffff",
+                      color: isDark ? "#000000" : "#ffffff",
                       marginBottom: 4,
                     }}
                   >
@@ -1045,7 +1045,7 @@ const addcourse = () => {
                   <Text
                     style={{
                       fontSize: 13,
-                      color: "rgba(255,255,255,0.8)",
+                      color: isDark ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.8)",
                       fontWeight: "500",
                     }}
                   >

@@ -1,19 +1,23 @@
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { ActivityIndicator, Alert, Text, View } from "react-native";
 
 const logout = () => {
   const router = useRouter();
+  const alertShown = useRef(false);
 
   useEffect(() => {
     const handleLogout = () => {
+      if (alertShown.current) return;
+      alertShown.current = true;
+      
       Alert.alert("Logout", "Are you sure you want to logout?", [
         { 
           text: "Cancel", 
           style: "cancel",
           onPress: () => {
-            router.navigate("/"); // Navigate away from logout screen
+            router.replace("/"); // Navigate away from logout screen
           } 
         },
         {
@@ -38,7 +42,7 @@ const logout = () => {
     };
 
     handleLogout();
-  }, [router]); // Add router to dependency array
+  }, []); // Remove router from dependency array
 
   return (
     <View 

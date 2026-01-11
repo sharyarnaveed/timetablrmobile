@@ -7,7 +7,7 @@ import * as Notifications from "expo-notifications";
 import { router, Tabs } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Alert, Platform, View } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 // Handle notifications when received
@@ -21,8 +21,13 @@ Notifications.setNotificationHandler({
 
 const _layout = () => {
   const { isDark, toggleTheme } = useTheme();
+  const authCheckDone = useRef(false);
 
   useEffect(() => {
+    // Prevent multiple auth checks
+    if (authCheckDone.current) return;
+    authCheckDone.current = true;
+
     const checkTokenAndRegister = async () => {
       const token = await SecureStore.getItemAsync("accessToken");
       if (token) {
@@ -34,26 +39,69 @@ const _layout = () => {
         );
         return () => subscription.remove();
       } else {
-        router.push("/signin");
+        router.replace("/signin");
+        return;
       }
     };
 
     const checktoken = async () => {
       const token = await SecureStore.getItemAsync("accessToken");
       if (!token) {
-        router.push("/signin");
+        router.replace("/signin");
+        return;
       }
-      const responce = await axios.get(
-        `${process.env.EXPO_PUBLIC_API_URL}/api/user/checkauth`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+      
+      // Check last auth check time to prevent rate limiting
+      const lastAuthCheck = await SecureStore.getItemAsync("lastAuthCheck");
+      const now = Date.now();
+      
+      if (lastAuthCheck && now - parseInt(lastAuthCheck) < 60000) {
+        // Skip check if done within last 60 seconds
+        console.log("Skipping auth check - recently validated");
+        return;
+      }
+      
+      try {
+        const responce = await axios.get(
+          `${process.env.EXPO_PUBLIC_API_URL}/api/user/checkauth`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            timeout: 5000, // Add timeout
+          }
+        );
+        
+        // Store last check time
+        await SecureStore.setItemAsync("lastAuthCheck", now.toString());
+        
+        if (responce.data.valid == false) {
+          await SecureStore.deleteItemAsync("accessToken");
+          await SecureStore.deleteItemAsync("username");
+          await SecureStore.deleteItemAsync("email");
+          await SecureStore.deleteItemAsync("lastAuthCheck");
+          router.replace("/signin");
         }
-      );
-      if (responce.data.valid == false) {
-        router.push("/logout");
+      } catch (error) {
+        console.error("Auth check error:", error);
+        
+        // Handle rate limiting
+        if (error.response?.status === 429) {
+          console.log("Rate limited - skipping auth check");
+          // Store check time to prevent immediate retry
+          await SecureStore.setItemAsync("lastAuthCheck", now.toString());
+          return;
+        }
+        
+        // Only redirect if it's an auth error
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          await SecureStore.deleteItemAsync("accessToken");
+          await SecureStore.deleteItemAsync("username");
+          await SecureStore.deleteItemAsync("email");
+          await SecureStore.deleteItemAsync("lastAuthCheck");
+          router.replace("/signin");
+        }
       }
     };
 

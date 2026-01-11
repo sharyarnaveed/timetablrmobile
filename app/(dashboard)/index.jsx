@@ -84,11 +84,18 @@ const index = () => {
     if (!token) {
       console.log("No token found");
       router.push("/signin");
+      return;
     }
 
     const username = await SecureStore.getItemAsync("username");
+    
+    if (!username) {
+      console.log("No username found");
+      router.push("/signin");
+      return;
+    }
+    
     SetTehusername(username);
-
     Setchar(username.charAt(0));
   };
 
