@@ -17,6 +17,9 @@ import Today from "../../components/Today";
 import { useTheme } from "../../context/ThemeContext";
 import useCurrentClass from "../../hooks/CurrentClass";
 import useupcomingClasses from "../../hooks/NotCurrentClass";
+import useTeacherCurrentClass from "../../hooks/useTeacherCurrentClass";
+import useTeacherUpcomingClasses from "../../hooks/useTeacherUpcomingClasses";
+import { getTeacherMetadata, getTeacherTimetable } from "../../utils/supabase";
 
 const index = () => {
   const { isDark } = useTheme();
@@ -26,17 +29,66 @@ const index = () => {
   const [firstchar, Setchar] = useState("");
   const [timetableData, setTimetableData] = useState(null);
   const [isOnline, setIsOnline] = useState(true);
+  const [userRole, setUserRole] = useState(null);
 
   const GOOGLE_FORM_URL = "https://forms.gle/6nN8mEKFfn4d8p8v5";
 
-  const currentClass = useCurrentClass(timetableData);
-  const upcomingclasses = useupcomingClasses(timetableData);
+  // Use appropriate hooks based on user role
+  const currentClass = userRole === "teacher"
+    ? useTeacherCurrentClass(timetableData)
+    : useCurrentClass(timetableData);
+  const upcomingclasses = userRole === "teacher"
+    ? useTeacherUpcomingClasses(timetableData)
+    : useupcomingClasses(timetableData);
 
   const handleMessagePress = async () => {
     try {
       await Linking.openURL(GOOGLE_FORM_URL);
     } catch (error) {
       console.error("Error opening Google Form:", error);
+    }
+  };
+
+  const getTeacherData = async (day) => {
+    try {
+      console.log("[DASHBOARD] getTeacherData called with day:", day);
+      const teacherName = await getTeacherMetadata();
+      console.log("[DASHBOARD] Teacher name from metadata:", teacherName);
+
+      if (!teacherName) {
+        console.error("Could not get teacher name from metadata");
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: "Could not load teacher data",
+        });
+        return;
+      }
+
+      console.log("[DASHBOARD] Calling getTeacherTimetable with:", teacherName, day);
+      const timetable = await getTeacherTimetable(teacherName, day);
+      console.log("[DASHBOARD] Timetable response:", timetable);
+
+      await SecureStore.setItemAsync(
+        "timetable",
+        JSON.stringify(timetable)
+      );
+      await SecureStore.setItemAsync("lastFetchTime", new Date().toISOString());
+      await SecureStore.setItemAsync("teacherName", teacherName);
+
+      setTimetableData(JSON.stringify(timetable));
+    } catch (error) {
+      console.log("Teacher API Error:", error.message);
+      // Load from local storage if API fails
+      const LocalTimetable = await SecureStore.getItemAsync("timetable");
+      if (LocalTimetable) {
+        setTimetableData(LocalTimetable);
+        Toast.show({
+          type: "info",
+          text1: "Using Offline Data",
+          text2: "Showing cached timetable",
+        });
+      }
     }
   };
 
@@ -65,6 +117,17 @@ const index = () => {
       setTimetableData(JSON.stringify(response.data.timetable));
     } catch (error) {
       console.log("API Error:", error.response?.data || error.message);
+
+      // If 401 error, token is invalid - redirect to signin
+      if (error.response?.status === 401) {
+        console.log("Authentication failed - redirecting to signin");
+        await SecureStore.deleteItemAsync("accessToken");
+        await SecureStore.deleteItemAsync("username");
+        await SecureStore.deleteItemAsync("email");
+        await SecureStore.deleteItemAsync("role");
+        router.push("/signin");
+        return;
+      }
       // Load from local storage if API fails
       const LocalTimetable = await SecureStore.getItemAsync("timetable");
       if (LocalTimetable) {
@@ -87,16 +150,34 @@ const index = () => {
       return;
     }
 
-    const username = await SecureStore.getItemAsync("username");
-    
-    if (!username) {
-      console.log("No username found");
-      router.push("/signin");
-      return;
+    // Get user role
+    const role = await SecureStore.getItemAsync("role");
+    setUserRole(role);
+
+    // For teachers, get name from metadata
+    if (role === "teacher") {
+      const teacherName = await getTeacherMetadata();
+      if (teacherName) {
+        SetTehusername(teacherName);
+        Setchar(teacherName.charAt(0));
+      } else {
+        console.log("No teacher name found");
+        router.push("/signin");
+        return;
+      }
+    } else {
+      // For students, get username from SecureStore
+      const username = await SecureStore.getItemAsync("username");
+
+      if (!username) {
+        console.log("No username found");
+        router.push("/signin");
+        return;
+      }
+
+      SetTehusername(username);
+      Setchar(username.charAt(0));
     }
-    
-    SetTehusername(username);
-    Setchar(username.charAt(0));
   };
 
   useEffect(() => {
@@ -115,6 +196,10 @@ const index = () => {
 
       const StoredDay = await SecureStore.getItemAsync("day");
       const LocalTimetable = await SecureStore.getItemAsync("timetable");
+      const role = await SecureStore.getItemAsync("role");
+
+      console.log("[DASHBOARD] User role:", role);
+      console.log("[DASHBOARD] Stored day:", StoredDay, "Current day:", dayName);
 
       // Check network status
       const netState = await NetInfo.fetch();
@@ -127,7 +212,15 @@ const index = () => {
       ) {
         await SecureStore.setItemAsync("day", dayName);
         if (netState.isConnected) {
-          await getdata(dayName, Makeday);
+          // Use appropriate data fetching based on role
+          console.log("[DASHBOARD] Fetching data for role:", role);
+          if (role === "teacher") {
+            console.log("[DASHBOARD] Calling getTeacherData...");
+            await getTeacherData(dayName);
+          } else {
+            console.log("[DASHBOARD] Calling getdata (student API)...");
+            await getdata(dayName, Makeday);
+          }
         } else {
           // Use local storage when offline
           if (LocalTimetable) {
@@ -150,7 +243,7 @@ const index = () => {
     const unsubscribe = NetInfo.addEventListener(state => {
       const wasOffline = !isOnline;
       setIsOnline(state.isConnected);
-      
+
       // Auto-reload when coming back online
       if (wasOffline && state.isConnected) {
         Toast.show({
@@ -159,8 +252,13 @@ const index = () => {
           text2: "Refreshing timetable...",
         });
         setTimeout(async () => {
+          const role = await SecureStore.getItemAsync("role");
           await SecureStore.setItemAsync("day", dayName);
-          await getdata(dayName, Makeday);
+          if (role === "teacher") {
+            await getTeacherData(dayName);
+          } else {
+            await getdata(dayName, Makeday);
+          }
         }, 500);
       } else if (!state.isConnected) {
         Toast.show({
@@ -191,7 +289,15 @@ const index = () => {
       today.getMonth() + 1
     ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-    await getdata(dayName, Makeday);
+    const role = await SecureStore.getItemAsync("role");
+
+    // Use appropriate data fetching based on role
+    if (role === "teacher") {
+      await getTeacherData(dayName);
+    } else {
+      await getdata(dayName, Makeday);
+    }
+
     const newTimetable = await SecureStore.getItemAsync("timetable");
 
     setTimetableData(newTimetable);
@@ -407,8 +513,8 @@ const index = () => {
                             ? "#000000"
                             : "#ffffff"
                           : isDark
-                          ? "#666666"
-                          : "#999999",
+                            ? "#666666"
+                            : "#999999",
                       letterSpacing: 0.5,
                     }}
                   >

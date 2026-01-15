@@ -3,6 +3,7 @@ import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useTheme } from "../context/ThemeContext";
+import { getTeacherMetadata, getTeacherWeekTimetable } from "../utils/supabase";
 
 const More = () => {
   const { isDark } = useTheme();
@@ -20,21 +21,67 @@ const More = () => {
   const [scheduleData, SetScheduledata] = useState([]);
 
   const getalltimetable = async () => {
-    const token = await SecureStore.getItemAsync("accessToken");
-    try {
-      const responce = await axios.get(
-        `${process.env.EXPO_PUBLIC_API_URL}/api/user/alltimetable`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
+    const role = await SecureStore.getItemAsync("role");
+
+    // Check if user is a teacher
+    if (role === "teacher") {
+      console.log("[More] Fetching teacher weekly timetable from Supabase...");
+      try {
+        const teacherName = await getTeacherMetadata();
+        if (!teacherName) {
+          console.error("Could not get teacher name");
+          return;
         }
-      );
-      SetScheduledata(responce.data.timetable);
-    } catch (error) {
-      console.log("error in getiing timetable", error);
+
+        const timetable = await getTeacherWeekTimetable(teacherName);
+        // console.log("[More] Teacher timetable:", timetable);
+
+        // Map abbreviated day names to full day names
+        const dayMap = {
+          "Mo": "Monday",
+          "Tu": "Tuesday",
+          "We": "Wednesday",
+          "Th": "Thursday",
+          "Fr": "Friday",
+          "Monday": "Monday",
+          "Tuesday": "Tuesday",
+          "Wednesday": "Wednesday",
+          "Thursday": "Thursday",
+          "Friday": "Friday",
+        };
+
+        // Transform teacher data to match student format
+        const transformedData = timetable.map(item => ({
+          day: dayMap[item.Day] || item.Day,
+          course_name: item.Subject,
+          venue: item.Location,
+          start_time: item.Time?.split('-')[0]?.trim() || "",
+          end_time: item.Time?.split('-')[1]?.trim() || "",
+        }));
+
+        SetScheduledata(transformedData);
+      } catch (error) {
+        console.log("Error fetching teacher timetable:", error);
+      }
+    } else {
+      // Student flow
+      console.log("[More] Fetching student timetable from API...");
+      const token = await SecureStore.getItemAsync("accessToken");
+      try {
+        const responce = await axios.get(
+          `${process.env.EXPO_PUBLIC_API_URL}/api/user/alltimetable`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            withCredentials: true,
+          }
+        );
+        SetScheduledata(responce.data.timetable);
+      } catch (error) {
+        console.log("error in getiing timetable", error);
+      }
     }
   };
 
@@ -97,8 +144,8 @@ const More = () => {
                         ? "#fff"
                         : "#000"
                       : isDark
-                      ? "#374151"
-                      : "#f3f4f6",
+                        ? "#374151"
+                        : "#f3f4f6",
                 }}
               >
                 <Text
@@ -110,8 +157,8 @@ const More = () => {
                           ? "#000"
                           : "#fff"
                         : isDark
-                        ? "#d1d5db"
-                        : "#6b7280",
+                          ? "#d1d5db"
+                          : "#6b7280",
                   }}
                 >
                   {day}
