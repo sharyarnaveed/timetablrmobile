@@ -7,7 +7,7 @@ import * as Notifications from "expo-notifications";
 import { router, Tabs } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alert, Platform, View } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { supabase } from "../../utils/supabase";
@@ -24,6 +24,7 @@ Notifications.setNotificationHandler({
 const _layout = () => {
   const { isDark, toggleTheme } = useTheme();
   const authCheckDone = useRef(false);
+  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
     // Prevent multiple auth checks
@@ -33,19 +34,27 @@ const _layout = () => {
     const checkTokenAndRegister = async () => {
       const token = await SecureStore.getItemAsync("accessToken");
       const role = await SecureStore.getItemAsync("role");
+      setUserRole(role);
 
-      if (token) {
-        registerForPushNotificationsAsync(role);
-        const subscription = Notifications.addNotificationReceivedListener(
-          (notification) => {
-            console.log("Notification received in foreground:", notification);
-          }
-        );
-        return () => subscription.remove();
-      } else {
+      if (!token || !role) {
+        // If no token or no role, clear everything and redirect to signin
+        await SecureStore.deleteItemAsync("accessToken");
+        await SecureStore.deleteItemAsync("username");
+        await SecureStore.deleteItemAsync("email");
+        await SecureStore.deleteItemAsync("role");
+        await SecureStore.deleteItemAsync("notification");
+        await SecureStore.deleteItemAsync("lastAuthCheck");
         router.replace("/signin");
         return;
       }
+
+      registerForPushNotificationsAsync(role);
+      const subscription = Notifications.addNotificationReceivedListener(
+        (notification) => {
+          console.log("Notification received in foreground:", notification);
+        }
+      );
+      return () => subscription.remove();
     };
 
     const checktoken = async () => {
@@ -145,6 +154,24 @@ const _layout = () => {
     checkTokenAndRegister();
   }, []);
 
+  // Listen for network changes to retry pending notification registration
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(async (state) => {
+      if (state.isConnected) {
+        // Check if there are pending notification registrations
+        const pendingToken = await SecureStore.getItemAsync("pendingNotificationToken");
+        const pendingRole = await SecureStore.getItemAsync("pendingNotificationRole");
+
+        if (pendingToken && pendingRole) {
+          console.log("Network restored, retrying pending notification registration...");
+          registerForPushNotificationsAsync(pendingRole);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   // Request permissions and register for push token
   async function registerForPushNotificationsAsync(role) {
     try {
@@ -182,7 +209,10 @@ const _layout = () => {
       const netState = await NetInfo.fetch();
 
       if (!netState.isConnected) {
-        console.log("Offline: Notification registration will be attempted later");
+        // Store pending registration for later when online
+        await SecureStore.setItemAsync("pendingNotificationToken", tokenData.data);
+        await SecureStore.setItemAsync("pendingNotificationRole", role);
+        console.log("Offline: Notification registration queued for later");
         return;
       }
 
@@ -197,22 +227,44 @@ const _layout = () => {
             return;
           }
 
-          const { data, error } = await supabase
+          // Check if teacher already has a notification registered (by teacherid)
+          const { data: existingRecord, error: checkError } = await supabase
             .from('notifyteacher')
-            .insert([
-              {
-                notifyid: tokenData.data,
-                teacherid: session.user.id
-              }
-            ]);
+            .select('id')
+            .eq('teacherid', session.user.id)
+            .single();
 
-          if (error) {
-            console.error("Error storing teacher notification token:", error);
+          if (checkError && checkError.code !== 'PGRST116') {
+            // PGRST116 = no rows found, which is fine
+            console.error("Error checking existing teacher notification:", checkError);
             return;
           }
 
-          console.log("Teacher notification token stored successfully");
+          if (existingRecord) {
+            // Teacher already registered, skip registration
+            console.log("Teacher already registered for notifications, skipping...");
+          } else {
+            // Insert new token for teacher
+            const { error } = await supabase
+              .from('notifyteacher')
+              .insert([
+                {
+                  notifyid: tokenData.data,
+                  teacherid: session.user.id
+                }
+              ]);
+
+            if (error) {
+              console.error("Error storing teacher notification token:", error);
+              return;
+            }
+            console.log("Teacher notification token stored successfully");
+          }
+
           await SecureStore.setItemAsync("notification", "true");
+          // Clear any pending registration
+          await SecureStore.deleteItemAsync("pendingNotificationToken");
+          await SecureStore.deleteItemAsync("pendingNotificationRole");
         } else {
           // For students, use custom API
           const token = await SecureStore.getItemAsync("accessToken");
@@ -229,6 +281,9 @@ const _layout = () => {
           );
           console.log(responce.data);
           await SecureStore.setItemAsync("notification", "true");
+          // Clear any pending registration
+          await SecureStore.deleteItemAsync("pendingNotificationToken");
+          await SecureStore.deleteItemAsync("pendingNotificationRole");
         }
       } catch (error) {
         console.log("Error saving notification token:", error);
@@ -246,6 +301,17 @@ const _layout = () => {
           "Unable to register for notifications."
         );
       }
+    }
+  }
+
+  // Retry pending notification registration when back online
+  async function retryPendingNotificationRegistration() {
+    const pendingToken = await SecureStore.getItemAsync("pendingNotificationToken");
+    const pendingRole = await SecureStore.getItemAsync("pendingNotificationRole");
+
+    if (pendingToken && pendingRole) {
+      console.log("Retrying pending notification registration...");
+      await registerForPushNotificationsAsync(pendingRole);
     }
   }
 
@@ -349,6 +415,7 @@ const _layout = () => {
         <Tabs.Screen
           name="addcourse"
           options={{
+            href: userRole === "teacher" ? null : "/addcourse",
             tabBarIcon: ({ focused }) => (
               <View
                 style={{
