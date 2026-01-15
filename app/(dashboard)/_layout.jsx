@@ -10,6 +10,8 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef } from "react";
 import { Alert, Platform, View } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
+import { supabase } from "../../utils/supabase";
+
 // Handle notifications when received
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -30,8 +32,10 @@ const _layout = () => {
 
     const checkTokenAndRegister = async () => {
       const token = await SecureStore.getItemAsync("accessToken");
+      const role = await SecureStore.getItemAsync("role");
+
       if (token) {
-        registerForPushNotificationsAsync();
+        registerForPushNotificationsAsync(role);
         const subscription = Notifications.addNotificationReceivedListener(
           (notification) => {
             console.log("Notification received in foreground:", notification);
@@ -46,21 +50,52 @@ const _layout = () => {
 
     const checktoken = async () => {
       const token = await SecureStore.getItemAsync("accessToken");
+      const role = await SecureStore.getItemAsync("role");
+
       if (!token) {
         router.replace("/signin");
         return;
       }
-      
+
       // Check last auth check time to prevent rate limiting
       const lastAuthCheck = await SecureStore.getItemAsync("lastAuthCheck");
       const now = Date.now();
-      
+
       if (lastAuthCheck && now - parseInt(lastAuthCheck) < 60000) {
         // Skip check if done within last 60 seconds
         console.log("Skipping auth check - recently validated");
         return;
       }
-      
+
+      // For teachers, use Supabase session validation
+      if (role === "teacher") {
+        try {
+          const { data: { session }, error } = await supabase.auth.getSession();
+
+          // Store last check time
+          await SecureStore.setItemAsync("lastAuthCheck", now.toString());
+
+          if (error || !session) {
+            console.error("Teacher session validation failed:", error);
+            await SecureStore.deleteItemAsync("accessToken");
+            await SecureStore.deleteItemAsync("role");
+            await SecureStore.deleteItemAsync("lastAuthCheck");
+            router.replace("/signin");
+            return;
+          }
+
+          console.log("Teacher session valid");
+        } catch (error) {
+          console.error("Teacher auth check error:", error);
+          await SecureStore.deleteItemAsync("accessToken");
+          await SecureStore.deleteItemAsync("role");
+          await SecureStore.deleteItemAsync("lastAuthCheck");
+          router.replace("/signin");
+        }
+        return;
+      }
+
+      // For students, use custom API check
       try {
         const responce = await axios.get(
           `${process.env.EXPO_PUBLIC_API_URL}/api/user/checkauth`,
@@ -72,10 +107,10 @@ const _layout = () => {
             timeout: 5000, // Add timeout
           }
         );
-        
+
         // Store last check time
         await SecureStore.setItemAsync("lastAuthCheck", now.toString());
-        
+
         if (responce.data.valid == false) {
           await SecureStore.deleteItemAsync("accessToken");
           await SecureStore.deleteItemAsync("username");
@@ -85,7 +120,7 @@ const _layout = () => {
         }
       } catch (error) {
         console.error("Auth check error:", error);
-        
+
         // Handle rate limiting
         if (error.response?.status === 429) {
           console.log("Rate limited - skipping auth check");
@@ -93,7 +128,7 @@ const _layout = () => {
           await SecureStore.setItemAsync("lastAuthCheck", now.toString());
           return;
         }
-        
+
         // Only redirect if it's an auth error
         if (error.response?.status === 401 || error.response?.status === 403) {
           await SecureStore.deleteItemAsync("accessToken");
@@ -111,7 +146,7 @@ const _layout = () => {
   }, []);
 
   // Request permissions and register for push token
-  async function registerForPushNotificationsAsync() {
+  async function registerForPushNotificationsAsync(role) {
     try {
       if (!Device.isDevice) {
         console.warn("Push notifications require a physical device.");
@@ -145,7 +180,7 @@ const _layout = () => {
 
       // Check network status before calling API
       const netState = await NetInfo.fetch();
-      
+
       if (!netState.isConnected) {
         console.log("Offline: Notification registration will be attempted later");
         return;
@@ -153,21 +188,48 @@ const _layout = () => {
 
       // Only call API if online and not already registered
       try {
-        const token = await SecureStore.getItemAsync("accessToken");
-        const responce = await axios.post(
-          `https://timetablr.burjalsama.site/api/user/storetoken`,
-          { token: tokenData.data },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            withCredentials: true,
-          }
-        );
-        console.log(responce.data);
+        if (role === "teacher") {
+          // For teachers, store in Supabase notifyteacher table
+          const { data: { session } } = await supabase.auth.getSession();
 
-        await SecureStore.setItemAsync("notification", "true");
+          if (!session?.user?.id) {
+            console.error("No teacher session found for notification registration");
+            return;
+          }
+
+          const { data, error } = await supabase
+            .from('notifyteacher')
+            .insert([
+              {
+                notifyid: tokenData.data,
+                teacherid: session.user.id
+              }
+            ]);
+
+          if (error) {
+            console.error("Error storing teacher notification token:", error);
+            return;
+          }
+
+          console.log("Teacher notification token stored successfully");
+          await SecureStore.setItemAsync("notification", "true");
+        } else {
+          // For students, use custom API
+          const token = await SecureStore.getItemAsync("accessToken");
+          const responce = await axios.post(
+            `https://timetablr.burjalsama.site/api/user/storetoken`,
+            { token: tokenData.data },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              withCredentials: true,
+            }
+          );
+          console.log(responce.data);
+          await SecureStore.setItemAsync("notification", "true");
+        }
       } catch (error) {
         console.log("Error saving notification token:", error);
         // Don't show alert, just log the error
@@ -263,8 +325,8 @@ const _layout = () => {
                           ? "#000000"
                           : "#ffffff"
                         : isDark
-                        ? "#666666"
-                        : "#999999"
+                          ? "#666666"
+                          : "#999999"
                     }
                   />
                 </View>
@@ -318,8 +380,8 @@ const _layout = () => {
                           ? "#000000"
                           : "#ffffff"
                         : isDark
-                        ? "#666666"
-                        : "#999999"
+                          ? "#666666"
+                          : "#999999"
                     }
                   />
                 </View>
@@ -374,8 +436,8 @@ const _layout = () => {
                           ? "#000000"
                           : "#ffffff"
                         : isDark
-                        ? "#666666"
-                        : "#999999"
+                          ? "#666666"
+                          : "#999999"
                     }
                   />
                 </View>
@@ -429,8 +491,8 @@ const _layout = () => {
                           ? "#000000"
                           : "#ffffff"
                         : isDark
-                        ? "#666666"
-                        : "#999999"
+                          ? "#666666"
+                          : "#999999"
                     }
                   />
                 </View>
@@ -502,12 +564,21 @@ const _layout = () => {
                   style: "destructive",
                   onPress: async () => {
                     try {
+                      const role = await SecureStore.getItemAsync("role");
+
+                      // If teacher, sign out from Supabase
+                      if (role === "teacher") {
+                        await supabase.auth.signOut();
+                      }
+
                       await SecureStore.deleteItemAsync("accessToken");
                       await SecureStore.deleteItemAsync("username");
                       await SecureStore.deleteItemAsync("email");
                       await SecureStore.deleteItemAsync("timetable");
                       await SecureStore.deleteItemAsync("day");
                       await SecureStore.deleteItemAsync("notification");
+                      await SecureStore.deleteItemAsync("role");
+                      await SecureStore.deleteItemAsync("lastAuthCheck");
 
                       router.replace("/signin");
                     } catch (error) {

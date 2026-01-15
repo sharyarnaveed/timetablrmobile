@@ -1,12 +1,12 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 import Toast from 'react-native-toast-message';
 import * as yup from 'yup';
 import { supabase } from "../utils/supabase";
-
 const teacherSigninScheme = yup.object().shape({
     email: yup.string().required("Email is required").email("Please enter a valid email"),
     password: yup.string().required("Password is required"),
@@ -55,6 +55,8 @@ const TeacherSigninForm = () => {
                 type: "success",
                 text1: "Sign in successful!"
             });
+            await SecureStore.setItemAsync('accessToken', authData.session.access_token);
+            await SecureStore.setItemAsync('role', "teacher");
 
             router.push("/(dashboard)/");
         } catch (error) {

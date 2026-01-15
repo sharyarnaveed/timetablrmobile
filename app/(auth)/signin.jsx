@@ -39,6 +39,7 @@ export default function signin() {
 
 
         await SecureStore.setItemAsync('accessToken', responce.data.accesstoken);
+        await SecureStore.setItemAsync('role', "student");
         router.push("/(dashboard)/");
       } else {
         Toast.show({
