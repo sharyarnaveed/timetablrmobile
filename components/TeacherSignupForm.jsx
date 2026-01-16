@@ -109,7 +109,7 @@ const TeacherSignupForm = () => {
             Toast.show({
                 type: "success",
                 text1: "Account created successfully!",
-                text2: "Please check your email to verify your account.",
+                text2: "Enjoy TimeTablr",
             });
             setLoading(false);
             router.push("/signin");

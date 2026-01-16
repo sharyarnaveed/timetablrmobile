@@ -16,12 +16,14 @@ export default function useupcomingClasses(timetableString) {
 
       const padTime = (timeStr) => {
         // Handles "9:00" -> "09:00"
+        if (!timeStr || typeof timeStr !== 'string') return null;
         const [h, m] = timeStr.split(":");
+        if (!h || !m) return null;
         return `${h.padStart(2, "0")}:${m.padStart(2, "0")}`;
       };
 
       const upcoming = timetableArray
-        .filter((cls) => padTime(cls.start_time) > currentTime)
+        .filter((cls) => cls.start_time && padTime(cls.start_time) > currentTime)
         .sort((a, b) => padTime(a.start_time).localeCompare(padTime(b.start_time)));
       setUpcoming(upcoming);
     };

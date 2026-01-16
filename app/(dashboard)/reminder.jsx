@@ -18,6 +18,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as yup from 'yup';
 import { useTheme } from "../../context/ThemeContext";
+import { supabase } from "../../utils/supabase";
 
 const { width } = Dimensions.get('window');
 
@@ -55,10 +56,11 @@ const eventSchema = yup.object().shape({
 const EventsPage = () => {
   const { isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  
+
   const [modalVisible, setModalVisible] = useState(false);
   const [events, setEvents] = useState([]);
-  
+  const [userRole, setUserRole] = useState(null);
+
   const [formData, setFormData] = useState({
     name: '',
     message: '',
@@ -72,6 +74,21 @@ const EventsPage = () => {
   const [formErrors, setFormErrors] = useState({});
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+
+  // Theme colors - pure black and white
+  const colors = useMemo(() => ({
+    bg: isDark ? '#000000' : '#ffffff',
+    text: isDark ? '#ffffff' : '#000000',
+    textSecondary: isDark ? '#666666' : '#888888',
+    textTertiary: isDark ? '#444444' : '#bbbbbb',
+    border: isDark ? '#1a1a1a' : '#f0f0f0',
+    borderActive: isDark ? '#ffffff' : '#000000',
+    cardBg: isDark ? '#0a0a0a' : '#fafafa',
+    accent: isDark ? '#ffffff' : '#000000',
+    accentText: isDark ? '#000000' : '#ffffff',
+    overlay: 'rgba(0, 0, 0, 0.6)',
+    error: isDark ? '#ff6b6b' : '#dc2626',
+  }), [isDark]);
 
   // Reset form data and errors
   const resetForm = useCallback(() => {
@@ -128,25 +145,30 @@ const EventsPage = () => {
     }
   }, [formData]);
 
-  // Fetch reminders from the server
-  const fetchReminders = async () => {
+  // Fetch reminders from the server (different logic for students vs teachers)
+  const fetchReminders = async (role) => {
     try {
-            const token = await SecureStore.getItemAsync("accessToken");
-      
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/user/getreminder`,
-         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
+      if (role === "teacher") {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError || !session) {
+          console.error('No active teacher session:', sessionError);
+          return;
         }
-      );
-      const result = await response.json();
-      
-      if (result.success) {
-        // Transform the data to match our events structure
-        const transformedEvents = result.data.map(reminder => ({
+
+        const { data, error } = await supabase
+          .from('teacher_reminders')
+          .select('*')
+          .eq('teacher_id', session.user.id)
+          .order('date', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching teacher reminders:', error);
+          Alert.alert('Error', 'Failed to fetch reminders', [{ text: 'OK' }]);
+          return;
+        }
+
+        const transformedEvents = (data || []).map(reminder => ({
           id: reminder.id,
           name: reminder.name,
           message: reminder.message,
@@ -156,104 +178,179 @@ const EventsPage = () => {
           priority: reminder.priority,
           subject: reminder.subject
         }));
-        
+
         setEvents(transformedEvents);
       } else {
-        Alert.alert(
-          'Error',
-          'Failed to fetch reminders',
-          [{ text: 'OK' }]
+        const token = await SecureStore.getItemAsync("accessToken");
+
+        const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/user/getreminder`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            withCredentials: true,
+          }
         );
+        const result = await response.json();
+
+        if (result.success) {
+          const transformedEvents = result.data.map(reminder => ({
+            id: reminder.id,
+            name: reminder.name,
+            message: reminder.message,
+            time: reminder.time,
+            date: reminder.date,
+            category: reminder.category,
+            priority: reminder.priority,
+            subject: reminder.subject
+          }));
+
+          setEvents(transformedEvents);
+        } else {
+          Alert.alert('Error', 'Failed to fetch reminders', [{ text: 'OK' }]);
+        }
       }
     } catch (error) {
       console.error('Error fetching reminders:', error);
-      Alert.alert(
-        'Error',
-        'Failed to fetch reminders. Please check your connection.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Error', 'Failed to fetch reminders. Please check your connection.', [{ text: 'OK' }]);
     }
   };
 
   useEffect(() => {
-    fetchReminders();
+    const initializeReminders = async () => {
+      const role = await SecureStore.getItemAsync("role");
+      setUserRole(role);
+      fetchReminders(role);
+    };
+    initializeReminders();
   }, []);
 
   // Handle adding event with validation
   const handleAddEvent = useCallback(async () => {
     const isValid = await validateForm();
-    
+
     if (!isValid) {
-      Alert.alert(
-        'Validation Error',
-        'Please fix the errors in the form before submitting.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Validation Error', 'Please fix the errors in the form before submitting.', [{ text: 'OK' }]);
       return;
     }
 
     try {
-      const token = await SecureStore.getItemAsync("accessToken");
-      
-      // Add API call to save the reminder
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/user/addreminder`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          category: formData.category,
-          date: formData.date,
-          message: formData.message,
-          name: formData.name,
-          priority: formData.priority,
-          subject: formData.subject,
-          time: formData.time
-        })
-      });
+      const role = await SecureStore.getItemAsync("role");
 
-      const result = await response.json();
+      if (role === "teacher") {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-      if (result.success) {
-        // Refresh the reminders list
-        await fetchReminders();
-        
+        if (sessionError || !session) {
+          throw new Error('No active teacher session');
+        }
+
+        const { error } = await supabase
+          .from('teacher_reminders')
+          .insert([{
+            teacher_id: session.user.id,
+            category: formData.category,
+            date: formData.date,
+            message: formData.message,
+            name: formData.name,
+            priority: formData.priority,
+            subject: formData.subject,
+            time: formData.time
+          }]);
+
+        if (error) {
+          throw new Error(error.message || 'Failed to add task');
+        }
+
+        await fetchReminders(role);
         resetForm();
         setModalVisible(false);
-        
-        Alert.alert(
-          'Success',
-          'Task added successfully!',
-          [{ text: 'OK' }]
-        );
+        Alert.alert('Success', 'Task added successfully!', [{ text: 'OK' }]);
       } else {
-        throw new Error(result.message || 'Failed to add task');
+        const token = await SecureStore.getItemAsync("accessToken");
+
+        const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/user/addreminder`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            category: formData.category,
+            date: formData.date,
+            message: formData.message,
+            name: formData.name,
+            priority: formData.priority,
+            subject: formData.subject,
+            time: formData.time
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          await fetchReminders(role);
+          resetForm();
+          setModalVisible(false);
+          Alert.alert('Success', 'Task added successfully!', [{ text: 'OK' }]);
+        } else {
+          throw new Error(result.message || 'Failed to add task');
+        }
       }
     } catch (error) {
       console.error('Error adding task:', error);
-      Alert.alert(
-        'Error',
-        'Failed to add task. Please try again.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Error', 'Failed to add task. Please try again.', [{ text: 'OK' }]);
     }
-  }, [formData, validateForm, resetForm, fetchReminders]);
+  }, [formData, validateForm, resetForm, userRole]);
+
+  // Handle deleting reminder (teachers only)
+  const handleDeleteReminder = useCallback(async (reminderId) => {
+    Alert.alert(
+      'Delete Task',
+      'Are you sure you want to delete this task?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const { error } = await supabase
+                .from('teacher_reminders')
+                .delete()
+                .eq('id', reminderId);
+
+              if (error) {
+                throw new Error(error.message || 'Failed to delete task');
+              }
+
+              // Refresh the reminders list
+              await fetchReminders('teacher');
+              Alert.alert('Success', 'Task deleted successfully!', [{ text: 'OK' }]);
+            } catch (error) {
+              console.error('Error deleting task:', error);
+              Alert.alert('Error', 'Failed to delete task. Please try again.', [{ text: 'OK' }]);
+            }
+          }
+        }
+      ]
+    );
+  }, []);
 
   // Close modal with confirmation if form has data
   const handleCloseModal = useCallback(() => {
-    const hasData = Object.values(formData).some(value => 
+    const hasData = Object.values(formData).some(value =>
       value !== '' && value !== 'assignment' && value !== 'medium'
     );
-    
+
     if (hasData) {
       Alert.alert(
         'Discard Changes',
         'Are you sure you want to discard your changes?',
         [
           { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Discard', 
+          {
+            text: 'Discard',
             style: 'destructive',
             onPress: () => {
               resetForm();
@@ -269,30 +366,31 @@ const EventsPage = () => {
   }, [formData, resetForm]);
 
   const getCategoryIcon = useCallback((category) => {
+    const iconColor = colors.text;
     const icons = {
-      assignment: <Feather name="book-open" size={24} color={isDark? "#fff": "#000"}/>,
-      quiz: <MaterialIcons name="quiz" size={24} color={isDark? "#fff": "#000"} />,
-      class: <MaterialIcons name="class" size={24} color={isDark? "#fff": "#000"} />,
-      project: <AntDesign name="folder1" size={24} color={isDark? "#fff": "#000"} />,
+      assignment: <Feather name="book-open" size={18} color={iconColor} />,
+      quiz: <MaterialIcons name="quiz" size={18} color={iconColor} />,
+      class: <MaterialIcons name="class" size={18} color={iconColor} />,
+      project: <AntDesign name="folderopen" size={18} color={iconColor} />,
     };
     return icons[category] || icons.assignment;
-  }, [isDark]);
+  }, [colors]);
 
   const formatDate = useCallback((dateStr) => {
     const date = new Date(dateStr);
     const today = new Date();
     const diffTime = date - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Tomorrow';
     if (diffDays === -1) return 'Yesterday';
     if (diffDays < -1) return 'Overdue';
-    
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
+
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
-      year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined 
+      year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
     });
   }, []);
 
@@ -302,20 +400,14 @@ const EventsPage = () => {
       const eventDate = new Date(event.date);
       return eventDate >= today;
     }).length;
-    
+
     const overdue = events.filter(event => {
       const eventDate = new Date(event.date);
       return eventDate < today;
     }).length;
-    
+
     return { upcomingCount: upcoming, overdueCount: overdue };
   }, [events]);
-
-  const getPriorityDot = useCallback((priority) => {
-    if (priority === 'high') return '●';
-    if (priority === 'medium') return '◐';
-    return '○';
-  }, []);
 
   const formatDateForDisplay = useCallback((year, month, day) => {
     return `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
@@ -336,382 +428,319 @@ const EventsPage = () => {
   const ErrorText = ({ error }) => {
     if (!error) return null;
     return (
-      <Text className={`text-sm mt-1 ${isDark ? 'text-red-400' : 'text-red-500'}`}>
+      <Text style={{ fontSize: 12, marginTop: 4, color: colors.error }}>
         {error}
       </Text>
     );
   };
 
   return (
-    <View className={`flex-1 ${isDark ? 'bg-black' : 'bg-gray-50'}`} style={{ paddingTop: insets.top }}>
-      <StatusBar 
-        barStyle={isDark ? "light-content" : "dark-content"} 
+    <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top }}>
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
         backgroundColor="transparent"
         translucent={true}
       />
-      
-      {/* Modernistic Header with accent */}
-      <View className="px-5 py-8">
-        <View className="flex-row justify-between items-center mb-8">
+
+      {/* Minimal Header */}
+      <View style={{ paddingHorizontal: 24, paddingTop: 20, paddingBottom: 32 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <View style={{ flex: 1 }}>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginBottom: 10,
-              }}
-            >
-              <View
-                style={{
-                  width: 5,
-                  height: 28,
-                  borderRadius: 2.5,
-                  backgroundColor: isDark ? "#ffffff" : "#111827",
-                  marginRight: 12,
-                }}
-              />
-              <Text 
-                style={{
-                  fontSize: 38,
-                  fontWeight: "800",
-                  color: isDark ? "#ffffff" : "#111827",
-                  letterSpacing: -1,
-                }}
-              >
-                Schedule
-              </Text>
-            </View>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginLeft: 17,
-                backgroundColor: isDark
-                  ? "rgba(255, 255, 255, 0.06)"
-                  : "rgba(0, 0, 0, 0.04)",
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 20,
-                alignSelf: "flex-start",
-              }}
-            >
-              <Text 
-                style={{
-                  fontSize: 14,
-                  color: isDark ? "#9ca3af" : "#6b7280",
-                  fontWeight: "600",
-                }}
-              >
-                {events.length} tasks • {upcomingCount} upcoming
-              </Text>
-            </View>
+            <Text style={{
+              fontSize: 32,
+              fontWeight: '300',
+              color: colors.text,
+              letterSpacing: -1,
+              marginBottom: 8,
+            }}>
+              Tasks
+            </Text>
+            <Text style={{
+              fontSize: 14,
+              color: colors.textSecondary,
+              fontWeight: '400',
+              letterSpacing: 0.5,
+            }}>
+              {events.length} total · {upcomingCount} upcoming
+            </Text>
           </View>
-          
-          {/* Modernistic Floating Add Button */}
+
+          {/* Minimal Add Button */}
           <TouchableOpacity
             style={{
-              width: 60,
-              height: 60,
-              borderRadius: 20,
-              backgroundColor: isDark ? "#ffffff" : "#111827",
-              justifyContent: "center",
-              alignItems: "center",
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.3,
-              shadowRadius: 16,
-              elevation: 8,
-              transform: [{ rotate: "-5deg" }],
+              width: 48,
+              height: 48,
+              borderRadius: 24,
+              backgroundColor: colors.accent,
+              justifyContent: 'center',
+              alignItems: 'center',
             }}
             onPress={() => setModalVisible(true)}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
           >
-            <Text 
-              style={{
-                fontSize: 32,
-                fontWeight: "300",
-                color: isDark ? "#000000" : "#ffffff",
-                transform: [{ rotate: "5deg" }],
-              }}
-            >
+            <Text style={{
+              fontSize: 24,
+              fontWeight: '300',
+              color: colors.accentText,
+              marginTop: -2,
+            }}>
               +
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Modernistic Stats with glassmorphism */}
-        <View className="flex-row space-x-3">
-          <View 
-            style={{
-              flex: 1,
-              padding: 24,
-              borderRadius: 24,
-              backgroundColor: isDark
-                ? "rgba(17, 17, 17, 0.8)"
-                : "rgba(255, 255, 255, 0.8)",
-              borderWidth: isDark ? 1.5 : 1,
-              borderColor: isDark
-                ? "rgba(255, 255, 255, 0.1)"
-                : "rgba(0, 0, 0, 0.08)",
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: isDark ? 0.3 : 0.1,
-              shadowRadius: 12,
-              elevation: 6,
-              overflow: "hidden",
-              position: "relative",
-            }}
-          >
-            <View
-              style={{
-                position: "absolute",
-                top: -20,
-                right: -20,
-                width: 60,
-                height: 60,
-                borderRadius: 30,
-                backgroundColor: isDark
-                  ? "rgba(255, 255, 255, 0.05)"
-                  : "rgba(0, 0, 0, 0.03)",
-              }}
-            />
-            <Text 
-              style={{
-                fontSize: 40,
-                fontWeight: "800",
-                color: isDark ? "#ffffff" : "#111827",
-                marginBottom: 8,
-                letterSpacing: -1,
-              }}
-            >
+        {/* Stats Row */}
+        <View style={{ flexDirection: 'row', marginTop: 24, gap: 12 }}>
+          <View style={{
+            flex: 1,
+            paddingVertical: 20,
+            paddingHorizontal: 20,
+            borderRadius: 16,
+            backgroundColor: colors.cardBg,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}>
+            <Text style={{
+              fontSize: 28,
+              fontWeight: '300',
+              color: colors.text,
+              marginBottom: 4,
+            }}>
               {upcomingCount}
             </Text>
-            <Text 
-              style={{
-                fontSize: 14,
-                color: isDark ? "#6b7280" : "#9ca3af",
-                fontWeight: "600",
-                letterSpacing: 0.5,
-              }}
-            >
+            <Text style={{
+              fontSize: 12,
+              color: colors.textSecondary,
+              fontWeight: '500',
+              letterSpacing: 1,
+              textTransform: 'uppercase',
+            }}>
               Upcoming
             </Text>
           </View>
-          <View 
-            style={{
-              flex: 1,
-              padding: 24,
-              borderRadius: 24,
-              backgroundColor: isDark ? "#ffffff" : "#111827",
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.3,
-              shadowRadius: 16,
-              elevation: 8,
-              overflow: "hidden",
-              position: "relative",
-            }}
-          >
-            <View
-              style={{
-                position: "absolute",
-                bottom: -15,
-                left: -15,
-                width: 50,
-                height: 50,
-                borderRadius: 25,
-                backgroundColor: isDark
-                  ? "rgba(0, 0, 0, 0.1)"
-                  : "rgba(255, 255, 255, 0.1)",
-              }}
-            />
-            <Text 
-              style={{
-                fontSize: 40,
-                fontWeight: "800",
-                color: isDark ? "#000000" : "#ffffff",
-                marginBottom: 8,
-                letterSpacing: -1,
-              }}
-            >
+
+          <View style={{
+            flex: 1,
+            paddingVertical: 20,
+            paddingHorizontal: 20,
+            borderRadius: 16,
+            backgroundColor: colors.accent,
+          }}>
+            <Text style={{
+              fontSize: 28,
+              fontWeight: '300',
+              color: colors.accentText,
+              marginBottom: 4,
+            }}>
               {overdueCount}
             </Text>
-            <Text 
-              style={{
-                fontSize: 14,
-                color: isDark ? "#6b7280" : "#d1d5db",
-                fontWeight: "600",
-                letterSpacing: 0.5,
-              }}
-            >
+            <Text style={{
+              fontSize: 12,
+              color: isDark ? '#666666' : '#999999',
+              fontWeight: '500',
+              letterSpacing: 1,
+              textTransform: 'uppercase',
+            }}>
               Overdue
             </Text>
           </View>
         </View>
       </View>
 
-      {/* Modern Events List */}
-      <ScrollView 
-        className="flex-1 px-5" 
+      {/* Task List */}
+      <ScrollView
+        style={{ flex: 1, paddingHorizontal: 24 }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={{ paddingBottom: 40 }}
       >
         {events.map((event) => (
           <TouchableOpacity
             key={event.id}
-            activeOpacity={0.7}
+            activeOpacity={0.6}
             style={{
-              borderRadius: 20,
+              borderRadius: 16,
               padding: 20,
               marginBottom: 12,
-              backgroundColor: isDark ? "#111111" : "#ffffff",
-              borderWidth: isDark ? 1 : 0,
-              borderColor: isDark ? "#1f1f1f" : "transparent",
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: isDark ? 0.2 : 0.05,
-              shadowRadius: 8,
-              elevation: 3,
+              backgroundColor: colors.cardBg,
+              borderWidth: 1,
+              borderColor: colors.border,
             }}
           >
-            <View className="flex-row justify-between items-start mb-3">
-              <View className="flex-row items-center flex-1">
-                <Text className="text-2xl mr-3">{getCategoryIcon(event.category)}</Text>
-                <View className="flex-1">
-                  <View className="flex-row items-center">
-                    <Text className={`text-lg mr-2 ${isDark ? 'text-white' : 'text-black'}`}>
-                      {getPriorityDot(event.priority)}
-                    </Text>
-                    <Text className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-black'}`}>
-                      {event.name}
-                    </Text>
-                  </View>
-                  <Text className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                    {event.subject} • {event.category}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                  <View style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: 3,
+                    backgroundColor: event.priority === 'high' ? colors.text :
+                      event.priority === 'medium' ? colors.textSecondary : colors.textTertiary,
+                    marginRight: 10,
+                  }} />
+                  <Text style={{
+                    fontSize: 16,
+                    fontWeight: '500',
+                    color: colors.text,
+                    letterSpacing: -0.3,
+                  }}>
+                    {event.name}
                   </Text>
                 </View>
+                <Text style={{
+                  fontSize: 13,
+                  color: colors.textSecondary,
+                  marginLeft: 16,
+                }}>
+                  {event.subject}
+                </Text>
               </View>
-              
-              <View className="items-end">
-                <Text className={`text-sm font-mono ${isDark ? 'text-white' : 'text-black'}`}>
-                  {event.time}
-                </Text>
-                <Text className={`text-xs mt-1 ${
-                  formatDate(event.date) === 'Overdue' 
-                    ? isDark ? 'text-red-400' : 'text-red-600'
-                    : isDark ? 'text-gray-400' : 'text-gray-600'
-                }`}>
-                  {formatDate(event.date)}
-                </Text>
+
+              <View style={{ alignItems: 'flex-end', flexDirection: 'row', gap: 12 }}>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={{
+                    fontSize: 13,
+                    color: colors.text,
+                    fontFamily: 'monospace',
+                    letterSpacing: -0.5,
+                  }}>
+                    {event.time}
+                  </Text>
+                  <Text style={{
+                    fontSize: 12,
+                    marginTop: 4,
+                    color: formatDate(event.date) === 'Overdue' ? colors.error : colors.textSecondary,
+                  }}>
+                    {formatDate(event.date)}
+                  </Text>
+                </View>
+
+                {/* Delete button - Teachers only */}
+                {userRole === 'teacher' && (
+                  <TouchableOpacity
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 8,
+                      backgroundColor: 'transparent',
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                    onPress={() => handleDeleteReminder(event.id)}
+                    activeOpacity={0.6}
+                  >
+                    <Feather name="trash-2" size={14} color={colors.error} />
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
 
             {event.message && (
-              <Text className={`text-sm leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+              <Text style={{
+                fontSize: 13,
+                lineHeight: 20,
+                color: colors.textSecondary,
+                marginTop: 12,
+                marginLeft: 16,
+              }}>
                 {event.message}
               </Text>
             )}
           </TouchableOpacity>
         ))}
-        
+
         {events.length === 0 && (
-          <View 
-            style={{
-              flex: 1,
-              justifyContent: "center",
-              alignItems: "center",
-              paddingVertical: 60,
-            }}
-          >
-            <Text style={{ fontSize: 64, marginBottom: 20 }}>📅</Text>
-            <Text 
-              style={{
-                fontSize: 22,
-                fontWeight: "600",
-                marginBottom: 8,
-                color: isDark ? "#ffffff" : "#111827",
-              }}
-            >
+          <View style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingVertical: 80,
+          }}>
+            <View style={{
+              width: 64,
+              height: 64,
+              borderRadius: 32,
+              backgroundColor: colors.cardBg,
+              borderWidth: 1,
+              borderColor: colors.border,
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginBottom: 20,
+            }}>
+              <Feather name="calendar" size={24} color={colors.textSecondary} />
+            </View>
+            <Text style={{
+              fontSize: 18,
+              fontWeight: '400',
+              marginBottom: 8,
+              color: colors.text,
+            }}>
               No tasks yet
             </Text>
-            <Text 
-              style={{
-                fontSize: 16,
-                textAlign: "center",
-                color: isDark ? "#6b7280" : "#9ca3af",
-                paddingHorizontal: 40,
-              }}
-            >
-              Add your first task to get started
+            <Text style={{
+              fontSize: 14,
+              textAlign: 'center',
+              color: colors.textSecondary,
+              paddingHorizontal: 40,
+            }}>
+              Tap + to add your first task
             </Text>
           </View>
         )}
       </ScrollView>
 
-      {/* Modern Modal with Validation */}
+      {/* Modal */}
       <Modal
         animationType="slide"
         transparent={true}
         visible={modalVisible}
         onRequestClose={handleCloseModal}
       >
-        <View 
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            justifyContent: "flex-end",
-          }}
-        >
-          <View 
-            style={{
-              borderTopLeftRadius: 32,
-              borderTopRightRadius: 32,
-              paddingHorizontal: 24,
-              paddingTop: 32,
-              paddingBottom: 40,
-              minHeight: "85%",
-              backgroundColor: isDark ? "#000000" : "#ffffff",
-            }}
-          >
-            
-            {/* Modern Modal Header */}
-            <View 
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 32,
-              }}
-            >
-              <Text 
-                style={{
-                  fontSize: 28,
-                  fontWeight: "700",
-                  color: isDark ? "#ffffff" : "#111827",
-                  letterSpacing: -0.5,
-                }}
-              >
-                Add Task
+        <View style={{ flex: 1, backgroundColor: colors.overlay, justifyContent: 'flex-end' }}>
+          <View style={{
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            paddingHorizontal: 24,
+            paddingTop: 24,
+            paddingBottom: 40,
+            minHeight: '85%',
+            backgroundColor: colors.bg,
+          }}>
+            {/* Modal Header */}
+            <View style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 32,
+            }}>
+              <Text style={{
+                fontSize: 24,
+                fontWeight: '300',
+                color: colors.text,
+                letterSpacing: -0.5,
+              }}>
+                New Task
               </Text>
               <TouchableOpacity
                 style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  backgroundColor: isDark ? "#111111" : "#f3f4f6",
-                  justifyContent: "center",
-                  alignItems: "center",
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: colors.cardBg,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  justifyContent: 'center',
+                  alignItems: 'center',
                 }}
                 onPress={handleCloseModal}
                 activeOpacity={0.7}
               >
-                <Text 
-                  style={{
-                    fontSize: 24,
-                    color: isDark ? "#ffffff" : "#111827",
-                    fontWeight: "300",
-                  }}
-                >
+                <Text style={{
+                  fontSize: 18,
+                  color: colors.textSecondary,
+                  fontWeight: '300',
+                }}>
                   ×
                 </Text>
               </TouchableOpacity>
@@ -719,33 +748,45 @@ const EventsPage = () => {
 
             <ScrollView showsVerticalScrollIndicator={false}>
               {/* Category Selection */}
-              <View className="mb-6">
-                <Text className={`text-base font-semibold mb-3 ${isDark ? 'text-white' : 'text-black'}`}>
+              <View style={{ marginBottom: 28 }}>
+                <Text style={{
+                  fontSize: 12,
+                  fontWeight: '600',
+                  letterSpacing: 1,
+                  textTransform: 'uppercase',
+                  color: colors.textSecondary,
+                  marginBottom: 12,
+                }}>
                   Category
                 </Text>
-                <View className="flex-row flex-wrap">
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   {[
                     { key: 'assignment', label: 'Assignment' },
                     { key: 'quiz', label: 'Quiz' },
                     { key: 'class', label: 'Class' },
                     { key: 'project', label: 'Project' },
-                  ].map((category, index) => (
+                  ].map((category) => (
                     <TouchableOpacity
                       key={category.key}
-                      className={`py-3 px-4 rounded-xl flex-row items-center mr-2 mb-2 border ${
-                        formData.category === category.key
-                          ? isDark 
-                            ? 'border-white bg-white/10' 
-                            : 'border-black bg-black/10'
-                          : isDark 
-                            ? 'border-black' 
-                            : 'border-gray-200'
-                      }`}
-                      style={{ width: (width - 60) / 3 - 8 }}
+                      style={{
+                        paddingVertical: 12,
+                        paddingHorizontal: 16,
+                        borderRadius: 12,
+                        borderWidth: 1,
+                        borderColor: formData.category === category.key ? colors.borderActive : colors.border,
+                        backgroundColor: formData.category === category.key ? (isDark ? '#111' : '#f5f5f5') : 'transparent',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 8,
+                      }}
                       onPress={() => updateFormData('category', category.key)}
                     >
-                      <Text className="text-lg mr-2">{getCategoryIcon(category.key)}</Text>
-                      <Text className={`font-medium text-xs ${isDark ? 'text-white' : 'text-black'}`}>
+                      {getCategoryIcon(category.key)}
+                      <Text style={{
+                        fontSize: 13,
+                        fontWeight: '500',
+                        color: colors.text,
+                      }}>
                         {category.label}
                       </Text>
                     </TouchableOpacity>
@@ -755,11 +796,18 @@ const EventsPage = () => {
               </View>
 
               {/* Priority Selection */}
-              <View className="mb-6">
-                <Text className={`text-base font-semibold mb-3 ${isDark ? 'text-white' : 'text-black'}`}>
+              <View style={{ marginBottom: 28 }}>
+                <Text style={{
+                  fontSize: 12,
+                  fontWeight: '600',
+                  letterSpacing: 1,
+                  textTransform: 'uppercase',
+                  color: colors.textSecondary,
+                  marginBottom: 12,
+                }}>
                   Priority
                 </Text>
-                <View className="flex-row space-x-3">
+                <View style={{ flexDirection: 'row', gap: 8 }}>
                   {[
                     { key: 'high', label: 'High' },
                     { key: 'medium', label: 'Medium' },
@@ -767,21 +815,33 @@ const EventsPage = () => {
                   ].map((priority) => (
                     <TouchableOpacity
                       key={priority.key}
-                      className={`flex-1 py-3 px-4 rounded-xl flex-row items-center justify-center border ${
-                        formData.priority === priority.key
-                          ? isDark 
-                            ? 'border-white bg-white/10' 
-                            : 'border-black bg-black/10'
-                          : isDark 
-                            ? 'border-black' 
-                            : 'border-gray-200'
-                      }`}
+                      style={{
+                        flex: 1,
+                        paddingVertical: 14,
+                        paddingHorizontal: 16,
+                        borderRadius: 12,
+                        borderWidth: 1,
+                        borderColor: formData.priority === priority.key ? colors.borderActive : colors.border,
+                        backgroundColor: formData.priority === priority.key ? (isDark ? '#111' : '#f5f5f5') : 'transparent',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                      }}
                       onPress={() => updateFormData('priority', priority.key)}
                     >
-                      <Text className={`text-lg mr-2 ${isDark ? 'text-white' : 'text-black'}`}>
-                        {getPriorityDot(priority.key)}
-                      </Text>
-                      <Text className={`font-medium ${isDark ? 'text-white' : 'text-black'}`}>
+                      <View style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: 3,
+                        backgroundColor: priority.key === 'high' ? colors.text :
+                          priority.key === 'medium' ? colors.textSecondary : colors.textTertiary,
+                      }} />
+                      <Text style={{
+                        fontSize: 13,
+                        fontWeight: '500',
+                        color: colors.text,
+                      }}>
                         {priority.label}
                       </Text>
                     </TouchableOpacity>
@@ -790,24 +850,32 @@ const EventsPage = () => {
                 <ErrorText error={formErrors.priority} />
               </View>
 
-              {/* Form Fields with Validation */}
-              <View className="space-y-4">
+              {/* Form Fields */}
+              <View style={{ gap: 20 }}>
                 <View>
-                  <Text className={`text-base font-semibold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>
-                    Task Name *
+                  <Text style={{
+                    fontSize: 12,
+                    fontWeight: '600',
+                    letterSpacing: 1,
+                    textTransform: 'uppercase',
+                    color: colors.textSecondary,
+                    marginBottom: 10,
+                  }}>
+                    Task Name
                   </Text>
                   <TextInput
-                    className={`border rounded-xl px-4 py-4 text-base ${
-                      formErrors.name
-                        ? isDark 
-                          ? 'border-red-400 bg-red-900/20 text-white' 
-                          : 'border-red-500 bg-red-50 text-black'
-                        : isDark 
-                          ? 'border-black bg-black text-white' 
-                          : 'border-gray-200 bg-gray-50 text-black'
-                    }`}
+                    style={{
+                      borderWidth: 1,
+                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      paddingVertical: 14,
+                      fontSize: 15,
+                      borderColor: formErrors.name ? colors.error : colors.border,
+                      backgroundColor: colors.cardBg,
+                      color: colors.text,
+                    }}
                     placeholder="Enter task name"
-                    placeholderTextColor={isDark ? "#666" : "#999"}
+                    placeholderTextColor={colors.textTertiary}
                     value={formData.name}
                     onChangeText={(text) => updateFormData('name', text)}
                   />
@@ -815,21 +883,29 @@ const EventsPage = () => {
                 </View>
 
                 <View>
-                  <Text className={`text-base font-semibold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>
-                    Subject *
+                  <Text style={{
+                    fontSize: 12,
+                    fontWeight: '600',
+                    letterSpacing: 1,
+                    textTransform: 'uppercase',
+                    color: colors.textSecondary,
+                    marginBottom: 10,
+                  }}>
+                    Subject
                   </Text>
                   <TextInput
-                    className={`border rounded-xl px-4 py-4 text-base ${
-                      formErrors.subject
-                        ? isDark 
-                          ? 'border-red-400 bg-red-900/20 text-white' 
-                          : 'border-red-500 bg-red-50 text-black'
-                        : isDark 
-                          ? 'border-black bg-black text-white' 
-                          : 'border-gray-200 bg-gray-50 text-black'
-                    }`}
+                    style={{
+                      borderWidth: 1,
+                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      paddingVertical: 14,
+                      fontSize: 15,
+                      borderColor: formErrors.subject ? colors.error : colors.border,
+                      backgroundColor: colors.cardBg,
+                      color: colors.text,
+                    }}
                     placeholder="Enter subject"
-                    placeholderTextColor={isDark ? "#666" : "#999"}
+                    placeholderTextColor={colors.textTertiary}
                     value={formData.subject}
                     onChangeText={(text) => updateFormData('subject', text)}
                   />
@@ -837,21 +913,30 @@ const EventsPage = () => {
                 </View>
 
                 <View>
-                  <Text className={`text-base font-semibold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>
+                  <Text style={{
+                    fontSize: 12,
+                    fontWeight: '600',
+                    letterSpacing: 1,
+                    textTransform: 'uppercase',
+                    color: colors.textSecondary,
+                    marginBottom: 10,
+                  }}>
                     Description
                   </Text>
                   <TextInput
-                    className={`border rounded-xl px-4 py-4 text-base h-20 ${
-                      formErrors.message
-                        ? isDark 
-                          ? 'border-red-400 bg-red-900/20 text-white' 
-                          : 'border-red-500 bg-red-50 text-black'
-                        : isDark 
-                          ? 'border-black bg-black text-white' 
-                          : 'border-gray-200 bg-gray-50 text-black'
-                    }`}
+                    style={{
+                      borderWidth: 1,
+                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      paddingVertical: 14,
+                      fontSize: 15,
+                      height: 80,
+                      borderColor: formErrors.message ? colors.error : colors.border,
+                      backgroundColor: colors.cardBg,
+                      color: colors.text,
+                    }}
                     placeholder="Enter description (optional)"
-                    placeholderTextColor={isDark ? "#666" : "#999"}
+                    placeholderTextColor={colors.textTertiary}
                     value={formData.message}
                     onChangeText={(text) => updateFormData('message', text)}
                     multiline={true}
@@ -860,67 +945,75 @@ const EventsPage = () => {
                   <ErrorText error={formErrors.message} />
                 </View>
 
-                <View className="flex-row space-x-3">
-                  <View className="flex-1">
-                    <Text className={`text-base font-semibold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>
-                      Time *
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{
+                      fontSize: 12,
+                      fontWeight: '600',
+                      letterSpacing: 1,
+                      textTransform: 'uppercase',
+                      color: colors.textSecondary,
+                      marginBottom: 10,
+                    }}>
+                      Time
                     </Text>
                     <TouchableOpacity
-                      className={`border rounded-xl px-4 py-4 flex-row justify-between items-center ${
-                        formErrors.time
-                          ? isDark 
-                            ? 'border-red-400 bg-red-900/20' 
-                            : 'border-red-500 bg-red-50'
-                          : isDark 
-                            ? 'border-black bg-black' 
-                            : 'border-gray-200 bg-gray-50'
-                      }`}
+                      style={{
+                        borderWidth: 1,
+                        borderRadius: 12,
+                        paddingHorizontal: 16,
+                        paddingVertical: 14,
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        borderColor: formErrors.time ? colors.error : colors.border,
+                        backgroundColor: colors.cardBg,
+                      }}
                       onPress={() => setShowTimePicker(true)}
                     >
-                      <Text className={`text-base ${
-                        formData.time 
-                          ? isDark ? 'text-white' : 'text-black'
-                          : isDark ? 'text-gray-600' : 'text-gray-400'
-                      }`}>
-                        {formData.time || 'Select time'}
+                      <Text style={{
+                        fontSize: 15,
+                        color: formData.time ? colors.text : colors.textTertiary,
+                      }}>
+                        {formData.time || 'Select'}
                       </Text>
-                      <AntDesign 
-                        name="clockcircleo" 
-                        size={20} 
-                        color={isDark ? "#666" : "#999"} 
-                      />
+                      <Feather name="clock" size={16} color={colors.textSecondary} />
                     </TouchableOpacity>
                     <ErrorText error={formErrors.time} />
                   </View>
 
-                  <View className="flex-1">
-                    <Text className={`text-base font-semibold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>
-                      Date *
+                  <View style={{ flex: 1 }}>
+                    <Text style={{
+                      fontSize: 12,
+                      fontWeight: '600',
+                      letterSpacing: 1,
+                      textTransform: 'uppercase',
+                      color: colors.textSecondary,
+                      marginBottom: 10,
+                    }}>
+                      Date
                     </Text>
                     <TouchableOpacity
-                      className={`border rounded-xl px-4 py-4 flex-row justify-between items-center ${
-                        formErrors.date
-                          ? isDark 
-                            ? 'border-red-400 bg-red-900/20' 
-                            : 'border-red-500 bg-red-50'
-                          : isDark 
-                            ? 'border-black bg-black' 
-                            : 'border-gray-200 bg-gray-50'
-                      }`}
+                      style={{
+                        borderWidth: 1,
+                        borderRadius: 12,
+                        paddingHorizontal: 16,
+                        paddingVertical: 14,
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        borderColor: formErrors.date ? colors.error : colors.border,
+                        backgroundColor: colors.cardBg,
+                      }}
                       onPress={() => setShowDatePicker(true)}
                     >
-                      <Text className={`text-base ${
-                        formData.date 
-                          ? isDark ? 'text-white' : 'text-black'
-                          : isDark ? 'text-gray-600' : 'text-gray-400'
-                      }`}>
-                        {formData.date || 'Select date'}
+                      <Text style={{
+                        fontSize: 15,
+                        color: formData.date ? colors.text : colors.textTertiary,
+                      }}>
+                        {formData.date || 'Select'}
                       </Text>
-                      <AntDesign 
-                        name="calendar" 
-                        size={20} 
-                        color={isDark ? "#666" : "#999"} 
-                      />
+                      <Feather name="calendar" size={16} color={colors.textSecondary} />
                     </TouchableOpacity>
                     <ErrorText error={formErrors.date} />
                   </View>
@@ -928,179 +1021,212 @@ const EventsPage = () => {
               </View>
 
               {/* Action Buttons */}
-              <View className="flex-row space-x-3 pt-8 pb-4">
+              <View style={{ flexDirection: 'row', gap: 12, paddingTop: 32, paddingBottom: 20 }}>
                 <TouchableOpacity
-                  className={`flex-1 py-4 px-6 rounded-xl border ${
-                    isDark ? 'border-gray-700' : 'border-gray-200'
-                  }`}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 16,
+                    paddingHorizontal: 24,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    backgroundColor: 'transparent',
+                  }}
                   onPress={handleCloseModal}
                 >
-                  <Text className={`text-center font-semibold text-base ${
-                    isDark ? 'text-white' : 'text-black'
-                  }`}>
+                  <Text style={{
+                    textAlign: 'center',
+                    fontWeight: '500',
+                    fontSize: 15,
+                    color: colors.text,
+                  }}>
                     Cancel
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  className={`flex-1 py-4 px-6 rounded-xl ${
-                    isDark ? 'bg-white' : 'bg-black'
-                  }`}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 16,
+                    paddingHorizontal: 24,
+                    borderRadius: 12,
+                    backgroundColor: colors.accent,
+                  }}
                   onPress={handleAddEvent}
                 >
-                  <Text className={`text-center font-semibold text-base ${
-                    isDark ? 'text-black' : 'text-white'
-                  }`}>
+                  <Text style={{
+                    textAlign: 'center',
+                    fontWeight: '500',
+                    fontSize: 15,
+                    color: colors.accentText,
+                  }}>
                     Add Task
                   </Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>
-          </View>
-        </View>
-      </Modal>
 
-      {/* Time Picker Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={showTimePicker}
-        onRequestClose={() => setShowTimePicker(false)}
-      >
-        <View className="flex-1 bg-black/50 justify-end">
-          <View className={`rounded-t-3xl px-6 py-6 ${isDark ? 'bg-black' : 'bg-white'}`}>
-            <View className="flex-row justify-between items-center mb-6">
-              <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-black'}`}>
-                Select Time
-              </Text>
-              <TouchableOpacity
-                className={`w-8 h-8 rounded-full justify-center items-center ${
-                  isDark ? 'bg-gray-900' : 'bg-gray-100'
-                }`}
-                onPress={() => setShowTimePicker(false)}
-              >
-                <Text className={`text-lg ${isDark ? 'text-white' : 'text-black'}`}>×</Text>
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={{ maxHeight: 300 }} showsVerticalScrollIndicator={false}>
-              <View className="space-y-2">
-                {[
-                  { label: '9:00 AM', value: '9:00 AM' },
-                  { label: '10:00 AM', value: '10:00 AM' },
-                  { label: '11:00 AM', value: '11:00 AM' },
-                  { label: '12:00 PM', value: '12:00 PM' },
-                  { label: '1:00 PM', value: '1:00 PM' },
-                  { label: '2:00 PM', value: '2:00 PM' },
-                  { label: '3:00 PM', value: '3:00 PM' },
-                  { label: '4:00 PM', value: '4:00 PM' },
-                  { label: '5:00 PM', value: '5:00 PM' },
-                  { label: '6:00 PM', value: '6:00 PM' },
-                  { label: '7:00 PM', value: '7:00 PM' },
-                  { label: '8:00 PM', value: '8:00 PM' },
-                  { label: '9:00 PM', value: '9:00 PM' },
-                  { label: '10:00 PM', value: '10:00 PM' },
-                  { label: '11:00 PM', value: '11:00 PM' },
-                  { label: '11:59 PM', value: '11:59 PM' },
-                ].map((time) => (
-                  <TouchableOpacity
-                    key={time.value}
-                    className={`py-4 px-4 rounded-xl border ${
-                      formData.time === time.value
-                        ? isDark 
-                          ? 'border-white bg-white/10' 
-                          : 'border-black bg-black/10'
-                        : isDark 
-                          ? 'border-gray-800' 
-                          : 'border-gray-200'
-                    }`}
-                    onPress={() => {
-                      updateFormData('time', time.value);
-                      setShowTimePicker(false);
-                    }}
-                  >
-                    <Text className={`text-base font-medium text-center ${
-                      isDark ? 'text-white' : 'text-black'
-                    }`}>
-                      {time.label}
+            {/* Time Picker Overlay */}
+            {showTimePicker && (
+              <View style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: colors.overlay,
+                justifyContent: 'flex-end',
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+              }}>
+                <View style={{
+                  borderTopLeftRadius: 20,
+                  borderTopRightRadius: 20,
+                  paddingHorizontal: 24,
+                  paddingVertical: 24,
+                  backgroundColor: colors.bg,
+                }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                    <Text style={{ fontSize: 18, fontWeight: '400', color: colors.text }}>
+                      Select Time
                     </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Date Picker Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={showDatePicker}
-        onRequestClose={() => setShowDatePicker(false)}
-      >
-        <View className="flex-1 bg-black/50 justify-end">
-          <View className={`rounded-t-3xl px-6 py-6 ${isDark ? 'bg-black' : 'bg-white'}`}>
-            <View className="flex-row justify-between items-center mb-6">
-              <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-black'}`}>
-                Select Date
-              </Text>
-              <TouchableOpacity
-                className={`w-8 h-8 rounded-full justify-center items-center ${
-                  isDark ? 'bg-gray-900' : 'bg-gray-100'
-                }`}
-                onPress={() => setShowDatePicker(false)}
-              >
-                <Text className={`text-lg ${isDark ? 'text-white' : 'text-black'}`}>×</Text>
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={{ maxHeight: 300 }} showsVerticalScrollIndicator={false}>
-              <View className="space-y-2">
-                {generateDateOptions.map((date, index) => {
-                  const dateStr = formatDateForDisplay(date.getFullYear(), date.getMonth(), date.getDate());
-                  const displayText = index === 0 ? 'Today' : 
-                                    index === 1 ? 'Tomorrow' : 
-                                    date.toLocaleDateString('en-US', { 
-                                      weekday: 'long', 
-                                      month: 'short', 
-                                      day: 'numeric' 
-                                    });
-                  
-                  return (
                     <TouchableOpacity
-                      key={dateStr}
-                      className={`py-4 px-4 rounded-xl border ${
-                        formData.date === dateStr
-                          ? isDark 
-                            ? 'border-white bg-white/10' 
-                            : 'border-black bg-black/10'
-                          : isDark 
-                            ? 'border-gray-800' 
-                            : 'border-gray-200'
-                      }`}
-                      onPress={() => {
-                        updateFormData('date', dateStr);
-                        setShowDatePicker(false);
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 16,
+                        backgroundColor: colors.cardBg,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        justifyContent: 'center',
+                        alignItems: 'center',
                       }}
+                      onPress={() => setShowTimePicker(false)}
                     >
-                      <View className="flex-row justify-between items-center">
-                        <Text className={`text-base font-medium ${
-                          isDark ? 'text-white' : 'text-black'
-                        }`}>
-                          {displayText}
-                        </Text>
-                        <Text className={`text-sm ${
-                          isDark ? 'text-gray-400' : 'text-gray-600'
-                        }`}>
-                          {dateStr}
-                        </Text>
-                      </View>
+                      <Text style={{ fontSize: 16, color: colors.textSecondary }}>×</Text>
                     </TouchableOpacity>
-                  );
-                })}
+                  </View>
+
+                  <ScrollView style={{ maxHeight: 280 }} showsVerticalScrollIndicator={false}>
+                    <View style={{ gap: 6 }}>
+                      {[
+                        '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
+                        '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM',
+                        '5:00 PM', '6:00 PM', '7:00 PM', '8:00 PM',
+                        '9:00 PM', '10:00 PM', '11:00 PM', '11:59 PM',
+                      ].map((time) => (
+                        <TouchableOpacity
+                          key={time}
+                          style={{
+                            paddingVertical: 14,
+                            paddingHorizontal: 16,
+                            borderRadius: 10,
+                            borderWidth: 1,
+                            borderColor: formData.time === time ? colors.borderActive : colors.border,
+                            backgroundColor: formData.time === time ? (isDark ? '#111' : '#f5f5f5') : 'transparent',
+                          }}
+                          onPress={() => {
+                            updateFormData('time', time);
+                            setShowTimePicker(false);
+                          }}
+                        >
+                          <Text style={{ fontSize: 14, fontWeight: '500', textAlign: 'center', color: colors.text }}>
+                            {time}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </ScrollView>
+                </View>
               </View>
-            </ScrollView>
+            )}
+
+            {/* Date Picker Overlay */}
+            {showDatePicker && (
+              <View style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: colors.overlay,
+                justifyContent: 'flex-end',
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+              }}>
+                <View style={{
+                  borderTopLeftRadius: 20,
+                  borderTopRightRadius: 20,
+                  paddingHorizontal: 24,
+                  paddingVertical: 24,
+                  backgroundColor: colors.bg,
+                }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                    <Text style={{ fontSize: 18, fontWeight: '400', color: colors.text }}>
+                      Select Date
+                    </Text>
+                    <TouchableOpacity
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 16,
+                        backgroundColor: colors.cardBg,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}
+                      onPress={() => setShowDatePicker(false)}
+                    >
+                      <Text style={{ fontSize: 16, color: colors.textSecondary }}>×</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <ScrollView style={{ maxHeight: 280 }} showsVerticalScrollIndicator={false}>
+                    <View style={{ gap: 6 }}>
+                      {generateDateOptions.map((date, index) => {
+                        const dateStr = formatDateForDisplay(date.getFullYear(), date.getMonth(), date.getDate());
+                        const displayText = index === 0 ? 'Today' :
+                          index === 1 ? 'Tomorrow' :
+                            date.toLocaleDateString('en-US', {
+                              weekday: 'short',
+                              month: 'short',
+                              day: 'numeric'
+                            });
+
+                        return (
+                          <TouchableOpacity
+                            key={dateStr}
+                            style={{
+                              paddingVertical: 14,
+                              paddingHorizontal: 16,
+                              borderRadius: 10,
+                              borderWidth: 1,
+                              borderColor: formData.date === dateStr ? colors.borderActive : colors.border,
+                              backgroundColor: formData.date === dateStr ? (isDark ? '#111' : '#f5f5f5') : 'transparent',
+                              flexDirection: 'row',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                            }}
+                            onPress={() => {
+                              updateFormData('date', dateStr);
+                              setShowDatePicker(false);
+                            }}
+                          >
+                            <Text style={{ fontSize: 14, fontWeight: '500', color: colors.text }}>
+                              {displayText}
+                            </Text>
+                            <Text style={{ fontSize: 12, color: colors.textSecondary }}>
+                              {dateStr}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </ScrollView>
+                </View>
+              </View>
+            )}
           </View>
         </View>
       </Modal>

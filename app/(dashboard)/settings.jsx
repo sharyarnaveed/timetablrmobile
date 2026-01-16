@@ -231,7 +231,7 @@ export default function Settings() {
       Toast.show({
         type: "success",
         text1: "Email update initiated",
-        text2: "Please check your new email for confirmation",
+        text2: "",
       });
       setActiveForm(null);
       resetEmail();
