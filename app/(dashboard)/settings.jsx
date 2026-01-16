@@ -6,6 +6,7 @@ import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
+  ActivityIndicator,
   Alert,
   ScrollView,
   Switch,
@@ -17,6 +18,7 @@ import {
 import Toast from "react-native-toast-message";
 import * as yup from "yup";
 import { useTheme } from "../../context/ThemeContext";
+import { supabase } from "../../utils/supabase";
 
 // Add validation schemas
 const usernameSchema = yup.object().shape({
@@ -38,10 +40,28 @@ const passwordSchema = yup.object().shape({
     ),
 });
 
+// Teacher-specific validation schemas
+const emailSchema = yup.object().shape({
+  newEmail: yup
+    .string()
+    .required("Email is required")
+    .email("Please enter a valid email address"),
+});
+
+const teacherPasswordSchema = yup.object().shape({
+  newPassword: yup
+    .string()
+    .required("New password is required")
+    .min(6, "Password must be at least 6 characters"),
+});
+
 export default function Settings() {
   const { isDark, toggleTheme } = useTheme();
   const [activeForm, setActiveForm] = useState(null);
   const [username, setUsername] = useState("");
+  const [userRole, setUserRole] = useState(null);
+  const [isEmailLoading, setIsEmailLoading] = useState(false);
+  const [isTeacherPasswordLoading, setIsTeacherPasswordLoading] = useState(false);
   const [email, setEmail] = useState("");
 
   // Add form controls
@@ -63,6 +83,26 @@ export default function Settings() {
     resolver: yupResolver(passwordSchema),
   });
 
+  // Teacher email form
+  const {
+    control: emailControl,
+    handleSubmit: handleEmailSubmit,
+    formState: { errors: emailErrors },
+    reset: resetEmail,
+  } = useForm({
+    resolver: yupResolver(emailSchema),
+  });
+
+  // Teacher password form
+  const {
+    control: teacherPasswordControl,
+    handleSubmit: handleTeacherPasswordSubmit,
+    formState: { errors: teacherPasswordErrors },
+    reset: resetTeacherPassword,
+  } = useForm({
+    resolver: yupResolver(teacherPasswordSchema),
+  });
+
   useEffect(() => {
     loadUserData();
   }, []);
@@ -71,10 +111,12 @@ export default function Settings() {
     try {
       const storedUsername = await SecureStore.getItemAsync("username");
       const storedEmail = await SecureStore.getItemAsync("email");
+      const storedRole = await SecureStore.getItemAsync("role");
       const notificationStatus = await SecureStore.getItemAsync("notification");
 
       if (storedUsername) setUsername(storedUsername);
       if (storedEmail) setEmail(storedEmail);
+      if (storedRole) setUserRole(storedRole);
     } catch (error) {
       console.error("Error loading user data:", error);
     }
@@ -161,8 +203,77 @@ export default function Settings() {
       setActiveForm(null);
       resetUsername();
       resetPassword();
+      resetEmail();
+      resetTeacherPassword();
     } else {
       setActiveForm(formType);
+    }
+  };
+
+  // Teacher email update handler
+  const onEmailSubmit = async (data) => {
+    setIsEmailLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        email: data.newEmail,
+      });
+
+      if (error) {
+        Toast.show({
+          type: "error",
+          text1: error.message || "Failed to update email",
+        });
+        return;
+      }
+
+      await SecureStore.setItemAsync("email", data.newEmail);
+      setEmail(data.newEmail);
+      Toast.show({
+        type: "success",
+        text1: "Email update initiated",
+        text2: "Please check your new email for confirmation",
+      });
+      setActiveForm(null);
+      resetEmail();
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Can't update email",
+      });
+    } finally {
+      setIsEmailLoading(false);
+    }
+  };
+
+  // Teacher password update handler
+  const onTeacherPasswordSubmit = async (data) => {
+    setIsTeacherPasswordLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: data.newPassword,
+      });
+
+      if (error) {
+        Toast.show({
+          type: "error",
+          text1: error.message || "Failed to update password",
+        });
+        return;
+      }
+
+      Toast.show({
+        type: "success",
+        text1: "Password updated successfully",
+      });
+      setActiveForm(null);
+      resetTeacherPassword();
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Can't update password",
+      });
+    } finally {
+      setIsTeacherPasswordLoading(false);
     }
   };
 
@@ -201,35 +312,67 @@ export default function Settings() {
           style: "destructive",
           onPress: async () => {
             try {
-              const token = await SecureStore.getItemAsync("accessToken");
-              const response = await axios.delete(
-                `${process.env.EXPO_PUBLIC_API_URL}/api/user/deleteaccount`,
-                {
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                  },
-                  withCredentials: true,
-                }
-              );
-              console.log(response.data);
+              const role = await SecureStore.getItemAsync("role");
 
-              if (response.data.success) {
+              if (role === "teacher") {
+                // For teachers, sign out from Supabase and clear local data
+                const { error } = await supabase.auth.signOut();
+
+                if (error) {
+                  Toast.show({
+                    type: "error",
+                    text1: error.message || "Failed to delete account.",
+                  });
+                  return;
+                }
+
+                // Clear all local data
                 await SecureStore.deleteItemAsync("accessToken");
                 await SecureStore.deleteItemAsync("username");
                 await SecureStore.deleteItemAsync("email");
                 await SecureStore.deleteItemAsync("timetable");
                 await SecureStore.deleteItemAsync("day");
+                await SecureStore.deleteItemAsync("role");
+                await SecureStore.deleteItemAsync("notification");
+
                 Toast.show({
                   type: "success",
                   text1: "Account deleted successfully.",
                 });
                 router.replace("/signin");
               } else {
-                Toast.show({
-                  type: "error",
-                  text1: response.data.message || "Failed to delete account.",
-                });
+                // For students, use the API
+                const token = await SecureStore.getItemAsync("accessToken");
+                const response = await axios.delete(
+                  `${process.env.EXPO_PUBLIC_API_URL}/api/user/deleteaccount`,
+                  {
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                      "Content-Type": "application/json",
+                    },
+                    withCredentials: true,
+                  }
+                );
+                console.log(response.data);
+
+                if (response.data.success) {
+                  await SecureStore.deleteItemAsync("accessToken");
+                  await SecureStore.deleteItemAsync("username");
+                  await SecureStore.deleteItemAsync("email");
+                  await SecureStore.deleteItemAsync("timetable");
+                  await SecureStore.deleteItemAsync("day");
+                  await SecureStore.deleteItemAsync("role");
+                  Toast.show({
+                    type: "success",
+                    text1: "Account deleted successfully.",
+                  });
+                  router.replace("/signin");
+                } else {
+                  Toast.show({
+                    type: "error",
+                    text1: response.data.message || "Failed to delete account.",
+                  });
+                }
               }
             } catch (error) {
               Toast.show({
@@ -340,7 +483,7 @@ export default function Settings() {
                 : "rgba(0, 0, 0, 0.015)",
             }}
           />
-          
+
           <View
             style={{
               width: 108,
@@ -508,381 +651,746 @@ export default function Settings() {
 
         {/* Modern Account Management */}
         <View style={{ marginBottom: 24 }}>
-          {/* Update Username Section */}
-          <View
-            style={{
-              backgroundColor: isDark ? "#111111" : "#ffffff",
-              borderRadius: 20,
-              marginBottom: 16,
-              overflow: "hidden",
-              borderWidth: isDark ? 1 : 0,
-              borderColor: isDark ? "#1f1f1f" : "transparent",
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: isDark ? 0.2 : 0.05,
-              shadowRadius: 8,
-              elevation: 3,
-            }}
-          >
-            <TouchableOpacity
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: 20,
-              }}
-              onPress={() => toggleForm("username")}
-              activeOpacity={0.7}
-            >
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    fontSize: 18,
-                    fontWeight: "600",
-                    color: isDark ? "#ffffff" : "#111827",
-                    marginBottom: 4,
-                  }}
-                >
-                  Update Username
-                </Text>
-                <Text
-                  style={{
-                    color: isDark ? "#6b7280" : "#9ca3af",
-                    fontSize: 14,
-                  }}
-                >
-                  Change your display name
-                </Text>
-              </View>
+          {/* Teacher-specific settings */}
+          {userRole === "teacher" && (
+            <>
+              {/* Update Email Section for Teachers */}
               <View
                 style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor:
-                    activeForm === "username"
-                      ? isDark
-                        ? "#ffffff"
-                        : "#111827"
-                      : isDark
-                      ? "#1f1f1f"
-                      : "#f3f4f6",
+                  backgroundColor: isDark ? "#111111" : "#ffffff",
+                  borderRadius: 20,
+                  marginBottom: 16,
+                  overflow: "hidden",
+                  borderWidth: isDark ? 1 : 0,
+                  borderColor: isDark ? "#1f1f1f" : "transparent",
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: isDark ? 0.2 : 0.05,
+                  shadowRadius: 8,
+                  elevation: 3,
                 }}
               >
-                <Text
+                <TouchableOpacity
                   style={{
-                    fontWeight: "600",
-                    fontSize: 18,
-                    color:
-                      activeForm === "username"
-                        ? isDark
-                          ? "#000000"
-                          : "#ffffff"
-                        : isDark
-                        ? "#6b7280"
-                        : "#9ca3af",
-                  }}
-                >
-                  {activeForm === "username" ? "−" : "+"}
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* Modern Username Form */}
-            {activeForm === "username" && (
-              <View style={{ paddingHorizontal: 20, paddingBottom: 20 }}>
-                <View
-                  style={{
-                    backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
-                    borderRadius: 16,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
                     padding: 20,
-                    borderWidth: 1,
-                    borderColor: isDark ? "#1f1f1f" : "#e5e7eb",
                   }}
+                  onPress={() => toggleForm("email")}
+                  activeOpacity={0.7}
                 >
-                  <Text
-                    style={{
-                      fontSize: 15,
-                      fontWeight: "600",
-                      color: isDark ? "#d1d5db" : "#374151",
-                      marginBottom: 16,
-                    }}
-                  >
-                    Enter new username
-                  </Text>
-
-                  <Controller
-                    control={usernameControl}
-                    name="newUsername"
-                    render={({ field: { onChange, value } }) => (
-                      <TextInput
-                        style={{
-                          backgroundColor: isDark ? "#111111" : "#ffffff",
-                          borderRadius: 12,
-                          paddingHorizontal: 16,
-                          paddingVertical: 14,
-                          fontSize: 16,
-                          color: isDark ? "#ffffff" : "#111827",
-                          marginBottom: 12,
-                          borderWidth: 1,
-                          borderColor: isDark ? "#1f1f1f" : "#e5e7eb",
-                        }}
-                        placeholder="Enter new username"
-                        placeholderTextColor={isDark ? "#6b7280" : "#9ca3af"}
-                        value={value}
-                        onChangeText={onChange}
-                        autoCapitalize="none"
-                      />
-                    )}
-                  />
-
-                  {usernameErrors.newUsername && (
+                  <View style={{ flex: 1 }}>
                     <Text
                       style={{
-                        color: "#ef4444",
-                        fontSize: 13,
-                        marginBottom: 12,
-                        marginTop: -4,
-                      }}
-                    >
-                      {usernameErrors.newUsername.message}
-                    </Text>
-                  )}
-
-                  <TouchableOpacity
-                    style={{
-                      backgroundColor: isDark ? "#ffffff" : "#111827",
-                      borderRadius: 12,
-                      paddingVertical: 14,
-                      alignItems: "center",
-                      marginTop: 8,
-                    }}
-                    onPress={handleUsernameSubmit(onUsernameSubmit)}
-                    activeOpacity={0.8}
-                  >
-                    <Text
-                      style={{
-                        color: isDark ? "#000000" : "#ffffff",
+                        fontSize: 18,
                         fontWeight: "600",
-                        fontSize: 16,
+                        color: isDark ? "#ffffff" : "#111827",
+                        marginBottom: 4,
                       }}
                     >
-                      Update Username
+                      Update Email
                     </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-          </View>
+                    <Text
+                      style={{
+                        color: isDark ? "#6b7280" : "#9ca3af",
+                        fontSize: 14,
+                      }}
+                    >
+                      Change your email address
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 18,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor:
+                        activeForm === "email"
+                          ? isDark
+                            ? "#ffffff"
+                            : "#111827"
+                          : isDark
+                            ? "#1f1f1f"
+                            : "#f3f4f6",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontWeight: "600",
+                        fontSize: 18,
+                        color:
+                          activeForm === "email"
+                            ? isDark
+                              ? "#000000"
+                              : "#ffffff"
+                            : isDark
+                              ? "#6b7280"
+                              : "#9ca3af",
+                      }}
+                    >
+                      {activeForm === "email" ? "−" : "+"}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
 
-          {/* Modern Change Password Section */}
-          <View
-            style={{
-              backgroundColor: isDark ? "#111111" : "#ffffff",
-              borderRadius: 20,
-              marginBottom: 16,
-              overflow: "hidden",
-              borderWidth: isDark ? 1 : 0,
-              borderColor: isDark ? "#1f1f1f" : "transparent",
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: isDark ? 0.2 : 0.05,
-              shadowRadius: 8,
-              elevation: 3,
-            }}
-          >
-            <TouchableOpacity
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: 20,
-              }}
-              onPress={() => toggleForm("password")}
-              activeOpacity={0.7}
-            >
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    fontSize: 18,
-                    fontWeight: "600",
-                    color: isDark ? "#ffffff" : "#111827",
-                    marginBottom: 4,
-                  }}
-                >
-                  Change Password
-                </Text>
-                <Text
-                  style={{
-                    color: isDark ? "#6b7280" : "#9ca3af",
-                    fontSize: 14,
-                  }}
-                >
-                  Update your security credentials
-                </Text>
+                {activeForm === "email" && (
+                  <View style={{ paddingHorizontal: 20, paddingBottom: 20 }}>
+                    <View
+                      style={{
+                        backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
+                        borderRadius: 16,
+                        padding: 20,
+                        borderWidth: 1,
+                        borderColor: isDark ? "#1f1f1f" : "#e5e7eb",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 15,
+                          fontWeight: "600",
+                          color: isDark ? "#d1d5db" : "#374151",
+                          marginBottom: 16,
+                        }}
+                      >
+                        Enter new email address
+                      </Text>
+
+                      <Controller
+                        control={emailControl}
+                        name="newEmail"
+                        render={({ field: { onChange, value } }) => (
+                          <TextInput
+                            style={{
+                              backgroundColor: isDark ? "#111111" : "#ffffff",
+                              borderRadius: 12,
+                              paddingHorizontal: 16,
+                              paddingVertical: 14,
+                              fontSize: 16,
+                              color: isDark ? "#ffffff" : "#111827",
+                              marginBottom: 12,
+                              borderWidth: 1,
+                              borderColor: isDark ? "#1f1f1f" : "#e5e7eb",
+                            }}
+                            placeholder="Enter new email"
+                            placeholderTextColor={isDark ? "#6b7280" : "#9ca3af"}
+                            value={value}
+                            onChangeText={onChange}
+                            autoCapitalize="none"
+                            keyboardType="email-address"
+                          />
+                        )}
+                      />
+
+                      {emailErrors.newEmail && (
+                        <Text
+                          style={{
+                            color: "#ef4444",
+                            fontSize: 13,
+                            marginBottom: 12,
+                            marginTop: -4,
+                          }}
+                        >
+                          {emailErrors.newEmail.message}
+                        </Text>
+                      )}
+
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: isDark ? "#ffffff" : "#111827",
+                          borderRadius: 12,
+                          paddingVertical: 14,
+                          alignItems: "center",
+                          marginTop: 8,
+                          opacity: isEmailLoading ? 0.7 : 1,
+                        }}
+                        onPress={handleEmailSubmit(onEmailSubmit)}
+                        activeOpacity={0.8}
+                        disabled={isEmailLoading}
+                      >
+                        {isEmailLoading ? (
+                          <ActivityIndicator
+                            color={isDark ? "#000000" : "#ffffff"}
+                            size="small"
+                          />
+                        ) : (
+                          <Text
+                            style={{
+                              color: isDark ? "#000000" : "#ffffff",
+                              fontWeight: "600",
+                              fontSize: 16,
+                            }}
+                          >
+                            Update Email
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
               </View>
+
+              {/* Update Password Section for Teachers */}
               <View
                 style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor:
-                    activeForm === "password"
-                      ? isDark
-                        ? "#ffffff"
-                        : "#111827"
-                      : isDark
-                      ? "#1f1f1f"
-                      : "#f3f4f6",
+                  backgroundColor: isDark ? "#111111" : "#ffffff",
+                  borderRadius: 20,
+                  marginBottom: 16,
+                  overflow: "hidden",
+                  borderWidth: isDark ? 1 : 0,
+                  borderColor: isDark ? "#1f1f1f" : "transparent",
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: isDark ? 0.2 : 0.05,
+                  shadowRadius: 8,
+                  elevation: 3,
                 }}
               >
-                <Text
+                <TouchableOpacity
                   style={{
-                    fontWeight: "600",
-                    fontSize: 18,
-                    color:
-                      activeForm === "password"
-                        ? isDark
-                          ? "#000000"
-                          : "#ffffff"
-                        : isDark
-                        ? "#6b7280"
-                        : "#9ca3af",
-                  }}
-                >
-                  {activeForm === "password" ? "−" : "+"}
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* Modern Password Form */}
-            {activeForm === "password" && (
-              <View style={{ paddingHorizontal: 20, paddingBottom: 20 }}>
-                <View
-                  style={{
-                    backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
-                    borderRadius: 16,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
                     padding: 20,
-                    borderWidth: 1,
-                    borderColor: isDark ? "#1f1f1f" : "#e5e7eb",
                   }}
+                  onPress={() => toggleForm("teacherPassword")}
+                  activeOpacity={0.7}
                 >
-                  <Text
-                    style={{
-                      fontSize: 15,
-                      fontWeight: "600",
-                      color: isDark ? "#d1d5db" : "#374151",
-                      marginBottom: 16,
-                    }}
-                  >
-                    Change your password
-                  </Text>
-
-                  <Controller
-                    control={passwordControl}
-                    name="currentPassword"
-                    render={({ field: { onChange, value } }) => (
-                      <TextInput
-                        style={{
-                          backgroundColor: isDark ? "#111111" : "#ffffff",
-                          borderRadius: 12,
-                          paddingHorizontal: 16,
-                          paddingVertical: 14,
-                          fontSize: 16,
-                          color: isDark ? "#ffffff" : "#111827",
-                          marginBottom: 12,
-                          borderWidth: 1,
-                          borderColor: isDark ? "#1f1f1f" : "#e5e7eb",
-                        }}
-                        placeholder="Current password"
-                        placeholderTextColor={isDark ? "#6b7280" : "#9ca3af"}
-                        value={value}
-                        onChangeText={onChange}
-                        secureTextEntry
-                      />
-                    )}
-                  />
-
-                  {passwordErrors.currentPassword && (
+                  <View style={{ flex: 1 }}>
                     <Text
                       style={{
-                        color: "#ef4444",
-                        fontSize: 13,
-                        marginBottom: 12,
-                        marginTop: -4,
-                      }}
-                    >
-                      {passwordErrors.currentPassword.message}
-                    </Text>
-                  )}
-
-                  <Controller
-                    control={passwordControl}
-                    name="newPassword"
-                    render={({ field: { onChange, value } }) => (
-                      <TextInput
-                        style={{
-                          backgroundColor: isDark ? "#111111" : "#ffffff",
-                          borderRadius: 12,
-                          paddingHorizontal: 16,
-                          paddingVertical: 14,
-                          fontSize: 16,
-                          color: isDark ? "#ffffff" : "#111827",
-                          marginBottom: 12,
-                          borderWidth: 1,
-                          borderColor: isDark ? "#1f1f1f" : "#e5e7eb",
-                        }}
-                        placeholder="New password"
-                        placeholderTextColor={isDark ? "#6b7280" : "#9ca3af"}
-                        value={value}
-                        onChangeText={onChange}
-                        secureTextEntry
-                      />
-                    )}
-                  />
-
-                  {passwordErrors.newPassword && (
-                    <Text
-                      style={{
-                        color: "#ef4444",
-                        fontSize: 13,
-                        marginBottom: 12,
-                        marginTop: -4,
-                      }}
-                    >
-                      {passwordErrors.newPassword.message}
-                    </Text>
-                  )}
-
-                  <TouchableOpacity
-                    style={{
-                      backgroundColor: isDark ? "#ffffff" : "#111827",
-                      borderRadius: 12,
-                      paddingVertical: 14,
-                      alignItems: "center",
-                      marginTop: 8,
-                    }}
-                    onPress={handlePasswordSubmit(onPasswordSubmit)}
-                    activeOpacity={0.8}
-                  >
-                    <Text
-                      style={{
-                        color: isDark ? "#000000" : "#ffffff",
+                        fontSize: 18,
                         fontWeight: "600",
-                        fontSize: 16,
+                        color: isDark ? "#ffffff" : "#111827",
+                        marginBottom: 4,
                       }}
                     >
                       Change Password
                     </Text>
-                  </TouchableOpacity>
-                </View>
+                    <Text
+                      style={{
+                        color: isDark ? "#6b7280" : "#9ca3af",
+                        fontSize: 14,
+                      }}
+                    >
+                      Update your security credentials
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 18,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor:
+                        activeForm === "teacherPassword"
+                          ? isDark
+                            ? "#ffffff"
+                            : "#111827"
+                          : isDark
+                            ? "#1f1f1f"
+                            : "#f3f4f6",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontWeight: "600",
+                        fontSize: 18,
+                        color:
+                          activeForm === "teacherPassword"
+                            ? isDark
+                              ? "#000000"
+                              : "#ffffff"
+                            : isDark
+                              ? "#6b7280"
+                              : "#9ca3af",
+                      }}
+                    >
+                      {activeForm === "teacherPassword" ? "−" : "+"}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+
+                {activeForm === "teacherPassword" && (
+                  <View style={{ paddingHorizontal: 20, paddingBottom: 20 }}>
+                    <View
+                      style={{
+                        backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
+                        borderRadius: 16,
+                        padding: 20,
+                        borderWidth: 1,
+                        borderColor: isDark ? "#1f1f1f" : "#e5e7eb",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 15,
+                          fontWeight: "600",
+                          color: isDark ? "#d1d5db" : "#374151",
+                          marginBottom: 16,
+                        }}
+                      >
+                        Enter new password
+                      </Text>
+
+                      <Controller
+                        control={teacherPasswordControl}
+                        name="newPassword"
+                        render={({ field: { onChange, value } }) => (
+                          <TextInput
+                            style={{
+                              backgroundColor: isDark ? "#111111" : "#ffffff",
+                              borderRadius: 12,
+                              paddingHorizontal: 16,
+                              paddingVertical: 14,
+                              fontSize: 16,
+                              color: isDark ? "#ffffff" : "#111827",
+                              marginBottom: 12,
+                              borderWidth: 1,
+                              borderColor: isDark ? "#1f1f1f" : "#e5e7eb",
+                            }}
+                            placeholder="Enter new password"
+                            placeholderTextColor={isDark ? "#6b7280" : "#9ca3af"}
+                            value={value}
+                            onChangeText={onChange}
+                            secureTextEntry
+                          />
+                        )}
+                      />
+
+                      {teacherPasswordErrors.newPassword && (
+                        <Text
+                          style={{
+                            color: "#ef4444",
+                            fontSize: 13,
+                            marginBottom: 12,
+                            marginTop: -4,
+                          }}
+                        >
+                          {teacherPasswordErrors.newPassword.message}
+                        </Text>
+                      )}
+
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: isDark ? "#ffffff" : "#111827",
+                          borderRadius: 12,
+                          paddingVertical: 14,
+                          alignItems: "center",
+                          marginTop: 8,
+                          opacity: isTeacherPasswordLoading ? 0.7 : 1,
+                        }}
+                        onPress={handleTeacherPasswordSubmit(onTeacherPasswordSubmit)}
+                        activeOpacity={0.8}
+                        disabled={isTeacherPasswordLoading}
+                      >
+                        {isTeacherPasswordLoading ? (
+                          <ActivityIndicator
+                            color={isDark ? "#000000" : "#ffffff"}
+                            size="small"
+                          />
+                        ) : (
+                          <Text
+                            style={{
+                              color: isDark ? "#000000" : "#ffffff",
+                              fontWeight: "600",
+                              fontSize: 16,
+                            }}
+                          >
+                            Change Password
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
               </View>
-            )}
-          </View>
+            </>
+          )}
+
+          {/* Student-specific settings */}
+          {userRole === "student" && (
+            <>
+              {/* Update Username Section */}
+              <View
+                style={{
+                  backgroundColor: isDark ? "#111111" : "#ffffff",
+                  borderRadius: 20,
+                  marginBottom: 16,
+                  overflow: "hidden",
+                  borderWidth: isDark ? 1 : 0,
+                  borderColor: isDark ? "#1f1f1f" : "transparent",
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: isDark ? 0.2 : 0.05,
+                  shadowRadius: 8,
+                  elevation: 3,
+                }}
+              >
+                <TouchableOpacity
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: 20,
+                  }}
+                  onPress={() => toggleForm("username")}
+                  activeOpacity={0.7}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        fontSize: 18,
+                        fontWeight: "600",
+                        color: isDark ? "#ffffff" : "#111827",
+                        marginBottom: 4,
+                      }}
+                    >
+                      Update Username
+                    </Text>
+                    <Text
+                      style={{
+                        color: isDark ? "#6b7280" : "#9ca3af",
+                        fontSize: 14,
+                      }}
+                    >
+                      Change your display name
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 18,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor:
+                        activeForm === "username"
+                          ? isDark
+                            ? "#ffffff"
+                            : "#111827"
+                          : isDark
+                            ? "#1f1f1f"
+                            : "#f3f4f6",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontWeight: "600",
+                        fontSize: 18,
+                        color:
+                          activeForm === "username"
+                            ? isDark
+                              ? "#000000"
+                              : "#ffffff"
+                            : isDark
+                              ? "#6b7280"
+                              : "#9ca3af",
+                      }}
+                    >
+                      {activeForm === "username" ? "−" : "+"}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+
+                {/* Modern Username Form */}
+                {activeForm === "username" && (
+                  <View style={{ paddingHorizontal: 20, paddingBottom: 20 }}>
+                    <View
+                      style={{
+                        backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
+                        borderRadius: 16,
+                        padding: 20,
+                        borderWidth: 1,
+                        borderColor: isDark ? "#1f1f1f" : "#e5e7eb",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 15,
+                          fontWeight: "600",
+                          color: isDark ? "#d1d5db" : "#374151",
+                          marginBottom: 16,
+                        }}
+                      >
+                        Enter new username
+                      </Text>
+
+                      <Controller
+                        control={usernameControl}
+                        name="newUsername"
+                        render={({ field: { onChange, value } }) => (
+                          <TextInput
+                            style={{
+                              backgroundColor: isDark ? "#111111" : "#ffffff",
+                              borderRadius: 12,
+                              paddingHorizontal: 16,
+                              paddingVertical: 14,
+                              fontSize: 16,
+                              color: isDark ? "#ffffff" : "#111827",
+                              marginBottom: 12,
+                              borderWidth: 1,
+                              borderColor: isDark ? "#1f1f1f" : "#e5e7eb",
+                            }}
+                            placeholder="Enter new username"
+                            placeholderTextColor={isDark ? "#6b7280" : "#9ca3af"}
+                            value={value}
+                            onChangeText={onChange}
+                            autoCapitalize="none"
+                          />
+                        )}
+                      />
+
+                      {usernameErrors.newUsername && (
+                        <Text
+                          style={{
+                            color: "#ef4444",
+                            fontSize: 13,
+                            marginBottom: 12,
+                            marginTop: -4,
+                          }}
+                        >
+                          {usernameErrors.newUsername.message}
+                        </Text>
+                      )}
+
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: isDark ? "#ffffff" : "#111827",
+                          borderRadius: 12,
+                          paddingVertical: 14,
+                          alignItems: "center",
+                          marginTop: 8,
+                        }}
+                        onPress={handleUsernameSubmit(onUsernameSubmit)}
+                        activeOpacity={0.8}
+                      >
+                        <Text
+                          style={{
+                            color: isDark ? "#000000" : "#ffffff",
+                            fontWeight: "600",
+                            fontSize: 16,
+                          }}
+                        >
+                          Update Username
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+              </View>
+
+              {/* Modern Change Password Section for Students */}
+              <View
+                style={{
+                  backgroundColor: isDark ? "#111111" : "#ffffff",
+                  borderRadius: 20,
+                  marginBottom: 16,
+                  overflow: "hidden",
+                  borderWidth: isDark ? 1 : 0,
+                  borderColor: isDark ? "#1f1f1f" : "transparent",
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: isDark ? 0.2 : 0.05,
+                  shadowRadius: 8,
+                  elevation: 3,
+                }}
+              >
+                <TouchableOpacity
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: 20,
+                  }}
+                  onPress={() => toggleForm("password")}
+                  activeOpacity={0.7}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        fontSize: 18,
+                        fontWeight: "600",
+                        color: isDark ? "#ffffff" : "#111827",
+                        marginBottom: 4,
+                      }}
+                    >
+                      Change Password
+                    </Text>
+                    <Text
+                      style={{
+                        color: isDark ? "#6b7280" : "#9ca3af",
+                        fontSize: 14,
+                      }}
+                    >
+                      Update your security credentials
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 18,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor:
+                        activeForm === "password"
+                          ? isDark
+                            ? "#ffffff"
+                            : "#111827"
+                          : isDark
+                            ? "#1f1f1f"
+                            : "#f3f4f6",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontWeight: "600",
+                        fontSize: 18,
+                        color:
+                          activeForm === "password"
+                            ? isDark
+                              ? "#000000"
+                              : "#ffffff"
+                            : isDark
+                              ? "#6b7280"
+                              : "#9ca3af",
+                      }}
+                    >
+                      {activeForm === "password" ? "−" : "+"}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+
+                {/* Modern Password Form */}
+                {activeForm === "password" && (
+                  <View style={{ paddingHorizontal: 20, paddingBottom: 20 }}>
+                    <View
+                      style={{
+                        backgroundColor: isDark ? "#1a1a1a" : "#f9fafb",
+                        borderRadius: 16,
+                        padding: 20,
+                        borderWidth: 1,
+                        borderColor: isDark ? "#1f1f1f" : "#e5e7eb",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 15,
+                          fontWeight: "600",
+                          color: isDark ? "#d1d5db" : "#374151",
+                          marginBottom: 16,
+                        }}
+                      >
+                        Change your password
+                      </Text>
+
+                      <Controller
+                        control={passwordControl}
+                        name="currentPassword"
+                        render={({ field: { onChange, value } }) => (
+                          <TextInput
+                            style={{
+                              backgroundColor: isDark ? "#111111" : "#ffffff",
+                              borderRadius: 12,
+                              paddingHorizontal: 16,
+                              paddingVertical: 14,
+                              fontSize: 16,
+                              color: isDark ? "#ffffff" : "#111827",
+                              marginBottom: 12,
+                              borderWidth: 1,
+                              borderColor: isDark ? "#1f1f1f" : "#e5e7eb",
+                            }}
+                            placeholder="Current password"
+                            placeholderTextColor={isDark ? "#6b7280" : "#9ca3af"}
+                            value={value}
+                            onChangeText={onChange}
+                            secureTextEntry
+                          />
+                        )}
+                      />
+
+                      {passwordErrors.currentPassword && (
+                        <Text
+                          style={{
+                            color: "#ef4444",
+                            fontSize: 13,
+                            marginBottom: 12,
+                            marginTop: -4,
+                          }}
+                        >
+                          {passwordErrors.currentPassword.message}
+                        </Text>
+                      )}
+
+                      <Controller
+                        control={passwordControl}
+                        name="newPassword"
+                        render={({ field: { onChange, value } }) => (
+                          <TextInput
+                            style={{
+                              backgroundColor: isDark ? "#111111" : "#ffffff",
+                              borderRadius: 12,
+                              paddingHorizontal: 16,
+                              paddingVertical: 14,
+                              fontSize: 16,
+                              color: isDark ? "#ffffff" : "#111827",
+                              marginBottom: 12,
+                              borderWidth: 1,
+                              borderColor: isDark ? "#1f1f1f" : "#e5e7eb",
+                            }}
+                            placeholder="New password"
+                            placeholderTextColor={isDark ? "#6b7280" : "#9ca3af"}
+                            value={value}
+                            onChangeText={onChange}
+                            secureTextEntry
+                          />
+                        )}
+                      />
+
+                      {passwordErrors.newPassword && (
+                        <Text
+                          style={{
+                            color: "#ef4444",
+                            fontSize: 13,
+                            marginBottom: 12,
+                            marginTop: -4,
+                          }}
+                        >
+                          {passwordErrors.newPassword.message}
+                        </Text>
+                      )}
+
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: isDark ? "#ffffff" : "#111827",
+                          borderRadius: 12,
+                          paddingVertical: 14,
+                          alignItems: "center",
+                          marginTop: 8,
+                        }}
+                        onPress={handlePasswordSubmit(onPasswordSubmit)}
+                        activeOpacity={0.8}
+                      >
+                        <Text
+                          style={{
+                            color: isDark ? "#000000" : "#ffffff",
+                            fontWeight: "600",
+                            fontSize: 16,
+                          }}
+                        >
+                          Change Password
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+              </View>
+            </>
+          )}
         </View>
 
         {/* Modern Logout and Delete Account Buttons */}
