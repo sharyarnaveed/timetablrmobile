@@ -34,23 +34,47 @@ export default function useTeacherCurrentClass(timetableString) {
                 // Check if the class is today
                 if (classDay !== dayName) return false;
 
-                // Parse time strings and compare (format: "14:00 - 17:00")
-                const timeParts = cls.Time?.split('-') || cls.Time?.split(' - ');
+                // Parse time strings and compare (format: "9:00 - 12:00" or "14:00 - 17:00")
+                // Try " - " format first (with spaces), then "-" format
+                let timeParts = cls.Time?.split(' - ');
+                if (!timeParts || timeParts.length !== 2) {
+                    timeParts = cls.Time?.split('-');
+                }
                 const startTime = timeParts?.[0]?.trim();
                 const endTime = timeParts?.[1]?.trim();
 
                 if (!startTime || !endTime) return false;
 
-                return startTime <= currentTime && endTime > currentTime;
-            }).map(cls => ({
-                // Map teacher data fields to match Today component expectations
-                ...cls,
-                course_name: cls.Subject || cls.subject_clean || cls.course_name,
-                venue: cls.Location || cls.venue,
-                start_time: cls.Time?.split('-')[0]?.trim() || cls.Time?.split(' - ')[0]?.trim(),
-                end_time: cls.Time?.split('-')[1]?.trim() || cls.Time?.split(' - ')[1]?.trim(),
-                teacher_name: cls.program || cls.teacher_name // For teachers, show program instead
-            }));
+                // Pad times to ensure proper comparison (e.g., "9:00" -> "09:00")
+                const padTime = (timeStr) => {
+                    const [h, m] = timeStr.split(":");
+                    return `${h.padStart(2, "0")}:${m.padStart(2, "0")}`;
+                };
+
+                const paddedStart = padTime(startTime);
+                const paddedEnd = padTime(endTime);
+                const paddedCurrent = padTime(currentTime);
+
+                return paddedStart <= paddedCurrent && paddedEnd > paddedCurrent;
+            }).map(cls => {
+                // Parse time properly
+                let timeParts = cls.Time?.split(' - ');
+                if (!timeParts || timeParts.length !== 2) {
+                    timeParts = cls.Time?.split('-');
+                }
+                const startTime = timeParts?.[0]?.trim() || '';
+                const endTime = timeParts?.[1]?.trim() || '';
+
+                return {
+                    // Map teacher data fields to match Today component expectations
+                    ...cls,
+                    course_name: cls.subject_clean || cls.Subject || cls.course_name,
+                    venue: cls.Location || cls.venue || 'TBA',
+                    start_time: startTime,
+                    end_time: endTime,
+                    teacher_name: cls.teacher_name || cls.program || 'TBA'
+                };
+            });
 
             setCurrentClasses(ongoingClasses);
         };

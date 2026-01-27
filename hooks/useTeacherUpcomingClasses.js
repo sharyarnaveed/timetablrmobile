@@ -41,8 +41,12 @@ export default function useTeacherUpcomingClasses(timetableString) {
                     // Check if the class is today
                     if (classDay !== dayName) return false;
 
-                    // Get start time from the Time field (format: "HH:MM - HH:MM" or "HH:MM-HH:MM")
-                    const timeParts = cls.Time?.split('-') || cls.Time?.split(' - ');
+                    // Get start time from the Time field (format: "9:00 - 12:00" or "14:00 - 17:00")
+                    // Try " - " format first (with spaces), then "-" format
+                    let timeParts = cls.Time?.split(' - ');
+                    if (!timeParts || timeParts.length !== 2) {
+                        timeParts = cls.Time?.split('-');
+                    }
                     const startTime = timeParts?.[0]?.trim();
 
                     if (!startTime) return false;
@@ -50,19 +54,37 @@ export default function useTeacherUpcomingClasses(timetableString) {
                     return padTime(startTime) > currentTime;
                 })
                 .sort((a, b) => {
-                    const aStart = padTime(a.Time.split('-')[0].trim() || a.Time.split(' - ')[0].trim());
-                    const bStart = padTime(b.Time.split('-')[0].trim() || b.Time.split(' - ')[0].trim());
+                    let aParts = a.Time?.split(' - ');
+                    if (!aParts || aParts.length !== 2) {
+                        aParts = a.Time?.split('-');
+                    }
+                    let bParts = b.Time?.split(' - ');
+                    if (!bParts || bParts.length !== 2) {
+                        bParts = b.Time?.split('-');
+                    }
+                    const aStart = padTime(aParts?.[0]?.trim() || '');
+                    const bStart = padTime(bParts?.[0]?.trim() || '');
                     return aStart.localeCompare(bStart);
                 })
-                .map(cls => ({
-                    // Map teacher data fields to match Today component expectations
-                    ...cls,
-                    course_name: cls.Subject || cls.subject_clean || cls.course_name,
-                    venue: cls.Location || cls.venue,
-                    start_time: cls.Time?.split('-')[0]?.trim() || cls.Time?.split(' - ')[0]?.trim(),
-                    end_time: cls.Time?.split('-')[1]?.trim() || cls.Time?.split(' - ')[1]?.trim(),
-                    teacher_name: cls.program || cls.teacher_name // For teachers, show program instead
-                }));
+                .map(cls => {
+                    // Parse time properly
+                    let timeParts = cls.Time?.split(' - ');
+                    if (!timeParts || timeParts.length !== 2) {
+                        timeParts = cls.Time?.split('-');
+                    }
+                    const startTime = timeParts?.[0]?.trim() || '';
+                    const endTime = timeParts?.[1]?.trim() || '';
+
+                    return {
+                        // Map teacher data fields to match Today component expectations
+                        ...cls,
+                        course_name: cls.subject_clean || cls.Subject || cls.course_name,
+                        venue: cls.Location || cls.venue || 'TBA',
+                        start_time: startTime,
+                        end_time: endTime,
+                        teacher_name: cls.teacher_name || cls.program || 'TBA'
+                    };
+                });
 
             setUpcoming(upcomingClasses);
         };

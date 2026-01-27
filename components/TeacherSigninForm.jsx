@@ -1,9 +1,10 @@
 import { yupResolver } from '@hookform/resolvers/yup';
+import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Toast from 'react-native-toast-message';
 import * as yup from 'yup';
 import { supabase } from "../utils/supabase";
@@ -24,6 +25,7 @@ const TeacherSigninForm = () => {
     const [loading, setLoading] = useState(false);
 
     const onsubmit = async (data) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         setLoading(true);
         try {
             const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -32,9 +34,11 @@ const TeacherSigninForm = () => {
             });
 
             if (authError) {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
                 Toast.show({
                     type: "error",
-                    text1: authError.message
+                    text1: "Sign in failed",
+                    text2: authError.message || "Please check your credentials"
                 });
                 setLoading(false);
                 return;
@@ -42,18 +46,22 @@ const TeacherSigninForm = () => {
 
             // Check if user has teacher role
             if (authData.user?.user_metadata?.role !== 'teacher') {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
                 Toast.show({
                     type: "error",
-                    text1: "Invalid credentials for teacher login"
+                    text1: "Access denied",
+                    text2: "This account is not authorized for teacher login"
                 });
                 await supabase.auth.signOut();
                 setLoading(false);
                 return;
             }
 
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             Toast.show({
                 type: "success",
-                text1: "Sign in successful!"
+                text1: "Welcome back!",
+                text2: "Sign in successful"
             });
             await SecureStore.setItemAsync('accessToken', authData.session.access_token);
             await SecureStore.setItemAsync('role', "teacher");
@@ -61,9 +69,11 @@ const TeacherSigninForm = () => {
             router.push("/(dashboard)/");
         } catch (error) {
             console.log(error);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             Toast.show({
                 type: "error",
-                text1: "Error in Sign In"
+                text1: "Sign in failed",
+                text2: "Unable to sign in. Please try again."
             });
         } finally {
             setLoading(false);
@@ -117,8 +127,15 @@ const TeacherSigninForm = () => {
                 className="bg-black h-14 rounded-full justify-center items-center mt-6 shadow-sm"
                 onPress={handleSubmit(onsubmit)}
                 disabled={loading}
+                accessibilityLabel="Sign in button"
+                accessibilityHint="Signs in with your email and password"
+                style={{ opacity: loading ? 0.6 : 1 }}
             >
-                <Text className="text-white text-lg font-semibold">Sign In</Text>
+                {loading ? (
+                    <ActivityIndicator color="#ffffff" />
+                ) : (
+                    <Text className="text-white text-lg font-semibold">Sign In</Text>
+                )}
             </TouchableOpacity>
         </View>
     );

@@ -1,6 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { Text, View, Animated } from "react-native";
 import { useTheme } from "../context/ThemeContext";
 
 const Today = ({ thecurent, Notcurrentclass }) => {
@@ -8,6 +8,7 @@ const Today = ({ thecurent, Notcurrentclass }) => {
   const [totalength, setlength] = useState(0);
   const [leftlength, setLeftLength] = useState(0);
   const [progress, SetProgress] = useState(0);
+  const [fadeAnim] = useState(new Animated.Value(0));
 
   const gettimetabewhoeldata = async () => {
     try {
@@ -38,12 +39,23 @@ const Today = ({ thecurent, Notcurrentclass }) => {
 
   useEffect(() => {
     gettimetabewhoeldata();
+    // Fade in animation
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
   }, [thecurent, Notcurrentclass]);
 
   const multipleCurrent = thecurent.length > 1;
 
   return (
-    <View style={{ backgroundColor: isDark ? "#000000" : "#fafafa" }}>
+    <Animated.View 
+      style={{ 
+        backgroundColor: isDark ? "#000000" : "#fafafa",
+        opacity: fadeAnim 
+      }}
+    >
       {/* Stats Cards */}
       <View style={{ paddingHorizontal: 24, marginBottom: 32 }}>
         <View style={{ flexDirection: "row", gap: 12 }}>
@@ -89,7 +101,7 @@ const Today = ({ thecurent, Notcurrentclass }) => {
                 overflow: "hidden",
               }}
             >
-              <View
+              <Animated.View
                 style={{
                   backgroundColor: isDark ? "#ffffff" : "#000000",
                   height: 6,
@@ -497,7 +509,7 @@ const Today = ({ thecurent, Notcurrentclass }) => {
           </Text>
         </View>
       )}
-    </View>
+    </Animated.View>
   );
 };
 

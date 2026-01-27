@@ -5,7 +5,8 @@ import * as SecureStore from "expo-secure-store";
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
-import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import * as Haptics from "expo-haptics";
+import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from "react-native";
 import Toast from 'react-native-toast-message';
 import * as yup from 'yup';
 import TeacherSigninForm from '../../components/TeacherSigninForm';
@@ -27,37 +28,44 @@ export default function signin() {
   });
   const [laoding, SetLoading] = useState(false)
   const onsubmit = async (data) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     await SecureStore.setItemAsync('username', data.username);
     SetLoading(true)
     try {
       const responce = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/api/user/signin`, data);
       if (responce.data.success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         Toast.show({
           type: "success",
-          text1: responce.data.message
+          text1: "Welcome back!",
+          text2: responce.data.message
         });
-
 
         await SecureStore.setItemAsync('accessToken', responce.data.accesstoken);
         await SecureStore.setItemAsync('role', "student");
         router.push("/(dashboard)/");
       } else {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         Toast.show({
           type: "error",
-          text1: responce.data.message
+          text1: "Sign in failed",
+          text2: responce.data.message || "Please check your credentials"
         });
         SetLoading(false)
-
       }
     } catch (error) {
       console.log(error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      const errorMessage = error.response?.data?.message || 
+                          (error.message?.includes('Network') ? "Network error. Please check your connection." : 
+                          "Unable to sign in. Please try again.");
       Toast.show({
         type: "error",
-        text1: "Error in Sign In"
+        text1: "Sign in failed",
+        text2: errorMessage
       });
     } finally {
       SetLoading(false)
-
     }
   };
 
@@ -88,7 +96,13 @@ export default function signin() {
           <View className="flex-row mb-8 bg-gray-100 rounded-full p-1">
             <TouchableOpacity
               className={`flex-1 py-3 rounded-full ${activeTab === 'student' ? 'bg-black' : 'bg-transparent'}`}
-              onPress={() => setActiveTab('student')}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setActiveTab('student');
+              }}
+              accessibilityLabel="Student sign in"
+              accessibilityRole="tab"
+              accessibilityState={{ selected: activeTab === 'student' }}
             >
               <Text className={`text-center font-semibold ${activeTab === 'student' ? 'text-white' : 'text-gray-600'}`}>
                 Student
@@ -96,7 +110,13 @@ export default function signin() {
             </TouchableOpacity>
             <TouchableOpacity
               className={`flex-1 py-3 rounded-full ${activeTab === 'teacher' ? 'bg-black' : 'bg-transparent'}`}
-              onPress={() => setActiveTab('teacher')}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setActiveTab('teacher');
+              }}
+              accessibilityLabel="Teacher sign in"
+              accessibilityRole="tab"
+              accessibilityState={{ selected: activeTab === 'teacher' }}
             >
               <Text className={`text-center font-semibold ${activeTab === 'teacher' ? 'text-white' : 'text-gray-600'}`}>
                 Teacher
@@ -155,8 +175,15 @@ export default function signin() {
                 className="bg-black h-14 rounded-full justify-center items-center mt-6 shadow-sm"
                 onPress={handleSubmit(onsubmit)}
                 disabled={laoding}
+                accessibilityLabel="Sign in button"
+                accessibilityHint="Signs in with your username and password"
+                style={{ opacity: laoding ? 0.6 : 1 }}
               >
-                <Text className="text-white text-lg font-semibold">Sign In</Text>
+                {laoding ? (
+                  <ActivityIndicator color="#ffffff" />
+                ) : (
+                  <Text className="text-white text-lg font-semibold">Sign In</Text>
+                )}
               </TouchableOpacity>
 
               {/* Sign In Link */}

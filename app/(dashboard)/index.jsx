@@ -1,11 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import NetInfo from "@react-native-community/netinfo";
 import axios from "axios";
 import { Link, router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Linking,
+  RefreshControl,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -30,6 +33,8 @@ const index = () => {
   const [timetableData, setTimetableData] = useState(null);
   const [isOnline, setIsOnline] = useState(true);
   const [userRole, setUserRole] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const GOOGLE_FORM_URL = "https://forms.gle/6nN8mEKFfn4d8p8v5";
 
@@ -42,10 +47,16 @@ const index = () => {
     : useupcomingClasses(timetableData);
 
   const handleMessagePress = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
       await Linking.openURL(GOOGLE_FORM_URL);
     } catch (error) {
       console.error("Error opening Google Form:", error);
+      Toast.show({
+        type: "error",
+        text1: "Unable to open link",
+        text2: "Please try again later",
+      });
     }
   };
 
@@ -85,8 +96,14 @@ const index = () => {
         setTimetableData(LocalTimetable);
         Toast.show({
           type: "info",
-          text1: "Using Offline Data",
-          text2: "Showing cached timetable",
+          text1: "Using Cached Data",
+          text2: "Showing your last saved timetable",
+        });
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Unable to Load Timetable",
+          text2: "Please check your connection and try again",
         });
       }
     }
@@ -121,11 +138,17 @@ const index = () => {
       // If 401 error, token is invalid - redirect to signin
       if (error.response?.status === 401) {
         console.log("Authentication failed - redirecting to signin");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        Toast.show({
+          type: "error",
+          text1: "Session Expired",
+          text2: "Please sign in again",
+        });
         await SecureStore.deleteItemAsync("accessToken");
         await SecureStore.deleteItemAsync("username");
         await SecureStore.deleteItemAsync("email");
         await SecureStore.deleteItemAsync("role");
-        router.push("/signin");
+        setTimeout(() => router.push("/signin"), 1500);
         return;
       }
       // Load from local storage if API fails
@@ -134,8 +157,14 @@ const index = () => {
         setTimetableData(LocalTimetable);
         Toast.show({
           type: "info",
-          text1: "Using Offline Data",
-          text2: "Showing cached timetable",
+          text1: "Using Cached Data",
+          text2: "Showing your last saved timetable",
+        });
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Unable to Load Timetable",
+          text2: error.response?.data?.message || "Please check your connection",
         });
       }
     }
@@ -191,49 +220,60 @@ const index = () => {
     const formatted = today.toLocaleDateString("en-US", options);
 
     const init = async () => {
-      await userdetails();
-      setday(formatted);
+      setIsLoading(true);
+      try {
+        await userdetails();
+        setday(formatted);
 
-      const StoredDay = await SecureStore.getItemAsync("day");
-      const LocalTimetable = await SecureStore.getItemAsync("timetable");
-      const role = await SecureStore.getItemAsync("role");
+        const StoredDay = await SecureStore.getItemAsync("day");
+        const LocalTimetable = await SecureStore.getItemAsync("timetable");
+        const role = await SecureStore.getItemAsync("role");
 
-      console.log("[DASHBOARD] User role:", role);
-      console.log("[DASHBOARD] Stored day:", StoredDay, "Current day:", dayName);
+        console.log("[DASHBOARD] User role:", role);
+        console.log("[DASHBOARD] Stored day:", StoredDay, "Current day:", dayName);
 
-      // Check network status
-      const netState = await NetInfo.fetch();
-      setIsOnline(netState.isConnected);
+        // Check network status
+        const netState = await NetInfo.fetch();
+        setIsOnline(netState.isConnected);
 
-      if (
-        StoredDay !== dayName ||
-        !LocalTimetable ||
-        LocalTimetable.length === 0
-      ) {
-        await SecureStore.setItemAsync("day", dayName);
-        if (netState.isConnected) {
-          // Use appropriate data fetching based on role
-          console.log("[DASHBOARD] Fetching data for role:", role);
-          if (role === "teacher") {
-            console.log("[DASHBOARD] Calling getTeacherData...");
-            await getTeacherData(dayName);
+        if (
+          StoredDay !== dayName ||
+          !LocalTimetable ||
+          LocalTimetable.length === 0
+        ) {
+          await SecureStore.setItemAsync("day", dayName);
+          if (netState.isConnected) {
+            // Use appropriate data fetching based on role
+            console.log("[DASHBOARD] Fetching data for role:", role);
+            if (role === "teacher") {
+              console.log("[DASHBOARD] Calling getTeacherData...");
+              await getTeacherData(dayName);
+            } else {
+              console.log("[DASHBOARD] Calling getdata (student API)...");
+              await getdata(dayName, Makeday);
+            }
           } else {
-            console.log("[DASHBOARD] Calling getdata (student API)...");
-            await getdata(dayName, Makeday);
-          }
-        } else {
           // Use local storage when offline
           if (LocalTimetable) {
             setTimetableData(LocalTimetable);
             Toast.show({
               type: "info",
               text1: "Offline Mode",
-              text2: "Showing cached timetable",
+              text2: "Showing cached timetable. Pull down to refresh when online.",
+            });
+          } else {
+            Toast.show({
+              type: "error",
+              text1: "No Internet Connection",
+              text2: "Please connect to the internet to load your timetable",
             });
           }
+          }
+        } else {
+          setTimetableData(LocalTimetable);
         }
-      } else {
-        setTimetableData(LocalTimetable);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -273,6 +313,9 @@ const index = () => {
   }, []);
 
   const handlereload = async () => {
+    // Haptic feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
     if (!isOnline) {
       Toast.show({
         type: "error",
@@ -282,6 +325,7 @@ const index = () => {
       return;
     }
 
+    setIsRefreshing(true);
     const today = new Date();
     const dayName = today.toLocaleDateString("en-US", { weekday: "long" });
 
@@ -291,21 +335,105 @@ const index = () => {
 
     const role = await SecureStore.getItemAsync("role");
 
-    // Use appropriate data fetching based on role
-    if (role === "teacher") {
-      await getTeacherData(dayName);
-    } else {
-      await getdata(dayName, Makeday);
+    try {
+      // Use appropriate data fetching based on role
+      if (role === "teacher") {
+        await getTeacherData(dayName);
+      } else {
+        await getdata(dayName, Makeday);
+      }
+
+      const newTimetable = await SecureStore.getItemAsync("timetable");
+      setTimetableData(newTimetable);
+      
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Toast.show({
+        type: "success",
+        text1: "Refreshed",
+        text2: "Timetable updated",
+      });
+    } catch (error) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setIsRefreshing(false);
     }
-
-    const newTimetable = await SecureStore.getItemAsync("timetable");
-
-    setTimetableData(newTimetable);
-    Toast.show({
-      type: "success",
-      text1: "Data Reloaded",
-    });
   };
+
+  // Loading skeleton component
+  const LoadingSkeleton = () => (
+    <View style={{ paddingHorizontal: 24 }}>
+      <View
+        style={{
+          backgroundColor: isDark ? "#0a0a0a" : "#ffffff",
+          padding: 24,
+          borderRadius: 24,
+          marginBottom: 12,
+        }}
+      >
+        <View
+          style={{
+            width: "60%",
+            height: 20,
+            backgroundColor: isDark ? "#1a1a1a" : "#f0f0f0",
+            borderRadius: 8,
+            marginBottom: 16,
+          }}
+        />
+        <View style={{ gap: 8 }}>
+          <View
+            style={{
+              width: "40%",
+              height: 14,
+              backgroundColor: isDark ? "#1a1a1a" : "#f0f0f0",
+              borderRadius: 6,
+            }}
+          />
+          <View
+            style={{
+              width: "50%",
+              height: 14,
+              backgroundColor: isDark ? "#1a1a1a" : "#f0f0f0",
+              borderRadius: 6,
+            }}
+          />
+        </View>
+      </View>
+    </View>
+  );
+
+  if (isLoading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: isDark ? "#000000" : "#fafafa",
+          paddingTop: 60,
+        }}
+      >
+        <View style={{ paddingHorizontal: 24, paddingBottom: 24 }}>
+          <View
+            style={{
+              width: "40%",
+              height: 24,
+              backgroundColor: isDark ? "#1a1a1a" : "#e5e5e5",
+              borderRadius: 8,
+              marginBottom: 8,
+            }}
+          />
+          <View
+            style={{
+              width: "60%",
+              height: 48,
+              backgroundColor: isDark ? "#1a1a1a" : "#e5e5e5",
+              borderRadius: 8,
+            }}
+          />
+        </View>
+        <LoadingSkeleton />
+        <LoadingSkeleton />
+      </View>
+    );
+  }
 
   return (
     <ScrollView
@@ -315,6 +443,14 @@ const index = () => {
       }}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: 120 }}
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={handlereload}
+          tintColor={isDark ? "#ffffff" : "#000000"}
+          colors={[isDark ? "#ffffff" : "#000000"]}
+        />
+      }
     >
       <View style={{ flex: 1 }}>
         {/* Header Section */}
@@ -367,6 +503,8 @@ const index = () => {
               <TouchableOpacity
                 onPress={handleMessagePress}
                 activeOpacity={0.7}
+                accessibilityLabel="Contact support"
+                accessibilityHint="Opens feedback form"
                 style={{
                   width: 44,
                   height: 44,
@@ -386,7 +524,12 @@ const index = () => {
               </TouchableOpacity>
 
               <Link href="/settings" asChild>
-                <TouchableOpacity activeOpacity={0.7}>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  accessibilityLabel="Settings"
+                  accessibilityHint="Opens settings page"
+                  onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+                >
                   <View
                     style={{
                       width: 44,
@@ -457,6 +600,9 @@ const index = () => {
             <TouchableOpacity
               onPress={handlereload}
               activeOpacity={0.7}
+              disabled={isRefreshing}
+              accessibilityLabel="Refresh timetable"
+              accessibilityHint="Pull down or tap to refresh your timetable"
               style={{
                 width: 48,
                 height: 48,
@@ -464,13 +610,21 @@ const index = () => {
                 backgroundColor: isDark ? "#151515" : "#f5f5f5",
                 alignItems: "center",
                 justifyContent: "center",
+                opacity: isRefreshing ? 0.5 : 1,
               }}
             >
-              <Ionicons
-                name="refresh"
-                size={20}
-                color={isDark ? "#888888" : "#666666"}
-              />
+              {isRefreshing ? (
+                <ActivityIndicator
+                  size="small"
+                  color={isDark ? "#888888" : "#666666"}
+                />
+              ) : (
+                <Ionicons
+                  name="refresh"
+                  size={20}
+                  color={isDark ? "#888888" : "#666666"}
+                />
+              )}
             </TouchableOpacity>
 
             {/* Tab Pills */}
@@ -487,8 +641,14 @@ const index = () => {
               {["Today", "Week"].map((tab) => (
                 <TouchableOpacity
                   key={tab}
-                  onPress={() => setSelectedTab(tab)}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setSelectedTab(tab);
+                  }}
                   activeOpacity={0.8}
+                  accessibilityLabel={`${tab} tab`}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: selectedTab === tab }}
                   style={{
                     flex: 1,
                     paddingVertical: 14,

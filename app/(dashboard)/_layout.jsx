@@ -9,6 +9,7 @@ import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef, useState } from "react";
 import { Alert, Platform, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../context/ThemeContext";
 import { supabase } from "../../utils/supabase";
 
@@ -25,152 +26,91 @@ const _layout = () => {
   const { isDark, toggleTheme } = useTheme();
   const authCheckDone = useRef(false);
   const [userRole, setUserRole] = useState(null);
+  const insets = useSafeAreaInsets();
 
-  useEffect(() => {
-    // Prevent multiple auth checks
-    if (authCheckDone.current) return;
-    authCheckDone.current = true;
-
-    const checkTokenAndRegister = async () => {
-      const token = await SecureStore.getItemAsync("accessToken");
-      const role = await SecureStore.getItemAsync("role");
-      setUserRole(role);
-
-      if (!token || !role) {
-        // If no token or no role, clear everything and redirect to signin
-        await SecureStore.deleteItemAsync("accessToken");
-        await SecureStore.deleteItemAsync("username");
-        await SecureStore.deleteItemAsync("email");
-        await SecureStore.deleteItemAsync("role");
-        await SecureStore.deleteItemAsync("notification");
-        await SecureStore.deleteItemAsync("lastAuthCheck");
-        router.replace("/signin");
+  // Update notification token when internet is available
+  async function updateNotificationToken(role) {
+    try {
+      // Check if registration previously failed - don't retry if it failed
+      const registrationFailed = await SecureStore.getItemAsync("notificationRegistrationFailed");
+      if (registrationFailed === "true") {
+        console.log("Notification registration previously failed, skipping update...");
         return;
       }
 
-      registerForPushNotificationsAsync(role);
-      const subscription = Notifications.addNotificationReceivedListener(
-        (notification) => {
-          console.log("Notification received in foreground:", notification);
-        }
-      );
-      return () => subscription.remove();
-    };
-
-    const checktoken = async () => {
-      const token = await SecureStore.getItemAsync("accessToken");
-      const role = await SecureStore.getItemAsync("role");
-
-      if (!token) {
-        router.replace("/signin");
+      if (!Device.isDevice) {
+        console.warn("Push notifications require a physical device.");
         return;
       }
 
-      // Check last auth check time to prevent rate limiting
-      const lastAuthCheck = await SecureStore.getItemAsync("lastAuthCheck");
-      const now = Date.now();
-
-      if (lastAuthCheck && now - parseInt(lastAuthCheck) < 60000) {
-        // Skip check if done within last 60 seconds
-        console.log("Skipping auth check - recently validated");
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      if (existingStatus !== "granted") {
+        console.warn("Notification permission not granted, skipping update");
         return;
       }
 
-      // For teachers, use Supabase session validation
-      if (role === "teacher") {
-        try {
-          const { data: { session }, error } = await supabase.auth.getSession();
+      const tokenData = await Notifications.getExpoPushTokenAsync({
+        projectId: process.env.EXPO_PROJECT_ID,
+      });
 
-          // Store last check time
-          await SecureStore.setItemAsync("lastAuthCheck", now.toString());
+      // Check network status before calling API
+      const netState = await NetInfo.fetch();
+      if (!netState.isConnected) {
+        console.log("Offline: Cannot update notification token");
+        return;
+      }
 
-          if (error || !session) {
-            console.error("Teacher session validation failed:", error);
-            await SecureStore.deleteItemAsync("accessToken");
-            await SecureStore.deleteItemAsync("role");
-            await SecureStore.deleteItemAsync("lastAuthCheck");
-            router.replace("/signin");
+      try {
+        if (role === "teacher") {
+          // For teachers, update in Supabase notifyteacher table
+          const { data: { session } } = await supabase.auth.getSession();
+
+          if (!session?.user?.id) {
+            console.error("No teacher session found for notification token update");
             return;
           }
 
-          console.log("Teacher session valid");
-        } catch (error) {
-          console.error("Teacher auth check error:", error);
-          await SecureStore.deleteItemAsync("accessToken");
-          await SecureStore.deleteItemAsync("role");
-          await SecureStore.deleteItemAsync("lastAuthCheck");
-          router.replace("/signin");
-        }
-        return;
-      }
+          // Update the token for teacher
+          const { error: updateError } = await supabase
+            .from('notifyteacher')
+            .update({ notifyid: tokenData.data })
+            .eq('teacherid', session.user.id);
 
-      // For students, use custom API check
-      try {
-        const responce = await axios.get(
-          `${process.env.EXPO_PUBLIC_API_URL}/api/user/checkauth`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            timeout: 5000, // Add timeout
+          if (updateError) {
+            console.error("Error updating teacher notification token:", updateError);
+            // Mark as failed to prevent retries
+            await SecureStore.setItemAsync("notificationRegistrationFailed", "true");
+            return;
           }
-        );
-
-        // Store last check time
-        await SecureStore.setItemAsync("lastAuthCheck", now.toString());
-
-        if (responce.data.valid == false) {
-          await SecureStore.deleteItemAsync("accessToken");
-          await SecureStore.deleteItemAsync("username");
-          await SecureStore.deleteItemAsync("email");
-          await SecureStore.deleteItemAsync("lastAuthCheck");
-          router.replace("/signin");
+          console.log("Teacher notification token updated successfully");
+        } else {
+          // For students, use custom API to update token
+          const token = await SecureStore.getItemAsync("accessToken");
+          const responce = await axios.post(
+            `https://timetablr.burjalsama.site/api/user/storetoken`,
+            { token: tokenData.data },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              withCredentials: true,
+            }
+          );
+          console.log("Student notification token updated:", responce.data);
         }
+        
+        // Clear failed flag on success
+        await SecureStore.deleteItemAsync("notificationRegistrationFailed");
       } catch (error) {
-        console.error("Auth check error:", error);
-
-        // Handle rate limiting
-        if (error.response?.status === 429) {
-          console.log("Rate limited - skipping auth check");
-          // Store check time to prevent immediate retry
-          await SecureStore.setItemAsync("lastAuthCheck", now.toString());
-          return;
-        }
-
-        // Only redirect if it's an auth error
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          await SecureStore.deleteItemAsync("accessToken");
-          await SecureStore.deleteItemAsync("username");
-          await SecureStore.deleteItemAsync("email");
-          await SecureStore.deleteItemAsync("lastAuthCheck");
-          router.replace("/signin");
-        }
+        console.log("Error updating notification token:", error);
+        // Mark as failed to prevent retries
+        await SecureStore.setItemAsync("notificationRegistrationFailed", "true");
       }
-    };
-
-    checktoken();
-
-    checkTokenAndRegister();
-  }, []);
-
-  // Listen for network changes to retry pending notification registration
-  useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener(async (state) => {
-      if (state.isConnected) {
-        // Check if there are pending notification registrations
-        const pendingToken = await SecureStore.getItemAsync("pendingNotificationToken");
-        const pendingRole = await SecureStore.getItemAsync("pendingNotificationRole");
-
-        if (pendingToken && pendingRole) {
-          console.log("Network restored, retrying pending notification registration...");
-          registerForPushNotificationsAsync(pendingRole);
-        }
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
+    } catch (err) {
+      console.error("❌ Error updating push token:", err);
+    }
+  }
 
   // Request permissions and register for push token
   async function registerForPushNotificationsAsync(role) {
@@ -180,10 +120,17 @@ const _layout = () => {
         return;
       }
 
+      // Check if registration previously failed - don't retry if it failed
+      const registrationFailed = await SecureStore.getItemAsync("notificationRegistrationFailed");
+      if (registrationFailed === "true") {
+        console.log("Notification registration previously failed, skipping retry...");
+        return;
+      }
+
       // Check if already registered
       const notificationRegistered = await SecureStore.getItemAsync("notification");
       if (notificationRegistered === "true") {
-        console.log("Notifications already registered, skipping...");
+        console.log("Notifications already registered, skipping initial registration...");
         return;
       }
 
@@ -237,12 +184,25 @@ const _layout = () => {
           if (checkError && checkError.code !== 'PGRST116') {
             // PGRST116 = no rows found, which is fine
             console.error("Error checking existing teacher notification:", checkError);
+            // Mark as failed to prevent retries
+            await SecureStore.setItemAsync("notificationRegistrationFailed", "true");
             return;
           }
 
           if (existingRecord) {
-            // Teacher already registered, skip registration
-            console.log("Teacher already registered for notifications, skipping...");
+            // Teacher already registered, update the token
+            const { error: updateError } = await supabase
+              .from('notifyteacher')
+              .update({ notifyid: tokenData.data })
+              .eq('teacherid', session.user.id);
+
+            if (updateError) {
+              console.error("Error updating teacher notification token:", updateError);
+              // Mark as failed to prevent retries
+              await SecureStore.setItemAsync("notificationRegistrationFailed", "true");
+              return;
+            }
+            console.log("Teacher notification token updated successfully");
           } else {
             // Insert new token for teacher
             const { error } = await supabase
@@ -256,13 +216,16 @@ const _layout = () => {
 
             if (error) {
               console.error("Error storing teacher notification token:", error);
+              // Mark as failed to prevent retries
+              await SecureStore.setItemAsync("notificationRegistrationFailed", "true");
               return;
             }
             console.log("Teacher notification token stored successfully");
           }
 
           await SecureStore.setItemAsync("notification", "true");
-          // Clear any pending registration
+          // Clear failed flag and pending registration
+          await SecureStore.deleteItemAsync("notificationRegistrationFailed");
           await SecureStore.deleteItemAsync("pendingNotificationToken");
           await SecureStore.deleteItemAsync("pendingNotificationRole");
         } else {
@@ -281,12 +244,15 @@ const _layout = () => {
           );
           console.log(responce.data);
           await SecureStore.setItemAsync("notification", "true");
-          // Clear any pending registration
+          // Clear failed flag and pending registration
+          await SecureStore.deleteItemAsync("notificationRegistrationFailed");
           await SecureStore.deleteItemAsync("pendingNotificationToken");
           await SecureStore.deleteItemAsync("pendingNotificationRole");
         }
       } catch (error) {
         console.log("Error saving notification token:", error);
+        // Mark as failed to prevent retries
+        await SecureStore.setItemAsync("notificationRegistrationFailed", "true");
         // Don't show alert, just log the error
       }
 
@@ -303,6 +269,203 @@ const _layout = () => {
       }
     }
   }
+
+  useEffect(() => {
+    // Prevent multiple auth checks
+    if (authCheckDone.current) return;
+    authCheckDone.current = true;
+
+    const checkTokenAndRegister = async () => {
+      const token = await SecureStore.getItemAsync("accessToken");
+      const role = await SecureStore.getItemAsync("role");
+      setUserRole(role);
+
+      if (!token || !role) {
+        // If no token or no role, clear everything and redirect to signin
+        await SecureStore.deleteItemAsync("accessToken");
+        await SecureStore.deleteItemAsync("username");
+        await SecureStore.deleteItemAsync("email");
+        await SecureStore.deleteItemAsync("role");
+        await SecureStore.deleteItemAsync("notification");
+        await SecureStore.deleteItemAsync("lastAuthCheck");
+        router.replace("/signin");
+        return;
+      }
+
+      // Check if already registered - if so, update token when online
+      const notificationRegistered = await SecureStore.getItemAsync("notification");
+      const netState = await NetInfo.fetch();
+      
+      if (notificationRegistered === "true" && netState.isConnected) {
+        // User already registered and online - update token (non-blocking)
+        updateNotificationToken(role).catch(err => {
+          console.log("Token update failed, continuing app usage:", err);
+        });
+      } else {
+        // User not registered yet - register (handles offline gracefully)
+        registerForPushNotificationsAsync(role).catch(err => {
+          console.log("Token registration failed, continuing app usage:", err);
+        });
+      }
+      
+      const subscription = Notifications.addNotificationReceivedListener(
+        (notification) => {
+          console.log("Notification received in foreground:", notification);
+        }
+      );
+      return () => subscription.remove();
+    };
+
+    const checktoken = async () => {
+      const token = await SecureStore.getItemAsync("accessToken");
+      const role = await SecureStore.getItemAsync("role");
+
+      if (!token) {
+        router.replace("/signin");
+        return;
+      }
+
+      // Check network status - skip auth check if offline to allow app to work offline
+      const netState = await NetInfo.fetch();
+      if (!netState.isConnected) {
+        console.log("Offline: Skipping auth check to allow offline usage");
+        return;
+      }
+
+      // Check last auth check time to prevent rate limiting
+      const lastAuthCheck = await SecureStore.getItemAsync("lastAuthCheck");
+      const now = Date.now();
+
+      if (lastAuthCheck && now - parseInt(lastAuthCheck) < 60000) {
+        // Skip check if done within last 60 seconds
+        console.log("Skipping auth check - recently validated");
+        return;
+      }
+
+      // For teachers, use Supabase session validation
+      if (role === "teacher") {
+        try {
+          const { data: { session }, error } = await supabase.auth.getSession();
+
+          // Store last check time
+          await SecureStore.setItemAsync("lastAuthCheck", now.toString());
+
+          if (error || !session) {
+            console.error("Teacher session validation failed:", error);
+            await SecureStore.deleteItemAsync("accessToken");
+            await SecureStore.deleteItemAsync("role");
+            await SecureStore.deleteItemAsync("lastAuthCheck");
+            router.replace("/signin");
+            return;
+          }
+
+          console.log("Teacher session valid");
+        } catch (error) {
+          console.error("Teacher auth check error:", error);
+          // Only redirect on auth errors, not network errors
+          if (error.message?.includes("network") || error.message?.includes("timeout")) {
+            console.log("Network error during auth check - allowing offline usage");
+            return;
+          }
+          await SecureStore.deleteItemAsync("accessToken");
+          await SecureStore.deleteItemAsync("role");
+          await SecureStore.deleteItemAsync("lastAuthCheck");
+          router.replace("/signin");
+        }
+        return;
+      }
+
+      // For students, use custom API check
+      try {
+        const responce = await axios.get(
+          `${process.env.EXPO_PUBLIC_API_URL}/api/user/checkauth`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            timeout: 5000, // Add timeout
+          }
+        );
+
+        // Store last check time
+        await SecureStore.setItemAsync("lastAuthCheck", now.toString());
+
+        if (responce.data.valid == false) {
+          await SecureStore.deleteItemAsync("accessToken");
+          await SecureStore.deleteItemAsync("username");
+          await SecureStore.deleteItemAsync("email");
+          await SecureStore.deleteItemAsync("lastAuthCheck");
+          router.replace("/signin");
+        }
+      } catch (error) {
+        console.error("Auth check error:", error);
+
+        // Handle network errors - don't redirect, allow offline usage
+        if (!error.response || error.code === "ECONNABORTED" || error.code === "ERR_NETWORK") {
+          console.log("Network error during auth check - allowing offline usage");
+          return;
+        }
+
+        // Handle rate limiting
+        if (error.response?.status === 429) {
+          console.log("Rate limited - skipping auth check");
+          // Store check time to prevent immediate retry
+          await SecureStore.setItemAsync("lastAuthCheck", now.toString());
+          return;
+        }
+
+        // Only redirect if it's an auth error
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          await SecureStore.deleteItemAsync("accessToken");
+          await SecureStore.deleteItemAsync("username");
+          await SecureStore.deleteItemAsync("email");
+          await SecureStore.deleteItemAsync("lastAuthCheck");
+          router.replace("/signin");
+        }
+      }
+    };
+
+    checktoken();
+
+    checkTokenAndRegister();
+  }, []);
+
+  // Listen for network changes to update notification tokens and retry pending registrations
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(async (state) => {
+      if (state.isConnected) {
+        try {
+          // Check if there are pending notification registrations
+          const pendingToken = await SecureStore.getItemAsync("pendingNotificationToken");
+          const pendingRole = await SecureStore.getItemAsync("pendingNotificationRole");
+
+          if (pendingToken && pendingRole) {
+            console.log("Network restored, retrying pending notification registration...");
+            registerForPushNotificationsAsync(pendingRole).catch(err => {
+              console.log("Failed to retry notification registration:", err);
+            });
+          } else {
+            // Update existing token if user is already registered
+            const notificationRegistered = await SecureStore.getItemAsync("notification");
+            const role = await SecureStore.getItemAsync("role");
+            
+            if (notificationRegistered === "true" && role) {
+              console.log("Network restored, updating notification token...");
+              updateNotificationToken(role).catch(err => {
+                console.log("Failed to update notification token:", err);
+              });
+            }
+          }
+        } catch (error) {
+          // Don't let token update errors break the app
+          console.log("Error in network listener:", error);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // Retry pending notification registration when back online
   async function retryPendingNotificationRegistration() {
@@ -334,13 +497,17 @@ const _layout = () => {
             borderTopRightRadius: 28,
             marginHorizontal: 0,
             marginBottom: 0,
-            paddingBottom: Platform.OS === "ios" ? 28 : 12,
+            paddingBottom: Platform.OS === "ios" 
+              ? Math.max(insets.bottom, 28) 
+              : Math.max(insets.bottom, 12),
             paddingTop: 12,
-            height: Platform.OS === "ios" ? 88 : 72,
+            height: Platform.OS === "ios" 
+              ? 88 + Math.max(insets.bottom - 28, 0) 
+              : 60 + Math.max(insets.bottom, 12),
             position: "absolute",
             left: 0,
             right: 0,
-            bottom: 0,
+            bottom: Platform.OS === "android" ? insets.bottom : 0,
             borderWidth: isDark ? 0.5 : 0,
             borderBottomWidth: 0,
             borderColor: isDark ? "rgba(255, 255, 255, 0.08)" : "transparent",

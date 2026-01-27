@@ -1,7 +1,8 @@
+import * as Haptics from "expo-haptics";
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View, ActivityIndicator, Animated } from "react-native";
 import { useTheme } from "../context/ThemeContext";
 import { getTeacherMetadata, getTeacherWeekTimetable } from "../utils/supabase";
 
@@ -19,8 +20,10 @@ const More = () => {
   ];
 
   const [scheduleData, SetScheduledata] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const getalltimetable = async () => {
+    setIsLoading(true);
     const role = await SecureStore.getItemAsync("role");
 
     // Check if user is a teacher
@@ -62,6 +65,8 @@ const More = () => {
         SetScheduledata(transformedData);
       } catch (error) {
         console.log("Error fetching teacher timetable:", error);
+      } finally {
+        setIsLoading(false);
       }
     } else {
       // Student flow
@@ -81,6 +86,8 @@ const More = () => {
         SetScheduledata(responce.data.timetable);
       } catch (error) {
         console.log("error in getiing timetable", error);
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -133,7 +140,13 @@ const More = () => {
             {days.map((day, index) => (
               <TouchableOpacity
                 key={day}
-                onPress={() => setSelectedDay(fullDays[index])}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelectedDay(fullDays[index]);
+                }}
+                accessibilityLabel={`${fullDays[index]} schedule`}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: selectedDay === fullDays[index] }}
                 style={{
                   paddingHorizontal: 24,
                   paddingVertical: 12,
@@ -174,8 +187,22 @@ const More = () => {
         style={{ flex: 1, paddingHorizontal: 24, paddingTop: 24 }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={{ gap: 16, paddingBottom: 24 }}>
-          {filterredschedule.length > 0 ? (
+        {isLoading ? (
+          <View style={{ paddingVertical: 60, alignItems: "center" }}>
+            <ActivityIndicator size="large" color={isDark ? "#ffffff" : "#000000"} />
+            <Text
+              style={{
+                marginTop: 16,
+                color: isDark ? "#9ca3af" : "#6b7280",
+                fontSize: 14,
+              }}
+            >
+              Loading schedule...
+            </Text>
+          </View>
+        ) : (
+          <View style={{ gap: 16, paddingBottom: 24 }}>
+            {filterredschedule.length > 0 ? (
             filterredschedule.map((classItem, index) => (
               <View
                 key={index}
@@ -268,9 +295,10 @@ const More = () => {
                   textAlign: "center",
                   fontSize: 16,
                   fontWeight: "500",
+                  marginBottom: 4,
                 }}
               >
-                No classes scheduled for {selectedDay}
+                No classes scheduled
               </Text>
               <Text
                 style={{
@@ -280,11 +308,17 @@ const More = () => {
                   textAlign: "center",
                 }}
               >
-                Enjoy your free day! 🎉
+                {selectedDay === "Monday" && "Start your week fresh! 🌟"}
+                {selectedDay === "Tuesday" && "Enjoy your free day! 🎉"}
+                {selectedDay === "Wednesday" && "Midweek break! ☕"}
+                {selectedDay === "Thursday" && "Almost there! 💪"}
+                {selectedDay === "Friday" && "Weekend is near! 🎊"}
+                {!["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"].includes(selectedDay) && "Enjoy your free day! 🎉"}
               </Text>
             </View>
           )}
-        </View>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
