@@ -1,7 +1,13 @@
+import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
-import { useEffect, useState } from "react";
-import { Text, View, Animated } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Animated, Modal, Pressable, Text, View } from "react-native";
 import { useTheme } from "../context/ThemeContext";
+
+const EASTER_EGG_TAP_COUNT = 5;
+const TAP_RESET_MS = 2000;
+const CONFETTI_COLORS = ["#ff6b6b", "#feca57", "#48dbfb", "#ff9ff3", "#54a0ff", "#5f27cd", "#00d2d3"];
+const NUM_CONFETTI = 24;
 
 const Today = ({ thecurent, Notcurrentclass }) => {
   const { isDark } = useTheme();
@@ -9,6 +15,18 @@ const Today = ({ thecurent, Notcurrentclass }) => {
   const [leftlength, setLeftLength] = useState(0);
   const [progress, SetProgress] = useState(0);
   const [fadeAnim] = useState(new Animated.Value(0));
+  const [tapCount, setTapCount] = useState(0);
+  const [showEasterEgg, setShowEasterEgg] = useState(false);
+  const tapResetRef = useRef(null);
+  const confettiAnims = useRef(
+    Array.from({ length: NUM_CONFETTI }, () => ({
+      y: new Animated.Value(0),
+      x: new Animated.Value(0),
+      color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+      left: Math.random() * 100,
+      delay: Math.random() * 400,
+    }))
+  ).current;
 
   const gettimetabewhoeldata = async () => {
     try {
@@ -47,6 +65,56 @@ const Today = ({ thecurent, Notcurrentclass }) => {
     }).start();
   }, [thecurent, Notcurrentclass]);
 
+  // Reset tap count after inactivity (Easter egg)
+  useEffect(() => {
+    if (tapCount === 0) return;
+    if (tapResetRef.current) clearTimeout(tapResetRef.current);
+    tapResetRef.current = setTimeout(() => setTapCount(0), TAP_RESET_MS);
+    return () => {
+      if (tapResetRef.current) clearTimeout(tapResetRef.current);
+    };
+  }, [tapCount]);
+
+  // Run confetti when Easter egg modal opens; reset when it closes
+  useEffect(() => {
+    if (showEasterEgg) {
+      confettiAnims.forEach(({ y, x, delay }) => {
+        y.setValue(0);
+        x.setValue(0);
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.parallel([
+            Animated.timing(y, {
+              toValue: 600,
+              duration: 2500,
+              useNativeDriver: true,
+            }),
+            Animated.timing(x, {
+              toValue: (Math.random() - 0.5) * 80,
+              duration: 2500,
+              useNativeDriver: true,
+            }),
+          ]),
+        ]).start();
+      });
+    } else {
+      confettiAnims.forEach(({ y, x }) => {
+        y.setValue(0);
+        x.setValue(0);
+      });
+    }
+  }, [showEasterEgg]);
+
+  const handleProgressCardPress = () => {
+    const next = tapCount + 1;
+    setTapCount(next);
+    if (next >= EASTER_EGG_TAP_COUNT) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setShowEasterEgg(true);
+      setTapCount(0);
+    }
+  };
+
   const multipleCurrent = thecurent.length > 1;
 
   return (
@@ -59,16 +127,18 @@ const Today = ({ thecurent, Notcurrentclass }) => {
       {/* Stats Cards */}
       <View style={{ paddingHorizontal: 24, marginBottom: 32 }}>
         <View style={{ flexDirection: "row", gap: 12 }}>
-          {/* Progress Card */}
-          <View
-            style={{
+          {/* Progress Card (tap 5x for Easter egg) */}
+          <Pressable
+            onPress={handleProgressCardPress}
+            style={({ pressed }) => ({
               flex: 1.5,
               backgroundColor: isDark ? "#0a0a0a" : "#ffffff",
               padding: 20,
               borderRadius: 20,
               borderWidth: 1,
               borderColor: isDark ? "#1a1a1a" : "#f0f0f0",
-            }}
+              opacity: pressed ? 0.9 : 1,
+            })}
           >
             <Text
               style={{
@@ -110,7 +180,7 @@ const Today = ({ thecurent, Notcurrentclass }) => {
                 }}
               />
             </View>
-          </View>
+          </Pressable>
 
           {/* Stats Column */}
           <View style={{ flex: 1, gap: 12 }}>
@@ -509,6 +579,99 @@ const Today = ({ thecurent, Notcurrentclass }) => {
           </Text>
         </View>
       )}
+
+      {/* Easter egg modal */}
+      <Modal
+        visible={showEasterEgg}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowEasterEgg(false)}
+      >
+        <Pressable
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+          onPress={() => setShowEasterEgg(false)}
+        >
+          {/* Confetti */}
+          {confettiAnims.map((item, i) => (
+            <Animated.View
+              key={i}
+              style={{
+                position: "absolute",
+                top: -20,
+                left: `${item.left}%`,
+                width: 10,
+                height: 10,
+                borderRadius: 5,
+                backgroundColor: item.color,
+                transform: [
+                  { translateY: item.y },
+                  { translateX: item.x },
+                ],
+              }}
+            />
+          ))}
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: isDark ? "#0a0a0a" : "#ffffff",
+              paddingHorizontal: 32,
+              paddingVertical: 28,
+              borderRadius: 24,
+              alignItems: "center",
+              borderWidth: 1,
+              borderColor: isDark ? "#1a1a1a" : "#f0f0f0",
+              minWidth: 280,
+            }}
+          >
+            <Text style={{ fontSize: 48, marginBottom: 16 }}>🎉</Text>
+            <Text
+              style={{
+                fontSize: 22,
+                fontWeight: "800",
+                color: isDark ? "#ffffff" : "#000000",
+                marginBottom: 8,
+                textAlign: "center",
+              }}
+            >
+              You found the secret!
+            </Text>
+            <Text
+              style={{
+                fontSize: 15,
+                color: isDark ? "#888888" : "#666666",
+                textAlign: "center",
+                marginBottom: 20,
+              }}
+            >
+              You're awesome. Keep crushing it!
+            </Text>
+            <Pressable
+              onPress={() => setShowEasterEgg(false)}
+              style={{
+                backgroundColor: isDark ? "#ffffff" : "#000000",
+                paddingHorizontal: 24,
+                paddingVertical: 12,
+                borderRadius: 12,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: "700",
+                  color: isDark ? "#000000" : "#ffffff",
+                }}
+              >
+                Close
+              </Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </Animated.View>
   );
 };

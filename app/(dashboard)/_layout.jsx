@@ -31,13 +31,6 @@ const _layout = () => {
   // Update notification token when internet is available
   async function updateNotificationToken(role) {
     try {
-      // Check if registration previously failed - don't retry if it failed
-      const registrationFailed = await SecureStore.getItemAsync("notificationRegistrationFailed");
-      if (registrationFailed === "true") {
-        console.log("Notification registration previously failed, skipping update...");
-        return;
-      }
-
       if (!Device.isDevice) {
         console.warn("Push notifications require a physical device.");
         return;
@@ -78,8 +71,6 @@ const _layout = () => {
 
           if (updateError) {
             console.error("Error updating teacher notification token:", updateError);
-            // Mark as failed to prevent retries
-            await SecureStore.setItemAsync("notificationRegistrationFailed", "true");
             return;
           }
           console.log("Teacher notification token updated successfully");
@@ -99,38 +90,19 @@ const _layout = () => {
           );
           console.log("Student notification token updated:", responce.data);
         }
-        
-        // Clear failed flag on success
-        await SecureStore.deleteItemAsync("notificationRegistrationFailed");
       } catch (error) {
         console.log("Error updating notification token:", error);
-        // Mark as failed to prevent retries
-        await SecureStore.setItemAsync("notificationRegistrationFailed", "true");
       }
     } catch (err) {
       console.error("❌ Error updating push token:", err);
     }
   }
 
-  // Request permissions and register for push token
+  // Request permissions and register for push token (only when online)
   async function registerForPushNotificationsAsync(role) {
     try {
       if (!Device.isDevice) {
         console.warn("Push notifications require a physical device.");
-        return;
-      }
-
-      // Check if registration previously failed - don't retry if it failed
-      const registrationFailed = await SecureStore.getItemAsync("notificationRegistrationFailed");
-      if (registrationFailed === "true") {
-        console.log("Notification registration previously failed, skipping retry...");
-        return;
-      }
-
-      // Check if already registered
-      const notificationRegistered = await SecureStore.getItemAsync("notification");
-      if (notificationRegistered === "true") {
-        console.log("Notifications already registered, skipping initial registration...");
         return;
       }
 
@@ -184,8 +156,6 @@ const _layout = () => {
           if (checkError && checkError.code !== 'PGRST116') {
             // PGRST116 = no rows found, which is fine
             console.error("Error checking existing teacher notification:", checkError);
-            // Mark as failed to prevent retries
-            await SecureStore.setItemAsync("notificationRegistrationFailed", "true");
             return;
           }
 
@@ -198,8 +168,6 @@ const _layout = () => {
 
             if (updateError) {
               console.error("Error updating teacher notification token:", updateError);
-              // Mark as failed to prevent retries
-              await SecureStore.setItemAsync("notificationRegistrationFailed", "true");
               return;
             }
             console.log("Teacher notification token updated successfully");
@@ -216,16 +184,11 @@ const _layout = () => {
 
             if (error) {
               console.error("Error storing teacher notification token:", error);
-              // Mark as failed to prevent retries
-              await SecureStore.setItemAsync("notificationRegistrationFailed", "true");
               return;
             }
             console.log("Teacher notification token stored successfully");
           }
 
-          await SecureStore.setItemAsync("notification", "true");
-          // Clear failed flag and pending registration
-          await SecureStore.deleteItemAsync("notificationRegistrationFailed");
           await SecureStore.deleteItemAsync("pendingNotificationToken");
           await SecureStore.deleteItemAsync("pendingNotificationRole");
         } else {
@@ -243,30 +206,14 @@ const _layout = () => {
             }
           );
           console.log(responce.data);
-          await SecureStore.setItemAsync("notification", "true");
-          // Clear failed flag and pending registration
-          await SecureStore.deleteItemAsync("notificationRegistrationFailed");
           await SecureStore.deleteItemAsync("pendingNotificationToken");
           await SecureStore.deleteItemAsync("pendingNotificationRole");
         }
       } catch (error) {
         console.log("Error saving notification token:", error);
-        // Mark as failed to prevent retries
-        await SecureStore.setItemAsync("notificationRegistrationFailed", "true");
-        // Don't show alert, just log the error
       }
-
-      // console.log("✅ Expo Push Token:", tokenData.data);
     } catch (err) {
       console.error("❌ Error getting push token:", err);
-      // Only show alert if online and it's a real error (not network related)
-      const netState = await NetInfo.fetch();
-      if (netState.isConnected && (Platform.OS === "android" || Platform.OS === "ios")) {
-        Alert.alert(
-          "Notification Error",
-          "Unable to register for notifications."
-        );
-      }
     }
   }
 
@@ -292,17 +239,9 @@ const _layout = () => {
         return;
       }
 
-      // Check if already registered - if so, update token when online
-      const notificationRegistered = await SecureStore.getItemAsync("notification");
+      // Register/update notification token only when online (handles offline gracefully)
       const netState = await NetInfo.fetch();
-      
-      if (notificationRegistered === "true" && netState.isConnected) {
-        // User already registered and online - update token (non-blocking)
-        updateNotificationToken(role).catch(err => {
-          console.log("Token update failed, continuing app usage:", err);
-        });
-      } else {
-        // User not registered yet - register (handles offline gracefully)
+      if (netState.isConnected) {
         registerForPushNotificationsAsync(role).catch(err => {
           console.log("Token registration failed, continuing app usage:", err);
         });
@@ -446,14 +385,11 @@ const _layout = () => {
               console.log("Failed to retry notification registration:", err);
             });
           } else {
-            // Update existing token if user is already registered
-            const notificationRegistered = await SecureStore.getItemAsync("notification");
             const role = await SecureStore.getItemAsync("role");
-            
-            if (notificationRegistered === "true" && role) {
-              console.log("Network restored, updating notification token...");
-              updateNotificationToken(role).catch(err => {
-                console.log("Failed to update notification token:", err);
+            if (role) {
+              console.log("Network restored, registering notification token...");
+              registerForPushNotificationsAsync(role).catch(err => {
+                console.log("Failed to register notification token:", err);
               });
             }
           }

@@ -1,14 +1,62 @@
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import 'react-native-url-polyfill/auto';
+
+/**
+ * Storage adapter for Supabase auth that avoids "window is not defined" on web.
+ * - When window is defined: use localStorage (web browser).
+ * - When window is undefined: try AsyncStorage (React Native); if it throws (e.g. web build in SSR), use in-memory.
+ */
+const memoryFallback = {};
+const supabaseStorage = {
+    getItem: async (key) => {
+        if (typeof window !== 'undefined') {
+            try {
+                return window.localStorage.getItem(key);
+            } catch {
+                return null;
+            }
+        }
+        try {
+            return await AsyncStorage.getItem(key);
+        } catch {
+            return memoryFallback[key] ?? null;
+        }
+    },
+    setItem: async (key, value) => {
+        if (typeof window !== 'undefined') {
+            try {
+                window.localStorage.setItem(key, value);
+            } catch {}
+            return;
+        }
+        try {
+            await AsyncStorage.setItem(key, value);
+        } catch {
+            memoryFallback[key] = value;
+        }
+    },
+    removeItem: async (key) => {
+        if (typeof window !== 'undefined') {
+            try {
+                window.localStorage.removeItem(key);
+            } catch {}
+            return;
+        }
+        try {
+            await AsyncStorage.removeItem(key);
+        } catch {
+            delete memoryFallback[key];
+        }
+    },
+};
 
 export const supabase = createClient(
     process.env.EXPO_PUBLIC_SUPABASE_URL,
     process.env.EXPO_PUBLIC_SUPABASE_KEY,
     {
         auth: {
-            storage: AsyncStorage,
+            storage: supabaseStorage,
             autoRefreshToken: true,
             persistSession: true,
             detectSessionInUrl: false,
