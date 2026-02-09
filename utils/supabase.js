@@ -3,14 +3,18 @@ import { createClient } from '@supabase/supabase-js';
 import 'react-native-url-polyfill/auto';
 
 /**
- * Storage adapter for Supabase auth that avoids "window is not defined" on web.
- * - When window is defined: use localStorage (web browser).
- * - When window is undefined: try AsyncStorage (React Native); if it throws (e.g. web build in SSR), use in-memory.
+ * Storage adapter for Supabase auth.
+ * - When localStorage is available (web browser): use localStorage.
+ * - Otherwise: use AsyncStorage (React Native); if it throws, use in-memory fallback.
+ *
+ * Note: In React Native, `window` is defined but `window.localStorage` is NOT,
+ * so we must check for localStorage directly, not just `window`.
  */
 const memoryFallback = {};
+const hasLocalStorage = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
 const supabaseStorage = {
     getItem: async (key) => {
-        if (typeof window !== 'undefined') {
+        if (hasLocalStorage) {
             try {
                 return window.localStorage.getItem(key);
             } catch {
@@ -24,7 +28,7 @@ const supabaseStorage = {
         }
     },
     setItem: async (key, value) => {
-        if (typeof window !== 'undefined') {
+        if (hasLocalStorage) {
             try {
                 window.localStorage.setItem(key, value);
             } catch {}
@@ -37,7 +41,7 @@ const supabaseStorage = {
         }
     },
     removeItem: async (key) => {
-        if (typeof window !== 'undefined') {
+        if (hasLocalStorage) {
             try {
                 window.localStorage.removeItem(key);
             } catch {}
