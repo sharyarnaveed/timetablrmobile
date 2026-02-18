@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
 import NetInfo from "@react-native-community/netinfo";
 import axios from "axios";
+import * as Haptics from "expo-haptics";
 import { Link, router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
@@ -27,7 +27,6 @@ import { getTeacherMetadata, getTeacherTimetable } from "../../utils/supabase";
 const index = () => {
   const { isDark } = useTheme();
   const [selectedTab, setSelectedTab] = useState("Today");
-  const [TheUsername, SetTehusername] = useState("");
   const [theday, setday] = useState("");
   const [firstchar, Setchar] = useState("");
   const [timetableData, setTimetableData] = useState(null);
@@ -187,7 +186,6 @@ const index = () => {
     if (role === "teacher") {
       const teacherName = await getTeacherMetadata();
       if (teacherName) {
-        SetTehusername(teacherName);
         Setchar(teacherName.charAt(0));
       } else {
         console.log("No teacher name found");
@@ -204,7 +202,6 @@ const index = () => {
         return;
       }
 
-      SetTehusername(username);
       Setchar(username.charAt(0));
     }
   };
@@ -461,7 +458,7 @@ const index = () => {
               flexDirection: "row",
               justifyContent: "space-between",
               alignItems: "center",
-              marginBottom: 32,
+              marginBottom: 20,
             }}
           >
             {/* Date Badge */}
@@ -555,32 +552,24 @@ const index = () => {
             </View>
           </View>
 
-          {/* Welcome Section */}
-          <View style={{ marginBottom: 8 }}>
-            <Text
-              style={{
-                fontSize: 14,
-                fontWeight: "500",
-                color: isDark ? "#555555" : "#999999",
-                letterSpacing: 2,
-                textTransform: "uppercase",
-                marginBottom: 8,
-              }}
-            >
-              Welcome back
-            </Text>
-            <Text
-              style={{
-                fontSize: 42,
-                fontWeight: "800",
-                color: isDark ? "#ffffff" : "#000000",
-                letterSpacing: -1.5,
-                lineHeight: 48,
-              }}
-            >
-              {TheUsername}
-            </Text>
-          </View>
+          {/* Compact time-based greeting */}
+          {(() => {
+            const hour = new Date().getHours();
+            const greeting =
+              hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+            return (
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontWeight: "600",
+                  color: isDark ? "#666666" : "#888888",
+                  letterSpacing: 0.5,
+                }}
+              >
+                {greeting}
+              </Text>
+            );
+          })()}
         </View>
 
         {/* Tab Selector */}

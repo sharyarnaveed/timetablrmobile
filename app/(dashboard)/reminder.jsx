@@ -5,15 +5,15 @@ import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
-  Alert,
-  Dimensions,
-  Modal,
-  ScrollView,
-  StatusBar,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    Dimensions,
+    Modal,
+    ScrollView,
+    StatusBar,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as yup from 'yup';

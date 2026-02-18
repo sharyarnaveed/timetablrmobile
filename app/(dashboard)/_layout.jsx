@@ -25,6 +25,7 @@ Notifications.setNotificationHandler({
 const _layout = () => {
   const { isDark, toggleTheme } = useTheme();
   const authCheckDone = useRef(false);
+  const wasOfflineRef = useRef(null); // null = not yet known, true = was offline, false = was online
   const [userRole, setUserRole] = useState(null);
   const insets = useSafeAreaInsets();
 
@@ -205,7 +206,7 @@ const _layout = () => {
               withCredentials: true,
             }
           );
-          console.log(responce.data);
+          // Backend may return {"message": "Token already up to date"} when token unchanged
           await SecureStore.deleteItemAsync("pendingNotificationToken");
           await SecureStore.deleteItemAsync("pendingNotificationRole");
         }
@@ -370,33 +371,36 @@ const _layout = () => {
     checkTokenAndRegister();
   }, []);
 
-  // Listen for network changes to update notification tokens and retry pending registrations
+  // Listen for network changes to update notification tokens only when coming back online
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(async (state) => {
-      if (state.isConnected) {
-        try {
-          // Check if there are pending notification registrations
-          const pendingToken = await SecureStore.getItemAsync("pendingNotificationToken");
-          const pendingRole = await SecureStore.getItemAsync("pendingNotificationRole");
+      const isOnline = !!state.isConnected;
+      const wasOffline = wasOfflineRef.current === true;
+      wasOfflineRef.current = !isOnline;
 
-          if (pendingToken && pendingRole) {
-            console.log("Network restored, retrying pending notification registration...");
-            registerForPushNotificationsAsync(pendingRole).catch(err => {
-              console.log("Failed to retry notification registration:", err);
+      // Only run when transitioning from offline → online (not on every "connected" emission at startup)
+      if (!isOnline || !wasOffline) return;
+
+      try {
+        const pendingToken = await SecureStore.getItemAsync("pendingNotificationToken");
+        const pendingRole = await SecureStore.getItemAsync("pendingNotificationRole");
+
+        if (pendingToken && pendingRole) {
+          console.log("Network restored, retrying pending notification registration...");
+          registerForPushNotificationsAsync(pendingRole).catch(err => {
+            console.log("Failed to retry notification registration:", err);
+          });
+        } else {
+          const role = await SecureStore.getItemAsync("role");
+          if (role) {
+            console.log("Network restored, registering notification token...");
+            registerForPushNotificationsAsync(role).catch(err => {
+              console.log("Failed to register notification token:", err);
             });
-          } else {
-            const role = await SecureStore.getItemAsync("role");
-            if (role) {
-              console.log("Network restored, registering notification token...");
-              registerForPushNotificationsAsync(role).catch(err => {
-                console.log("Failed to register notification token:", err);
-              });
-            }
           }
-        } catch (error) {
-          // Don't let token update errors break the app
-          console.log("Error in network listener:", error);
         }
+      } catch (error) {
+        console.log("Error in network listener:", error);
       }
     });
 

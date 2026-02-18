@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "scheme": "timetablr",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "icon":"./assets/images/icon.png",
     "ios": {
       "supportsTablet": true

@@ -6,19 +6,19 @@ import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  Switch,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    Switch,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import Toast from "react-native-toast-message";
 import * as yup from "yup";
 import { useTheme } from "../../context/ThemeContext";
-import { supabase } from "../../utils/supabase";
+import { getTeacherMetadata, supabase } from "../../utils/supabase";
 
 // Add validation schemas
 const usernameSchema = yup.object().shape({
@@ -112,9 +112,14 @@ export default function Settings() {
       const storedUsername = await SecureStore.getItemAsync("username");
       const storedEmail = await SecureStore.getItemAsync("email");
       const storedRole = await SecureStore.getItemAsync("role");
-      const notificationStatus = await SecureStore.getItemAsync("notification");
+      const storedTeacherName = await SecureStore.getItemAsync("teacherName");
 
-      if (storedUsername) setUsername(storedUsername);
+      if (storedRole === "teacher") {
+        const displayName = storedTeacherName || (await getTeacherMetadata()) || storedUsername || "";
+        setUsername(displayName);
+      } else if (storedUsername) {
+        setUsername(storedUsername);
+      }
       if (storedEmail) setEmail(storedEmail);
       if (storedRole) setUserRole(storedRole);
     } catch (error) {
