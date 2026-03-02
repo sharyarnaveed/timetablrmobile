@@ -6,13 +6,13 @@ import { Link, router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Linking,
-  RefreshControl,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Linking,
+    RefreshControl,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import Toast from "react-native-toast-message";
 import Week from "../../components/More";
@@ -38,12 +38,14 @@ const index = () => {
   const GOOGLE_FORM_URL = "https://forms.gle/6nN8mEKFfn4d8p8v5";
 
   // Use appropriate hooks based on user role
-  const currentClass = userRole === "teacher"
-    ? useTeacherCurrentClass(timetableData)
-    : useCurrentClass(timetableData);
-  const upcomingclasses = userRole === "teacher"
-    ? useTeacherUpcomingClasses(timetableData)
-    : useupcomingClasses(timetableData);
+  const currentClass =
+    userRole === "teacher"
+      ? useTeacherCurrentClass(timetableData)
+      : useCurrentClass(timetableData);
+  const upcomingclasses =
+    userRole === "teacher"
+      ? useTeacherUpcomingClasses(timetableData)
+      : useupcomingClasses(timetableData);
 
   const handleMessagePress = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -75,14 +77,15 @@ const index = () => {
         return;
       }
 
-      console.log("[DASHBOARD] Calling getTeacherTimetable with:", teacherName, day);
+      console.log(
+        "[DASHBOARD] Calling getTeacherTimetable with:",
+        teacherName,
+        day,
+      );
       const timetable = await getTeacherTimetable(teacherName, day);
       console.log("[DASHBOARD] Timetable response:", timetable);
 
-      await SecureStore.setItemAsync(
-        "timetable",
-        JSON.stringify(timetable)
-      );
+      await SecureStore.setItemAsync("timetable", JSON.stringify(timetable));
       await SecureStore.setItemAsync("lastFetchTime", new Date().toISOString());
       await SecureStore.setItemAsync("teacherName", teacherName);
 
@@ -121,12 +124,12 @@ const index = () => {
             "Content-Type": "application/json",
           },
           withCredentials: true,
-        }
+        },
       );
 
       await SecureStore.setItemAsync(
         "timetable",
-        JSON.stringify(response.data.timetable)
+        JSON.stringify(response.data.timetable),
       );
       await SecureStore.setItemAsync("lastFetchTime", new Date().toISOString());
 
@@ -163,7 +166,8 @@ const index = () => {
         Toast.show({
           type: "error",
           text1: "Unable to Load Timetable",
-          text2: error.response?.data?.message || "Please check your connection",
+          text2:
+            error.response?.data?.message || "Please check your connection",
         });
       }
     }
@@ -210,7 +214,7 @@ const index = () => {
     const today = new Date();
     const dayName = today.toLocaleDateString("en-US", { weekday: "long" });
     const Makeday = `${today.getFullYear()}-${String(
-      today.getMonth() + 1
+      today.getMonth() + 1,
     ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
     const options = { weekday: "long", month: "long", day: "numeric" };
@@ -227,7 +231,12 @@ const index = () => {
         const role = await SecureStore.getItemAsync("role");
 
         console.log("[DASHBOARD] User role:", role);
-        console.log("[DASHBOARD] Stored day:", StoredDay, "Current day:", dayName);
+        console.log(
+          "[DASHBOARD] Stored day:",
+          StoredDay,
+          "Current day:",
+          dayName,
+        );
 
         // Check network status
         const netState = await NetInfo.fetch();
@@ -250,21 +259,22 @@ const index = () => {
               await getdata(dayName, Makeday);
             }
           } else {
-          // Use local storage when offline
-          if (LocalTimetable) {
-            setTimetableData(LocalTimetable);
-            Toast.show({
-              type: "info",
-              text1: "Offline Mode",
-              text2: "Showing cached timetable. Pull down to refresh when online.",
-            });
-          } else {
-            Toast.show({
-              type: "error",
-              text1: "No Internet Connection",
-              text2: "Please connect to the internet to load your timetable",
-            });
-          }
+            // Use local storage when offline
+            if (LocalTimetable) {
+              setTimetableData(LocalTimetable);
+              Toast.show({
+                type: "info",
+                text1: "Offline Mode",
+                text2:
+                  "Showing cached timetable. Pull down to refresh when online.",
+              });
+            } else {
+              Toast.show({
+                type: "error",
+                text1: "No Internet Connection",
+                text2: "Please connect to the internet to load your timetable",
+              });
+            }
           }
         } else {
           setTimetableData(LocalTimetable);
@@ -277,7 +287,7 @@ const index = () => {
     init();
 
     // Listen for network status changes
-    const unsubscribe = NetInfo.addEventListener(state => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
       const wasOffline = !isOnline;
       setIsOnline(state.isConnected);
 
@@ -327,7 +337,7 @@ const index = () => {
     const dayName = today.toLocaleDateString("en-US", { weekday: "long" });
 
     const Makeday = `${today.getFullYear()}-${String(
-      today.getMonth() + 1
+      today.getMonth() + 1,
     ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
     const role = await SecureStore.getItemAsync("role");
@@ -342,7 +352,7 @@ const index = () => {
 
       const newTimetable = await SecureStore.getItemAsync("timetable");
       setTimetableData(newTimetable);
-      
+
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Toast.show({
         type: "success",
@@ -356,45 +366,143 @@ const index = () => {
     }
   };
 
+  // Theme helpers
+  const card = isDark ? "#111111" : "#ffffff";
+  const cardBorder = isDark ? "#1e1e1e" : "#eee";
+  const pageBg = isDark ? "#000000" : "#f5f5f7";
+  const shimmer = isDark ? "#1a1a1a" : "#e8e8ec";
+  const shimmerLight = isDark ? "#141414" : "#f0f0f4";
+
   // Loading skeleton component
   const LoadingSkeleton = () => (
-    <View style={{ paddingHorizontal: 24 }}>
+    <View style={{ paddingHorizontal: 20 }}>
+      {/* Stats skeleton */}
       <View
         style={{
-          backgroundColor: isDark ? "#0a0a0a" : "#ffffff",
-          padding: 24,
+          backgroundColor: card,
+          padding: 22,
           borderRadius: 24,
-          marginBottom: 12,
+          marginBottom: 16,
+          borderWidth: 1,
+          borderColor: cardBorder,
         }}
       >
         <View
           style={{
-            width: "60%",
-            height: 20,
-            backgroundColor: isDark ? "#1a1a1a" : "#f0f0f0",
-            borderRadius: 8,
+            flexDirection: "row",
+            justifyContent: "space-between",
             marginBottom: 16,
           }}
-        />
-        <View style={{ gap: 8 }}>
+        >
           <View
             style={{
               width: "40%",
-              height: 14,
-              backgroundColor: isDark ? "#1a1a1a" : "#f0f0f0",
-              borderRadius: 6,
+              height: 16,
+              backgroundColor: shimmer,
+              borderRadius: 8,
             }}
           />
           <View
             style={{
-              width: "50%",
-              height: 14,
-              backgroundColor: isDark ? "#1a1a1a" : "#f0f0f0",
-              borderRadius: 6,
+              width: 60,
+              height: 32,
+              backgroundColor: shimmer,
+              borderRadius: 8,
             }}
           />
         </View>
+        <View
+          style={{
+            height: 10,
+            backgroundColor: shimmerLight,
+            borderRadius: 8,
+            marginBottom: 20,
+          }}
+        />
+        <View style={{ flexDirection: "row", gap: 10 }}>
+          {[1, 2, 3].map((i) => (
+            <View
+              key={i}
+              style={{
+                flex: 1,
+                height: 60,
+                backgroundColor: shimmerLight,
+                borderRadius: 14,
+              }}
+            />
+          ))}
+        </View>
       </View>
+      {/* Class cards skeleton */}
+      {[1, 2].map((i) => (
+        <View
+          key={i}
+          style={{
+            flexDirection: "row",
+            marginBottom: 12,
+            paddingLeft: 6,
+          }}
+        >
+          <View style={{ width: 28, alignItems: "center", paddingTop: 18 }}>
+            <View
+              style={{
+                width: 14,
+                height: 14,
+                borderRadius: 7,
+                backgroundColor: shimmer,
+              }}
+            />
+            {i < 2 && (
+              <View
+                style={{
+                  flex: 1,
+                  width: 2,
+                  backgroundColor: shimmerLight,
+                  marginTop: 4,
+                }}
+              />
+            )}
+          </View>
+          <View
+            style={{
+              flex: 1,
+              marginLeft: 12,
+              backgroundColor: card,
+              borderRadius: 18,
+              padding: 18,
+              borderWidth: 1,
+              borderColor: cardBorder,
+            }}
+          >
+            <View
+              style={{
+                width: "35%",
+                height: 12,
+                backgroundColor: shimmer,
+                borderRadius: 6,
+                marginBottom: 12,
+              }}
+            />
+            <View
+              style={{
+                width: "70%",
+                height: 16,
+                backgroundColor: shimmer,
+                borderRadius: 8,
+                marginBottom: 8,
+              }}
+            />
+            <View
+              style={{
+                width: "55%",
+                height: 12,
+                backgroundColor: shimmerLight,
+                borderRadius: 6,
+              }}
+            />
+          </View>
+        </View>
+      ))}
     </View>
   );
 
@@ -403,30 +511,55 @@ const index = () => {
       <View
         style={{
           flex: 1,
-          backgroundColor: isDark ? "#000000" : "#fafafa",
+          backgroundColor: pageBg,
           paddingTop: 60,
         }}
       >
-        <View style={{ paddingHorizontal: 24, paddingBottom: 24 }}>
+        <View style={{ paddingHorizontal: 20, paddingBottom: 24 }}>
           <View
             style={{
-              width: "40%",
-              height: 24,
-              backgroundColor: isDark ? "#1a1a1a" : "#e5e5e5",
-              borderRadius: 8,
-              marginBottom: 8,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 20,
             }}
-          />
+          >
+            <View
+              style={{
+                width: "50%",
+                height: 20,
+                backgroundColor: shimmer,
+                borderRadius: 100,
+              }}
+            />
+            <View style={{ flexDirection: "row", gap: 12 }}>
+              <View
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  backgroundColor: shimmer,
+                }}
+              />
+              <View
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  backgroundColor: shimmer,
+                }}
+              />
+            </View>
+          </View>
           <View
             style={{
-              width: "60%",
-              height: 48,
-              backgroundColor: isDark ? "#1a1a1a" : "#e5e5e5",
+              width: "55%",
+              height: 28,
+              backgroundColor: shimmer,
               borderRadius: 8,
             }}
           />
         </View>
-        <LoadingSkeleton />
         <LoadingSkeleton />
       </View>
     );
@@ -436,7 +569,7 @@ const index = () => {
     <ScrollView
       style={{
         flex: 1,
-        backgroundColor: isDark ? "#000000" : "#fafafa",
+        backgroundColor: pageBg,
       }}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: 120 }}
@@ -450,28 +583,30 @@ const index = () => {
       }
     >
       <View style={{ flex: 1 }}>
-        {/* Header Section */}
-        <View style={{ paddingHorizontal: 24, paddingTop: 60, paddingBottom: 24 }}>
+        {/* ── Header Section ── */}
+        <View
+          style={{ paddingHorizontal: 20, paddingTop: 60, paddingBottom: 8 }}
+        >
           {/* Top Bar */}
           <View
             style={{
               flexDirection: "row",
               justifyContent: "space-between",
               alignItems: "center",
-              marginBottom: 20,
+              marginBottom: 24,
             }}
           >
-            {/* Date Badge */}
+            {/* Date + status */}
             <View
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                backgroundColor: isDark ? "#111111" : "#ffffff",
-                paddingHorizontal: 16,
-                paddingVertical: 10,
+                backgroundColor: card,
+                paddingHorizontal: 14,
+                paddingVertical: 9,
                 borderRadius: 100,
                 borderWidth: 1,
-                borderColor: isDark ? "#1a1a1a" : "#f0f0f0",
+                borderColor: cardBorder,
               }}
             >
               <View
@@ -479,7 +614,7 @@ const index = () => {
                   width: 8,
                   height: 8,
                   borderRadius: 4,
-                  backgroundColor: isOnline ? (isDark ? "#ffffff" : "#000000") : "#ff6b6b",
+                  backgroundColor: isOnline ? "#10ac84" : "#ff6b6b",
                   marginRight: 10,
                 }}
               />
@@ -491,32 +626,34 @@ const index = () => {
                   letterSpacing: 0.3,
                 }}
               >
-                {isOnline ? theday : `${theday} • Offline`}
+                {isOnline ? theday : `${theday} · Offline`}
               </Text>
             </View>
 
             {/* Action Buttons */}
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+            >
               <TouchableOpacity
                 onPress={handleMessagePress}
                 activeOpacity={0.7}
                 accessibilityLabel="Contact support"
                 accessibilityHint="Opens feedback form"
                 style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 22,
-                  backgroundColor: isDark ? "#111111" : "#ffffff",
+                  width: 42,
+                  height: 42,
+                  borderRadius: 21,
+                  backgroundColor: card,
                   alignItems: "center",
                   justifyContent: "center",
                   borderWidth: 1,
-                  borderColor: isDark ? "#1a1a1a" : "#f0f0f0",
+                  borderColor: cardBorder,
                 }}
               >
                 <Ionicons
                   name="chatbubble-outline"
-                  size={20}
-                  color={isDark ? "#ffffff" : "#000000"}
+                  size={18}
+                  color={isDark ? "#888888" : "#666666"}
                 />
               </TouchableOpacity>
 
@@ -525,13 +662,15 @@ const index = () => {
                   activeOpacity={0.7}
                   accessibilityLabel="Settings"
                   accessibilityHint="Opens settings page"
-                  onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+                  onPress={() =>
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                  }
                 >
                   <View
                     style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 22,
+                      width: 42,
+                      height: 42,
+                      borderRadius: 21,
                       backgroundColor: isDark ? "#ffffff" : "#000000",
                       alignItems: "center",
                       justifyContent: "center",
@@ -539,7 +678,7 @@ const index = () => {
                   >
                     <Text
                       style={{
-                        fontSize: 18,
+                        fontSize: 17,
                         fontWeight: "700",
                         color: isDark ? "#000000" : "#ffffff",
                       }}
@@ -552,18 +691,23 @@ const index = () => {
             </View>
           </View>
 
-          {/* Compact time-based greeting */}
+          {/* Greeting */}
           {(() => {
             const hour = new Date().getHours();
             const greeting =
-              hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+              hour < 12
+                ? "Good morning"
+                : hour < 18
+                  ? "Good afternoon"
+                  : "Good evening";
             return (
               <Text
                 style={{
-                  fontSize: 15,
-                  fontWeight: "600",
-                  color: isDark ? "#666666" : "#888888",
-                  letterSpacing: 0.5,
+                  fontSize: 26,
+                  fontWeight: "800",
+                  color: isDark ? "#ffffff" : "#000000",
+                  letterSpacing: -0.5,
+                  marginBottom: 4,
                 }}
               >
                 {greeting}
@@ -572,17 +716,13 @@ const index = () => {
           })()}
         </View>
 
-        {/* Tab Selector */}
-        <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
+        {/* ── Tab Selector ── */}
+        <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
           <View
             style={{
               flexDirection: "row",
               alignItems: "center",
-              backgroundColor: isDark ? "#0a0a0a" : "#ffffff",
-              borderRadius: 20,
-              padding: 6,
-              borderWidth: 1,
-              borderColor: isDark ? "#1a1a1a" : "#f0f0f0",
+              gap: 10,
             }}
           >
             {/* Refresh Button */}
@@ -593,12 +733,14 @@ const index = () => {
               accessibilityLabel="Refresh timetable"
               accessibilityHint="Pull down or tap to refresh your timetable"
               style={{
-                width: 48,
-                height: 48,
-                borderRadius: 16,
-                backgroundColor: isDark ? "#151515" : "#f5f5f5",
+                width: 46,
+                height: 46,
+                borderRadius: 15,
+                backgroundColor: card,
                 alignItems: "center",
                 justifyContent: "center",
+                borderWidth: 1,
+                borderColor: cardBorder,
                 opacity: isRefreshing ? 0.5 : 1,
               }}
             >
@@ -610,7 +752,7 @@ const index = () => {
               ) : (
                 <Ionicons
                   name="refresh"
-                  size={20}
+                  size={18}
                   color={isDark ? "#888888" : "#666666"}
                 />
               )}
@@ -621,10 +763,11 @@ const index = () => {
               style={{
                 flex: 1,
                 flexDirection: "row",
-                marginLeft: 8,
-                backgroundColor: isDark ? "#151515" : "#f5f5f5",
-                borderRadius: 14,
+                backgroundColor: card,
+                borderRadius: 15,
                 padding: 4,
+                borderWidth: 1,
+                borderColor: cardBorder,
               }}
             >
               {["Today", "Week"].map((tab) => (
@@ -640,7 +783,7 @@ const index = () => {
                   accessibilityState={{ selected: selectedTab === tab }}
                   style={{
                     flex: 1,
-                    paddingVertical: 14,
+                    paddingVertical: 13,
                     borderRadius: 12,
                     backgroundColor:
                       selectedTab === tab
@@ -662,9 +805,9 @@ const index = () => {
                             ? "#000000"
                             : "#ffffff"
                           : isDark
-                            ? "#666666"
+                            ? "#555555"
                             : "#999999",
-                      letterSpacing: 0.5,
+                      letterSpacing: 0.3,
                     }}
                   >
                     {tab}
@@ -675,7 +818,7 @@ const index = () => {
           </View>
         </View>
 
-        {/* Content */}
+        {/* ── Content ── */}
         {selectedTab === "Today" && (
           <Today thecurent={currentClass} Notcurrentclass={upcomingclasses} />
         )}

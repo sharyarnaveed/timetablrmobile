@@ -1,6 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createClient } from '@supabase/supabase-js';
-import 'react-native-url-polyfill/auto';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { createClient } from "@supabase/supabase-js";
+import "react-native-url-polyfill/auto";
 
 /**
  * Storage adapter for Supabase auth.
@@ -11,92 +11,130 @@ import 'react-native-url-polyfill/auto';
  * so we must check for localStorage directly, not just `window`.
  */
 const memoryFallback = {};
-const hasLocalStorage = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+const hasLocalStorage =
+  typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 const supabaseStorage = {
-    getItem: async (key) => {
-        if (hasLocalStorage) {
-            try {
-                return window.localStorage.getItem(key);
-            } catch {
-                return null;
-            }
-        }
-        try {
-            return await AsyncStorage.getItem(key);
-        } catch {
-            return memoryFallback[key] ?? null;
-        }
-    },
-    setItem: async (key, value) => {
-        if (hasLocalStorage) {
-            try {
-                window.localStorage.setItem(key, value);
-            } catch {}
-            return;
-        }
-        try {
-            await AsyncStorage.setItem(key, value);
-        } catch {
-            memoryFallback[key] = value;
-        }
-    },
-    removeItem: async (key) => {
-        if (hasLocalStorage) {
-            try {
-                window.localStorage.removeItem(key);
-            } catch {}
-            return;
-        }
-        try {
-            await AsyncStorage.removeItem(key);
-        } catch {
-            delete memoryFallback[key];
-        }
-    },
+  getItem: async (key) => {
+    if (hasLocalStorage) {
+      try {
+        return window.localStorage.getItem(key);
+      } catch {
+        return null;
+      }
+    }
+    try {
+      return await AsyncStorage.getItem(key);
+    } catch {
+      return memoryFallback[key] ?? null;
+    }
+  },
+  setItem: async (key, value) => {
+    if (hasLocalStorage) {
+      try {
+        window.localStorage.setItem(key, value);
+      } catch {}
+      return;
+    }
+    try {
+      await AsyncStorage.setItem(key, value);
+    } catch {
+      memoryFallback[key] = value;
+    }
+  },
+  removeItem: async (key) => {
+    if (hasLocalStorage) {
+      try {
+        window.localStorage.removeItem(key);
+      } catch {}
+      return;
+    }
+    try {
+      await AsyncStorage.removeItem(key);
+    } catch {
+      delete memoryFallback[key];
+    }
+  },
 };
 
 export const supabase = createClient(
-    process.env.EXPO_PUBLIC_SUPABASE_URL,
-    process.env.EXPO_PUBLIC_SUPABASE_KEY,
-    {
-        auth: {
-            storage: supabaseStorage,
-            autoRefreshToken: true,
-            persistSession: true,
-            detectSessionInUrl: false,
-        },
-        realtime: {
-            enabled: false,
-        },
-    }
+  process.env.EXPO_PUBLIC_SUPABASE_URL,
+  process.env.EXPO_PUBLIC_SUPABASE_KEY,
+  {
+    auth: {
+      storage: supabaseStorage,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: false,
+    },
+    realtime: {
+      enabled: false,
+    },
+  },
 );
+
+/**
+ * Safely get the current session, handling invalid refresh token errors.
+ * If the refresh token is invalid, signs out the user and returns null.
+ * @returns {Promise<import('@supabase/supabase-js').Session | null>}
+ */
+export async function safeGetSession() {
+  try {
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
+    if (error) {
+      if (
+        error.message?.includes("Refresh Token") ||
+        error.message?.includes("Invalid Refresh Token") ||
+        error.status === 401
+      ) {
+        console.warn("Invalid refresh token detected, signing out...");
+        await supabase.auth.signOut();
+        return null;
+      }
+      throw error;
+    }
+    return session;
+  } catch (error) {
+    if (
+      error.message?.includes("Refresh Token") ||
+      error.message?.includes("Invalid Refresh Token")
+    ) {
+      console.warn("Invalid refresh token detected (catch), signing out...");
+      await supabase.auth.signOut();
+      return null;
+    }
+    throw error;
+  }
+}
 
 /**
  * Get teacher metadata (name) from the current Supabase session
  * @returns {Promise<string|null>} Teacher name or null if not found
  */
 export async function getTeacherMetadata() {
-    try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+  try {
+    const session = await safeGetSession();
 
-        if (error || !session) {
-            console.error('No active teacher session:', error);
-            return null;
-        }
-
-        // Get teacher name from user metadata
-        const teacherName = session.user?.user_metadata?.teacher_name;
-
-        if (!teacherName) {
-            console.error('Teacher name not found in session metadata');
-            return null;
-        }
-
-        return teacherName;
-    } catch (error) {
-        console.error('Error getting teacher metadata:', error);
-        return null;
+    if (!session) {
+      console.error("No active teacher session");
+      return null;
     }
+
+    // Get teacher name from user metadata
+    const teacherName = session.user?.user_metadata?.teacher_name;
+
+    if (!teacherName) {
+      console.error("Teacher name not found in session metadata");
+      return null;
+    }
+
+    return teacherName;
+  } catch (error) {
+    console.error("Error getting teacher metadata:", error);
+    return null;
+  }
 }
 
 /**
@@ -105,16 +143,16 @@ export async function getTeacherMetadata() {
  * @returns {string} Abbreviated day (e.g., "mo", "fri")
  */
 function convertDayToAbbrev(fullDay) {
-    const dayMap = {
-        'Monday': 'Mo',
-        'Tuesday': 'Tu',
-        'Wednesday': 'We',
-        'Thursday': 'Th',
-        'Friday': 'Fr',
-        'Saturday': 'sa',
-        'Sunday': 'su'
-    };
-    return dayMap[fullDay] || fullDay.toLowerCase().substring(0, 2);
+  const dayMap = {
+    Monday: "Mo",
+    Tuesday: "Tu",
+    Wednesday: "We",
+    Thursday: "Th",
+    Friday: "Fr",
+    Saturday: "sa",
+    Sunday: "su",
+  };
+  return dayMap[fullDay] || fullDay.toLowerCase().substring(0, 2);
 }
 
 /**
@@ -124,27 +162,34 @@ function convertDayToAbbrev(fullDay) {
  * @returns {Promise<Array>} Array of timetable entries
  */
 export async function getTeacherTimetable(teacherName, day) {
-    try {
-        const abbreviatedDay = convertDayToAbbrev(day);
-        console.log("[TEACHER] Fetching timetable for:", teacherName, "Day:", day, "->", abbreviatedDay);
+  try {
+    const abbreviatedDay = convertDayToAbbrev(day);
+    console.log(
+      "[TEACHER] Fetching timetable for:",
+      teacherName,
+      "Day:",
+      day,
+      "->",
+      abbreviatedDay,
+    );
 
-        const { data, error } = await supabase
-            .from('teachersdata')
-            .select('*')
-            .eq('teacher_name', teacherName)
-            .eq('Day', abbreviatedDay);
-        console.log("[TEACHER] Timetable data:", data);
+    const { data, error } = await supabase
+      .from("teachersdata")
+      .select("*")
+      .eq("teacher_name", teacherName)
+      .eq("Day", abbreviatedDay);
+    console.log("[TEACHER] Timetable data:", data);
 
-        if (error) {
-            console.error('Error fetching teacher timetable:', error);
-            return [];
-        }
-
-        return data || [];
-    } catch (error) {
-        console.error('Error in getTeacherTimetable:', error);
-        return [];
+    if (error) {
+      console.error("Error fetching teacher timetable:", error);
+      return [];
     }
+
+    return data || [];
+  } catch (error) {
+    console.error("Error in getTeacherTimetable:", error);
+    return [];
+  }
 }
 
 /**
@@ -153,21 +198,21 @@ export async function getTeacherTimetable(teacherName, day) {
  * @returns {Promise<Array>} Array of all timetable entries for the week
  */
 export async function getTeacherWeekTimetable(teacherName) {
-    try {
-        const { data, error } = await supabase
-            .from('teachersdata')
-            .select('*')
-            .eq('teacher_name', teacherName);
-        // console.log(data);
+  try {
+    const { data, error } = await supabase
+      .from("teachersdata")
+      .select("*")
+      .eq("teacher_name", teacherName);
+    // console.log(data);
 
-        if (error) {
-            console.error('Error fetching teacher week timetable:', error);
-            return [];
-        }
-
-        return data || [];
-    } catch (error) {
-        console.error('Error in getTeacherWeekTimetable:', error);
-        return [];
+    if (error) {
+      console.error("Error fetching teacher week timetable:", error);
+      return [];
     }
+
+    return data || [];
+  } catch (error) {
+    console.error("Error in getTeacherWeekTimetable:", error);
+    return [];
+  }
 }

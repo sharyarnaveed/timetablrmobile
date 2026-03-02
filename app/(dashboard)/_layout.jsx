@@ -11,7 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import { Alert, Platform, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../context/ThemeContext";
-import { supabase } from "../../utils/supabase";
+import { safeGetSession, supabase } from "../../utils/supabase";
 
 // Handle notifications when received
 Notifications.setNotificationHandler({
@@ -37,7 +37,8 @@ const _layout = () => {
         return;
       }
 
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
       if (existingStatus !== "granted") {
         console.warn("Notification permission not granted, skipping update");
         return;
@@ -57,21 +58,26 @@ const _layout = () => {
       try {
         if (role === "teacher") {
           // For teachers, update in Supabase notifyteacher table
-          const { data: { session } } = await supabase.auth.getSession();
+          const session = await safeGetSession();
 
           if (!session?.user?.id) {
-            console.error("No teacher session found for notification token update");
+            console.error(
+              "No teacher session found for notification token update",
+            );
             return;
           }
 
           // Update the token for teacher
           const { error: updateError } = await supabase
-            .from('notifyteacher')
+            .from("notifyteacher")
             .update({ notifyid: tokenData.data })
-            .eq('teacherid', session.user.id);
+            .eq("teacherid", session.user.id);
 
           if (updateError) {
-            console.error("Error updating teacher notification token:", updateError);
+            console.error(
+              "Error updating teacher notification token:",
+              updateError,
+            );
             return;
           }
           console.log("Teacher notification token updated successfully");
@@ -87,7 +93,7 @@ const _layout = () => {
                 "Content-Type": "application/json",
               },
               withCredentials: true,
-            }
+            },
           );
           console.log("Student notification token updated:", responce.data);
         }
@@ -130,7 +136,10 @@ const _layout = () => {
 
       if (!netState.isConnected) {
         // Store pending registration for later when online
-        await SecureStore.setItemAsync("pendingNotificationToken", tokenData.data);
+        await SecureStore.setItemAsync(
+          "pendingNotificationToken",
+          tokenData.data,
+        );
         await SecureStore.setItemAsync("pendingNotificationRole", role);
         console.log("Offline: Notification registration queued for later");
         return;
@@ -140,48 +149,54 @@ const _layout = () => {
       try {
         if (role === "teacher") {
           // For teachers, store in Supabase notifyteacher table
-          const { data: { session } } = await supabase.auth.getSession();
+          const session = await safeGetSession();
 
           if (!session?.user?.id) {
-            console.error("No teacher session found for notification registration");
+            console.error(
+              "No teacher session found for notification registration",
+            );
             return;
           }
 
           // Check if teacher already has a notification registered (by teacherid)
           const { data: existingRecord, error: checkError } = await supabase
-            .from('notifyteacher')
-            .select('id')
-            .eq('teacherid', session.user.id)
+            .from("notifyteacher")
+            .select("id")
+            .eq("teacherid", session.user.id)
             .single();
 
-          if (checkError && checkError.code !== 'PGRST116') {
+          if (checkError && checkError.code !== "PGRST116") {
             // PGRST116 = no rows found, which is fine
-            console.error("Error checking existing teacher notification:", checkError);
+            console.error(
+              "Error checking existing teacher notification:",
+              checkError,
+            );
             return;
           }
 
           if (existingRecord) {
             // Teacher already registered, update the token
             const { error: updateError } = await supabase
-              .from('notifyteacher')
+              .from("notifyteacher")
               .update({ notifyid: tokenData.data })
-              .eq('teacherid', session.user.id);
+              .eq("teacherid", session.user.id);
 
             if (updateError) {
-              console.error("Error updating teacher notification token:", updateError);
+              console.error(
+                "Error updating teacher notification token:",
+                updateError,
+              );
               return;
             }
             console.log("Teacher notification token updated successfully");
           } else {
             // Insert new token for teacher
-            const { error } = await supabase
-              .from('notifyteacher')
-              .insert([
-                {
-                  notifyid: tokenData.data,
-                  teacherid: session.user.id
-                }
-              ]);
+            const { error } = await supabase.from("notifyteacher").insert([
+              {
+                notifyid: tokenData.data,
+                teacherid: session.user.id,
+              },
+            ]);
 
             if (error) {
               console.error("Error storing teacher notification token:", error);
@@ -204,7 +219,7 @@ const _layout = () => {
                 "Content-Type": "application/json",
               },
               withCredentials: true,
-            }
+            },
           );
           // Backend may return {"message": "Token already up to date"} when token unchanged
           await SecureStore.deleteItemAsync("pendingNotificationToken");
@@ -243,15 +258,15 @@ const _layout = () => {
       // Register/update notification token only when online (handles offline gracefully)
       const netState = await NetInfo.fetch();
       if (netState.isConnected) {
-        registerForPushNotificationsAsync(role).catch(err => {
+        registerForPushNotificationsAsync(role).catch((err) => {
           console.log("Token registration failed, continuing app usage:", err);
         });
       }
-      
+
       const subscription = Notifications.addNotificationReceivedListener(
         (notification) => {
           console.log("Notification received in foreground:", notification);
-        }
+        },
       );
       return () => subscription.remove();
     };
@@ -285,13 +300,13 @@ const _layout = () => {
       // For teachers, use Supabase session validation
       if (role === "teacher") {
         try {
-          const { data: { session }, error } = await supabase.auth.getSession();
+          const session = await safeGetSession();
 
           // Store last check time
           await SecureStore.setItemAsync("lastAuthCheck", now.toString());
 
-          if (error || !session) {
-            console.error("Teacher session validation failed:", error);
+          if (!session) {
+            console.error("Teacher session validation failed");
             await SecureStore.deleteItemAsync("accessToken");
             await SecureStore.deleteItemAsync("role");
             await SecureStore.deleteItemAsync("lastAuthCheck");
@@ -303,8 +318,13 @@ const _layout = () => {
         } catch (error) {
           console.error("Teacher auth check error:", error);
           // Only redirect on auth errors, not network errors
-          if (error.message?.includes("network") || error.message?.includes("timeout")) {
-            console.log("Network error during auth check - allowing offline usage");
+          if (
+            error.message?.includes("network") ||
+            error.message?.includes("timeout")
+          ) {
+            console.log(
+              "Network error during auth check - allowing offline usage",
+            );
             return;
           }
           await SecureStore.deleteItemAsync("accessToken");
@@ -325,7 +345,7 @@ const _layout = () => {
               "Content-Type": "application/json",
             },
             timeout: 5000, // Add timeout
-          }
+          },
         );
 
         // Store last check time
@@ -342,8 +362,14 @@ const _layout = () => {
         console.error("Auth check error:", error);
 
         // Handle network errors - don't redirect, allow offline usage
-        if (!error.response || error.code === "ECONNABORTED" || error.code === "ERR_NETWORK") {
-          console.log("Network error during auth check - allowing offline usage");
+        if (
+          !error.response ||
+          error.code === "ECONNABORTED" ||
+          error.code === "ERR_NETWORK"
+        ) {
+          console.log(
+            "Network error during auth check - allowing offline usage",
+          );
           return;
         }
 
@@ -382,19 +408,25 @@ const _layout = () => {
       if (!isOnline || !wasOffline) return;
 
       try {
-        const pendingToken = await SecureStore.getItemAsync("pendingNotificationToken");
-        const pendingRole = await SecureStore.getItemAsync("pendingNotificationRole");
+        const pendingToken = await SecureStore.getItemAsync(
+          "pendingNotificationToken",
+        );
+        const pendingRole = await SecureStore.getItemAsync(
+          "pendingNotificationRole",
+        );
 
         if (pendingToken && pendingRole) {
-          console.log("Network restored, retrying pending notification registration...");
-          registerForPushNotificationsAsync(pendingRole).catch(err => {
+          console.log(
+            "Network restored, retrying pending notification registration...",
+          );
+          registerForPushNotificationsAsync(pendingRole).catch((err) => {
             console.log("Failed to retry notification registration:", err);
           });
         } else {
           const role = await SecureStore.getItemAsync("role");
           if (role) {
             console.log("Network restored, registering notification token...");
-            registerForPushNotificationsAsync(role).catch(err => {
+            registerForPushNotificationsAsync(role).catch((err) => {
               console.log("Failed to register notification token:", err);
             });
           }
@@ -409,8 +441,12 @@ const _layout = () => {
 
   // Retry pending notification registration when back online
   async function retryPendingNotificationRegistration() {
-    const pendingToken = await SecureStore.getItemAsync("pendingNotificationToken");
-    const pendingRole = await SecureStore.getItemAsync("pendingNotificationRole");
+    const pendingToken = await SecureStore.getItemAsync(
+      "pendingNotificationToken",
+    );
+    const pendingRole = await SecureStore.getItemAsync(
+      "pendingNotificationRole",
+    );
 
     if (pendingToken && pendingRole) {
       console.log("Retrying pending notification registration...");
@@ -437,13 +473,15 @@ const _layout = () => {
             borderTopRightRadius: 28,
             marginHorizontal: 0,
             marginBottom: 0,
-            paddingBottom: Platform.OS === "ios" 
-              ? Math.max(insets.bottom, 28) 
-              : Math.max(insets.bottom, 12),
+            paddingBottom:
+              Platform.OS === "ios"
+                ? Math.max(insets.bottom, 28)
+                : Math.max(insets.bottom, 12),
             paddingTop: 12,
-            height: Platform.OS === "ios" 
-              ? 88 + Math.max(insets.bottom - 28, 0) 
-              : 60 + Math.max(insets.bottom, 12),
+            height:
+              Platform.OS === "ios"
+                ? 88 + Math.max(insets.bottom - 28, 0)
+                : 60 + Math.max(insets.bottom, 12),
             position: "absolute",
             left: 0,
             right: 0,
